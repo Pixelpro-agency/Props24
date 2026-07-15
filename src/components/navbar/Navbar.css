@@ -1,0 +1,114 @@
+/* ── Navbar Styles ─────────────────────────────────────── */
+
+/* Dropdown shared transitions */
+.navbar-dropdown-enter {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+}
+
+.navbar-dropdown-enter-active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+/* Search bar focus glow */
+.navbar-search-focused {
+    box-shadow: 0 0 0 3px rgba(0, 168, 232, 0.1);
+}
+
+/* Badge pulse animation for new alerts */
+@keyframes badge-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+.navbar-badge-pulse {
+    animation: badge-pulse 2s ease-in-out infinite;
+}
+
+/* Icon hover micro-animation */
+.navbar-icon-hover {
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.navbar-icon-hover:hover {
+    transform: scale(1.1);
+}
+
+.navbar-icon-hover:active {
+    transform: scale(0.95);
+}
+
+/* Dropdown item slide-in stagger */
+@keyframes dropdown-item-in {
+    from {
+        opacity: 0;
+        transform: translateX(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.navbar-dropdown-item {
+    animation: dropdown-item-in 0.15s ease-out backwards;
+}
+
+/* Loading spinner rotate */
+@keyframes navbar-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.navbar-spinner {
+    animation: navbar-spin 0.8s linear infinite;
+}
+
+/* Divider vertical style */
+.navbar-divider {
+    width: 1px;
+    height: 20px;
+    background-color: #e5e7eb;
+    margin: 0 4px;
+}
+
+/* ── Responsive Overrides ─────────────────────────────── */
+
+/* On tablets (md-lg): compact text */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .navbar-text-compact {
+        font-size: 0.75rem;
+    }
+}
+
+/* Scrollbar for long dropdown menus */
+.navbar-dropdown-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.navbar-dropdown-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.navbar-dropdown-scroll::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 9999px;
+}
+
+.navbar-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af;
+}
