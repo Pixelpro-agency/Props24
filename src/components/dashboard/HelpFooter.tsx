@@ -8,14 +8,16 @@ export function HelpFooter() {
                     href="/support"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline transition-colors duration-150"
+                    className="missing-route px-1 rounded hover:underline transition-colors duration-150"
+                    style={{ color: '#ca8a04', backgroundColor: '#fef08a', borderColor: '#eab308' }}
                 >
                     Centro Supporto
                 </a>{' '}
                 o{' '}
                 <a
                     href="/contact"
-                    className="text-blue-600 hover:underline transition-colors duration-150"
+                    className="missing-route px-1 rounded hover:underline transition-colors duration-150"
+                    style={{ color: '#ca8a04', backgroundColor: '#fef08a', borderColor: '#eab308' }}
                 >
                     Contattaci
                 </a>

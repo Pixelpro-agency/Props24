@@ -60,7 +60,7 @@ export interface TenantTab {
 export interface TenantDetail extends Omit<Tenant, 'address1' | 'address2' | 'city' | 'zip' | 'state' | 'country' | 'proAddress' | 'proCity' | 'proZip' | 'proState' | 'proCountry'> {
     // Override parziale di alcuni campi che vogliamo raggruppare o chiamare in modo diverso
     addresses: {
-        rentedProperty?: TenantDetailAddress;
+        rentedProperty?: TenantDetailAddress | null;
         tenantAddress?: TenantDetailAddress;
     };
     employment?: {
@@ -77,6 +77,10 @@ export interface TenantDetail extends Omit<Tenant, 'address1' | 'address2' | 'ci
 
     // Dati tab
     finances?: TenantFinance;
+    currentLease?: TenantLease | null;
+    futureLeases?: TenantLease[];
+    historicalLeases?: TenantLease[];
+    archivedLeases?: TenantLease[];
     leases: TenantLease[];
     messages: TenantMessage[];
     activityHistory: any[]; // Potremmo definirlo meglio in futuro

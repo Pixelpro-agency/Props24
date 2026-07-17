@@ -8,6 +8,7 @@ import {
     FileText,
     ExternalLink,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { Lease } from '../../types/propertyDetail';
 
 interface LeaseCardProps {
@@ -56,18 +57,20 @@ export function LeaseCard({ lease }: LeaseCardProps) {
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <button
+                    <Link
+                        to={`/leases/${lease.id}/edit`}
                         className="p-1.5 rounded hover:bg-gray-200 transition-colors cursor-pointer"
                         title="Modifica"
                     >
                         <Pencil className="w-3.5 h-3.5 text-gray-500" />
-                    </button>
-                    <button
+                    </Link>
+                    <Link
+                        to={`/leases/${lease.id}`}
                         className="p-1.5 rounded hover:bg-gray-200 transition-colors cursor-pointer"
                         title="Visualizza"
                     >
                         <Eye className="w-3.5 h-3.5 text-gray-500" />
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -84,12 +87,12 @@ export function LeaseCard({ lease }: LeaseCardProps) {
                 {/* Tenant */}
                 <div className="flex items-center gap-2 text-sm">
                     <Users className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    <a
-                        href={lease.tenant.link || `/tenants/${lease.tenant.id}`}
+                    <Link
+                        to={lease.tenant.link || `/tenants/${lease.tenant.id}`}
                         className="text-blue-600 hover:underline font-medium truncate"
                     >
                         {lease.tenant.name}
-                    </a>
+                    </Link>
                 </div>
 
                 {/* Contract type */}
@@ -127,13 +130,13 @@ export function LeaseCard({ lease }: LeaseCardProps) {
 
             {/* Footer */}
             <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50">
-                <a
-                    href="/leases"
+                <Link
+                    to={`/leases/${lease.id}`}
                     className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline font-medium"
                 >
                     <ExternalLink className="w-3 h-3" />
-                    Mostra tutto
-                </a>
+                    Visualizza locazione
+                </Link>
             </div>
         </div>
     );

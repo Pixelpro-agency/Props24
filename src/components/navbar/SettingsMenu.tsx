@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { Settings, ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { NavbarDropdownSection } from '../../types/navbar';
+import { isKnownRoute } from '../../utils/routes';
 
 interface SettingsMenuProps {
     sections: NavbarDropdownSection[];
@@ -67,15 +68,22 @@ export function SettingsMenu({ sections, isOpen, onToggle, onClose }: SettingsMe
                                 </div>
 
                                 {/* Section items */}
-                                {section.items.map(item => (
-                                    <div key={item.id}>
-                                        <Link
-                                            to={item.href || '#'}
-                                            onClick={onClose}
-                                            className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-                                        >
+                                {section.items.map(item => {
+                                    const isMissingRoute = Boolean(item.href && !isKnownRoute(item.href));
+                                    const missingRouteStyle = isMissingRoute
+                                        ? { color: '#ca8a04', backgroundColor: '#fef08a', borderColor: '#eab308' }
+                                        : undefined;
+                                    const itemClassName = `flex items-center gap-3 px-4 py-2 text-sm transition-colors ${isMissingRoute
+                                        ? 'missing-route'
+                                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                        }`;
+                                    const content = (
+                                        <>
                                             {item.icon && (
-                                                <item.icon className="w-4 h-4 text-gray-400 shrink-0" />
+                                                <item.icon
+                                                    className="w-4 h-4 text-gray-400 shrink-0"
+                                                    style={isMissingRoute ? { color: '#ca8a04' } : undefined}
+                                                />
                                             )}
                                             <span className="flex-1">{item.label}</span>
                                             {item.isBeta && (
@@ -83,12 +91,25 @@ export function SettingsMenu({ sections, isOpen, onToggle, onClose }: SettingsMe
                                                     BETA
                                                 </span>
                                             )}
-                                        </Link>
-                                        {item.dividerAfter && (
-                                            <div className="mx-3 my-0.5 border-t border-gray-100" />
-                                        )}
-                                    </div>
-                                ))}
+                                        </>
+                                    );
+
+                                    return (
+                                        <div key={item.id}>
+                                            <Link
+                                                to={item.href || '#'}
+                                                onClick={onClose}
+                                                className={itemClassName}
+                                                style={missingRouteStyle}
+                                            >
+                                                {content}
+                                            </Link>
+                                            {item.dividerAfter && (
+                                                <div className="mx-3 my-0.5 border-t border-gray-100" />
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         ))}
                     </motion.div>

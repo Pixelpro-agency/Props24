@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import type { TenantListItem } from '../data/mockTenantList';
-import { mockTenantList } from '../data/mockTenantList';
+import type { TenantListItem } from '../db/tenantRepository';
+import { useTenantsDb } from './useTenantsDb';
 
 export interface TenantFilterState {
     propertyId: string;
@@ -18,11 +18,12 @@ interface UseTenantFiltersOptions {
  */
 export function useTenantFilters({ activeTab }: UseTenantFiltersOptions) {
     const [filters, setFilters] = useState<TenantFilterState>({ propertyId: '', query: '' });
+    const tenants = useTenantsDb();
 
     // Tab-filtered data
     const dataByTab = useMemo(
-        () => mockTenantList.filter((t) => (activeTab === 'active' ? !t.archived : t.archived)),
-        [activeTab],
+        () => tenants.filter((t) => (activeTab === 'active' ? !t.archived : t.archived)),
+        [activeTab, tenants],
     );
 
     // Apply user filters
@@ -66,8 +67,8 @@ export function useTenantRecipients(
 ) {
     return useMemo(() => {
         return selectedIds
-            .map((idx) => {
-                const tenant = filteredData[parseInt(idx)];
+            .map((id) => {
+                const tenant = filteredData.find((item) => item.id === id);
                 if (!tenant || !tenant.email) return null;
                 return { id: tenant.id, name: tenant.displayName, email: tenant.email };
             })

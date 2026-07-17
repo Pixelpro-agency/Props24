@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { VisibilityState } from '@tanstack/react-table';
-import { mockProperties } from '../data/mockProperties';
 import { useFilters } from '../hooks/useFilters';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useTableSelection } from '../hooks/useTableSelection';
@@ -14,16 +13,19 @@ import { FloatingActions } from '../components/properties/FloatingActions';
 import { FeedbackBox } from '../components/properties/FeedbackBox';
 import { ExportModal } from '../components/properties/ExportModal';
 import { usePropertyStats } from '../hooks/usePropertyStats';
+import { usePropertiesDb } from '../hooks/usePropertiesDb';
+import { archiveProperties, deleteProperties } from '../db/propertyRepository';
 
 export function PropertiesPage() {
     const navigate = useNavigate();
+    const properties = usePropertiesDb();
     // Tab state (active / archived)
     const [activeTab, setActiveTab] = useState('active');
 
     // Filter by tab first
     const dataByTab = useMemo(
-        () => mockProperties.filter((p) => (activeTab === 'active' ? !p.archived : p.archived)),
-        [activeTab],
+        () => properties.filter((p) => (activeTab === 'active' ? !p.archived : p.archived)),
+        [activeTab, properties],
     );
 
     // Filter hook — applies user filters on top of tab filter
@@ -40,7 +42,7 @@ export function PropertiesPage() {
     );
 
     // Row selection via custom hook
-    const { rowSelection, setRowSelection, selectedCount, clearSelection } = useTableSelection();
+    const { rowSelection, setRowSelection, selectedCount, selectedIds, clearSelection } = useTableSelection();
 
     // Export modal
     const [showExport, setShowExport] = useState(false);
@@ -56,12 +58,19 @@ export function PropertiesPage() {
 
     // Handlers
     function handleDelete() {
-        alert(`Eliminare ${selectedCount} unità?`);
+        if (selectedIds.length === 0) return;
+        const confirmed = window.confirm(`Eliminare ${selectedCount} unità selezionate?`);
+        if (!confirmed) return;
+        const result = deleteProperties(selectedIds);
+        if (result.blocked.length > 0) {
+            window.alert(`${result.blocked.length} unità non eliminate perché hanno locazioni attive.`);
+        }
         clearSelection();
     }
 
     function handleArchive() {
-        alert(`Archiviare ${selectedCount} unità?`);
+        if (selectedIds.length === 0) return;
+        archiveProperties(selectedIds);
         clearSelection();
     }
 

@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { Bell, RotateCcw } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { NavbarAlert } from '../../types/navbar';
+import { isKnownRoute } from '../../utils/routes';
 
 interface AlertsDropdownProps {
     alerts: NavbarAlert[];
@@ -131,7 +132,8 @@ export function AlertsDropdown({
                             <Link
                                 to="/alerts"
                                 onClick={onClose}
-                                className="block text-center text-xs font-medium text-brand-blue hover:text-brand-blue/80 py-2.5 transition-colors"
+                                className="missing-route block text-center text-xs font-medium py-2.5 transition-colors"
+                                style={{ color: '#ca8a04', backgroundColor: '#fef08a', borderColor: '#eab308' }}
                             >
                                 Vedi tutti gli avvisi
                             </Link>
@@ -154,6 +156,7 @@ interface AlertItemProps {
 
 function AlertItem({ alert, onDismiss, onClose, showDivider }: AlertItemProps) {
     const Icon = alert.icon;
+    const isMissingRoute = !isKnownRoute(alert.viewHref);
 
     return (
         <>
@@ -177,7 +180,11 @@ function AlertItem({ alert, onDismiss, onClose, showDivider }: AlertItemProps) {
                             <Link
                                 to={alert.viewHref}
                                 onClick={onClose}
-                                className="text-xs font-medium text-brand-blue hover:text-brand-blue/80 transition-colors"
+                                className={`text-xs font-medium transition-colors ${isMissingRoute
+                                    ? 'missing-route px-1.5 py-0.5 rounded'
+                                    : 'text-brand-blue hover:text-brand-blue/80'
+                                    }`}
+                                style={isMissingRoute ? { color: '#ca8a04', backgroundColor: '#fef08a', borderColor: '#eab308' } : undefined}
                             >
                                 Visualizza
                             </Link>

@@ -1,6 +1,8 @@
 // Tab 4: Contatti di Emergenza — lista dinamica con badge "Principale"
 // Max 5 contatti, con logica contatto principale auto-gestita
 import { useState } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
+import type { TenantFormData } from '../schema';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, Info, Star, User, Building2 } from 'lucide-react';
 import { Modal } from '../../property-form/ui/Modal';
@@ -42,8 +44,27 @@ const emptyContact: Omit<EmergencyContact, 'id'> = {
     isPrimary: false,
 };
 
+function toFormEmergencyContact(id: string, data: Omit<EmergencyContact, 'id'>): TenantFormData['TenantEmergencyContacts'][number] {
+    return {
+        id,
+        contactType: data.contactType,
+        companyName: data.companyName || '',
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        address: data.address || '',
+        city: data.city || '',
+        zip: data.zip || '',
+        country: data.country || '',
+        comments: data.comments || '',
+        isPrimary: data.isPrimary === true,
+    };
+}
+
 export function Tab4Emergency() {
-    const [contacts, setContacts] = useState<EmergencyContact[]>([]);
+    const { control } = useFormContext<TenantFormData>();
+    const { fields: contacts, append, update, replace } = useFieldArray({ control, name: 'TenantEmergencyContacts', keyName: 'fieldId' });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -79,7 +100,7 @@ export function Tab4Emergency() {
             if (wasMain && updated.length > 0) {
                 updated[0] = { ...updated[0], isPrimary: true };
             }
-            setContacts(updated);
+            replace(updated);
         }
         setIsDeleteModalOpen(false);
         setDeleteIndex(null);
@@ -87,9 +108,7 @@ export function Tab4Emergency() {
 
     // Imposta come principale
     const togglePrimary = (index: number) => {
-        setContacts(prev =>
-            prev.map((c, i) => ({ ...c, isPrimary: i === index }))
-        );
+        replace(contacts.map((c, i) => ({ ...c, isPrimary: i === index })));
     };
 
     const updateField = (field: string, value: string | boolean) => {
@@ -120,23 +139,20 @@ export function Tab4Emergency() {
         if (!validateForm()) return;
 
         if (editingIndex !== null) {
-            setContacts(prev =>
-                prev.map((c, i) => {
-                    if (i === editingIndex) return { ...c, ...formData };
-                    // Se il contatto modificato diventa principale, togli il flag agli altri
-                    if (formData.isPrimary) return { ...c, isPrimary: false };
-                    return c;
-                })
-            );
+            if (formData.isPrimary) {
+                replace(contacts.map((c, i) => (i === editingIndex ? toFormEmergencyContact(c.id, { ...emptyContact, ...formData }) : { ...c, isPrimary: false })));
+            } else {
+                update(editingIndex, toFormEmergencyContact(contacts[editingIndex].id, { ...emptyContact, ...formData }));
+            }
         } else {
-            const newContact: EmergencyContact = { id: generateId(), ...formData };
+            const newContact = toFormEmergencyContact(generateId(), { ...emptyContact, ...formData });
             // Se è il primo, diventa automaticamente principale
             if (contacts.length === 0) newContact.isPrimary = true;
             // Se è marcato come principale, rimuovi dagli altri
             if (newContact.isPrimary) {
-                setContacts(prev => [...prev.map(c => ({ ...c, isPrimary: false })), newContact]);
+                replace([...contacts.map(c => ({ ...c, isPrimary: false })), newContact]);
             } else {
-                setContacts(prev => [...prev, newContact]);
+                append(newContact);
             }
         }
         setIsModalOpen(false);

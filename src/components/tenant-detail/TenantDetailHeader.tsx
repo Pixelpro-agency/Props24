@@ -41,7 +41,7 @@ export function TenantDetailHeader({ title, onDeleteClick }: TenantDetailHeaderP
                         {/* Dropdown menu */}
                         <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
                             <button
-                                onClick={() => { setMenuOpen(false); /* Azione Modifica mock */ }}
+                                onClick={() => setMenuOpen(false)}
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                             >
                                 <Pencil className="w-4 h-4" /> Modifica

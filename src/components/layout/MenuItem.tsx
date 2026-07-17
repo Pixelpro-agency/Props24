@@ -3,6 +3,7 @@ import { ChevronDown, PlusCircle, MoreHorizontal } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { MenuItem as MenuItemType } from '../../types/menu';
 import { Badge, BadgeList } from './Badge';
+import { isKnownRoute } from '../../utils/routes';
 
 interface MenuItemProps {
     item: MenuItemType;
@@ -26,6 +27,11 @@ export function MenuItem({
     const navigate = useNavigate();
     const paddingLeft = level === 0 ? 'px-3' : 'pl-10 pr-3';
 
+    const isMissingRoute = Boolean(item.href && !isKnownRoute(item.href));
+    const missingRouteStyle = isMissingRoute
+        ? { color: '#ca8a04', backgroundColor: '#fef08a', borderColor: '#eab308' }
+        : undefined;
+
     // Per i NavLink, usiamo il path corrente per determinare l'active
     const isRouteActive = item.href ? location.pathname === item.href : false;
     const activeState = isActive || isRouteActive;
@@ -33,7 +39,9 @@ export function MenuItem({
     const baseClasses = clsx(
         "w-full flex items-center py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 group",
         paddingLeft,
-        activeState
+        isMissingRoute
+            ? 'missing-route border'
+            : activeState
             ? 'bg-brand-blue/10 text-brand-blue relative'
             : 'text-slate-600 hover:bg-gray-200'
     );
@@ -66,6 +74,7 @@ export function MenuItem({
                         "w-5 h-5 mr-3 shrink-0",
                         activeState ? "text-brand-blue" : "text-slate-400 group-hover:text-slate-600"
                     )}
+                    style={isMissingRoute ? { color: '#ca8a04' } : undefined}
                     strokeWidth={2}
                 />
             )}
@@ -85,7 +94,10 @@ export function MenuItem({
                         <button
                             onClick={handleQuickAdd}
                             aria-label="Nuovo"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:text-brand-blue text-slate-400 focus:opacity-100 rounded-full"
+                            className={clsx(
+                                'opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:text-brand-blue focus:opacity-100 rounded-full',
+                                item.quickAddHref && !isKnownRoute(item.quickAddHref) ? 'missing-route-text' : 'text-slate-400'
+                            )}
                         >
                             <PlusCircle className="w-4 h-4" />
                         </button>
@@ -106,7 +118,10 @@ export function MenuItem({
                         <button
                             onClick={(e) => handleQuickAddAction(e, action.href)}
                             aria-label={action.tooltip}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:text-brand-blue text-slate-400 focus:opacity-100 rounded-full"
+                            className={clsx(
+                                'opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:text-brand-blue focus:opacity-100 rounded-full',
+                                !isKnownRoute(action.href) ? 'missing-route-text' : 'text-slate-400'
+                            )}
                         >
                             <action.icon className="w-4 h-4" />
                         </button>
@@ -167,6 +182,7 @@ export function MenuItem({
             to={item.href || '#'}
             onClick={onNavigate}
             className={baseClasses}
+            style={missingRouteStyle}
         >
             {content}
         </NavLink>

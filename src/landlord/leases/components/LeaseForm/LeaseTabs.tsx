@@ -14,13 +14,8 @@ interface LeaseTabsProps {
 
 const TABS: Tab[] = [
     { id: 'general', label: 'Informazioni Generali' },
-    { id: 'additional', label: 'Informazioni Aggiuntive' },
-    { id: 'receipts', label: 'Ricevute' },
-    { id: 'settings', label: 'Altre Impostazioni' },
+    { id: 'tenants', label: 'Inquilini' },
     { id: 'guarantors', label: 'Garanti' },
-    { id: 'insurance', label: 'Assicurazione' },
-    { id: 'documents', label: 'Documenti' },
-    { id: 'signature', label: 'Firma', badge: 'BETA' },
 ];
 
 export const LeaseTabs: React.FC<LeaseTabsProps> = ({ children, activeTab, onTabChange }) => {
@@ -30,7 +25,7 @@ export const LeaseTabs: React.FC<LeaseTabsProps> = ({ children, activeTab, onTab
             <div className="border-b border-gray-200 mb-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <nav className="flex gap-0 -mb-px" role="tablist">
                     {TABS.map((tab) => (
-                        <button
+                        <button type="button"
                             key={tab.id}
                             role="tab"
                             aria-selected={activeTab === tab.id}

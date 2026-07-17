@@ -3,11 +3,18 @@ import type { TenantDetail } from '../../types/tenantDetail';
 
 interface TenantInfoCardProps {
     tenant: TenantDetail;
-    onInvite: () => void;
+    onInvite: () => void | Promise<void>;
     onCopyLink: () => void;
 }
 
 export function TenantInfoCard({ tenant, onInvite, onCopyLink }: TenantInfoCardProps) {
+    const invitation = tenant.invitation;
+    const hasInviteEmail = Boolean((tenant.email || invitation?.email || '').trim());
+    const titleLabels: Record<string, string> = {
+        Miss: 'Sig.na',
+        Mrs: 'Sig.ra',
+        Mr: 'Sig.',
+    };
 
     // Helper Avatar
     const getInitials = () => {
@@ -24,6 +31,26 @@ export function TenantInfoCard({ tenant, onInvite, onCopyLink }: TenantInfoCardP
         if (tenant.type === 'company') return tenant.companyName || 'Azienda';
         return `${tenant.firstName || ''} ${tenant.lastName || ''}`.trim();
     };
+
+    const companyRows = [
+        ['Ragione sociale', tenant.companyName],
+        ['P.IVA', tenant.vatNumber],
+        ['Registro imprese', tenant.siret],
+        ['Capitale', tenant.capital],
+        ['Settore di attività', tenant.companyDescription],
+    ].filter(([, value]) => Boolean(String(value || '').trim()));
+
+    const representativeRows = [
+        ['Titolo', tenant.title ? titleLabels[tenant.title] || tenant.title : ''],
+        ['Nome', tenant.firstName],
+        ['2° nome', tenant.middleName],
+        ['Cognome', tenant.lastName],
+        ['Data di nascita', tenant.birthDate],
+        ['Luogo di nascita', tenant.birthPlace],
+        ['Nazionalità', tenant.nationality],
+        ['Codice fiscale', tenant.fiscalCode],
+        ['P.IVA personale', tenant.vatNumberPersonal],
+    ].filter(([, value]) => Boolean(String(value || '').trim()));
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full">
@@ -83,27 +110,71 @@ export function TenantInfoCard({ tenant, onInvite, onCopyLink }: TenantInfoCardP
                             )}
                         </div>
 
-                        {/* Login Status */}
-                        <div className="mt-4 flex items-center gap-3">
-                            <span className="text-sm text-gray-700">Log in</span>
-                            {tenant.loginStatus?.status === 'active' && (
-                                <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded">Attivo</span>
-                            )}
-                            {tenant.loginStatus?.status === 'pending_invitation' && (
-                                <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">Invito inviato</span>
-                            )}
-                            {(tenant.loginStatus?.status === 'inactive' || !tenant.loginStatus?.status) && (
-                                <button
-                                    onClick={onInvite}
-                                    className="px-2 py-0.5 bg-[#72a333] hover:bg-[#638e2c] text-white text-xs font-medium rounded transition-colors shadow-sm"
-                                >
-                                    INVITA
-                                </button>
-                            )}
-                        </div>
+                        {hasInviteEmail && (
+                            <div className="mt-4 flex flex-wrap items-center gap-3">
+                                <span className="text-sm text-gray-700">Invito</span>
+                                {invitation?.status === 'accepted' ? (
+                                    <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded">ACCETTATO</span>
+                                ) : invitation?.status === 'pending' ? (
+                                    <>
+                                        <span className="px-2 py-0.5 bg-orange-100 text-orange-800 text-xs font-medium rounded">IN ATTESA</span>
+                                        <button
+                                            type="button"
+                                            onClick={onInvite}
+                                            className="px-2 py-0.5 bg-[#72a333] hover:bg-[#638e2c] text-white text-xs font-medium rounded transition-colors shadow-sm"
+                                        >
+                                            MANDA DI NUOVO L'INVITO
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={onInvite}
+                                        className="px-2 py-0.5 bg-[#72a333] hover:bg-[#638e2c] text-white text-xs font-medium rounded transition-colors shadow-sm"
+                                    >
+                                        INVIA INVITO
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {tenant.type === 'company' && (
+                <div className="p-6 border-b border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-800 mb-2">Dati società</h3>
+                        {companyRows.length > 0 ? (
+                            <div className="text-sm text-gray-600 space-y-1">
+                                {companyRows.map(([label, value]) => (
+                                    <div key={label}>
+                                        <span className="text-gray-500">{label}: </span>
+                                        <span className="text-gray-800">{value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-gray-500">Nessuna informazione</p>
+                        )}
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-800 mb-2">Rappresentante legale</h3>
+                        {representativeRows.length > 0 ? (
+                            <div className="text-sm text-gray-600 space-y-1">
+                                {representativeRows.map(([label, value]) => (
+                                    <div key={label}>
+                                        <span className="text-gray-500">{label}: </span>
+                                        <span className="text-gray-800">{value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-gray-500">Nessuna informazione</p>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Sezione Indirizzi */}
             <div className="p-6 border-b border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -176,6 +247,74 @@ export function TenantInfoCard({ tenant, onInvite, onCopyLink }: TenantInfoCardP
                     </div>
                 ) : (
                     <p className="text-sm text-gray-500">Nessuna informazione</p>
+                )}
+            </div>
+
+            <div className="p-6 border-b border-gray-100">
+                <h3 className="text-sm font-medium text-gray-800 mb-2 font-semibold">Documento identita</h3>
+                {tenant.idType || tenant.idNumber || tenant.idExpiry || tenant.identityDocumentFile ? (
+                    <div className="text-sm text-gray-600 space-y-1">
+                        {tenant.idType && <div>Tipo: <span className="text-gray-800">{tenant.idType}</span></div>}
+                        {tenant.idNumber && <div>Numero: <span className="text-gray-800">{tenant.idNumber}</span></div>}
+                        {tenant.idExpiry && <div>Scadenza: <span className="text-gray-800">{tenant.idExpiry}</span></div>}
+                        {tenant.identityDocumentFile && <div>File: <span className="text-gray-800">{tenant.identityDocumentFile.name}</span></div>}
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-500">Nessuna informazione</p>
+                )}
+            </div>
+
+            <div className="p-6 border-b border-gray-100">
+                <h3 className="text-sm font-medium text-gray-800 mb-2 font-semibold">Garanti</h3>
+                {tenant.guarantors.length > 0 ? (
+                    <div className="space-y-2">
+                        {tenant.guarantors.map((guarantor) => (
+                            <div key={guarantor.id} className="text-sm text-gray-600">
+                                <div className="font-medium text-gray-800">
+                                    {[guarantor.companyName, guarantor.firstName, guarantor.lastName].filter(Boolean).join(' ') || 'Garante'}
+                                </div>
+                                <div>{[guarantor.email, guarantor.phone].filter(Boolean).join(' - ')}</div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-500">Nessun garante</p>
+                )}
+            </div>
+
+            <div className="p-6 border-b border-gray-100">
+                <h3 className="text-sm font-medium text-gray-800 mb-2 font-semibold">Contatti emergenza</h3>
+                {tenant.emergencyContacts.length > 0 ? (
+                    <div className="space-y-2">
+                        {tenant.emergencyContacts.map((contact) => (
+                            <div key={contact.id} className="text-sm text-gray-600">
+                                <div className="font-medium text-gray-800">
+                                    {[contact.companyName, contact.firstName, contact.lastName].filter(Boolean).join(' ') || 'Contatto'}
+                                    {contact.isPrimary ? ' - principale' : ''}
+                                </div>
+                                <div>{[contact.email, contact.phone].filter(Boolean).join(' - ')}</div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-500">Nessun contatto</p>
+                )}
+            </div>
+
+            <div className="p-6 border-b border-gray-100">
+                <h3 className="text-sm font-medium text-gray-800 mb-2 font-semibold">Documenti</h3>
+                {tenant.documents.length > 0 ? (
+                    <div className="space-y-2">
+                        {tenant.documents.map((document) => (
+                            <div key={document.id} className="text-sm text-gray-600">
+                                <span className="font-medium text-gray-800">{document.fileName}</span>
+                                <span className="ml-2">{document.categoryLabel}</span>
+                                {document.file?.name && <span className="ml-2 text-gray-500">{document.file.name}</span>}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-500">Nessun documento</p>
                 )}
             </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { TenantDetail } from '../types/tenantDetail';
-import { buildTenantDetail } from '../data/mockTenantDetail';
+import { deleteTenantById, getTenantById, sendTenantInvite } from '../db/tenantRepository';
+import { subscribeJsonDb } from '../db/jsonDb';
 
 interface UseTenantDetailReturn {
     tenant: TenantDetail | null;
@@ -17,75 +18,46 @@ export function useTenantDetail(id: string | undefined): UseTenantDetailReturn {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        let isMounted = true;
-        setLoading(true);
-        setError(null);
+        const loadTenant = () => {
+            setLoading(true);
+            setError(null);
 
-        if (!id) {
-            setError('ID inquilino non fornito');
-            setLoading(false);
-            return;
-        }
+            if (!id) {
+                setTenant(null);
+                setError('ID inquilino non fornito');
+                setLoading(false);
+                return;
+            }
 
-        // Simulazione caricamento API
-        const loadTenant = async () => {
             try {
-                // Piccolo delay per mostrare il loading status
-                await new Promise(resolve => setTimeout(resolve, 800));
-
-                const data = buildTenantDetail(id);
-
-                if (!isMounted) return;
-
-                if (data) {
-                    setTenant(data);
-                } else {
-                    setError('Inquilino non trovato');
-                }
-            } catch (err) {
-                if (isMounted) setError('Si è verificato un errore durante il caricamento');
+                const data = getTenantById(id);
+                setTenant(data);
+                if (!data) setError('Inquilino non trovato');
+            } catch {
+                setTenant(null);
+                setError('Si e verificato un errore durante il caricamento');
             } finally {
-                if (isMounted) setLoading(false);
+                setLoading(false);
             }
         };
 
         loadTenant();
-
-        return () => {
-            isMounted = false;
-        };
+        return subscribeJsonDb(loadTenant);
     }, [id]);
 
     const deleteTenant = async () => {
-        // Simulazione cancellazione
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log(`[API Mock] Delete tenant ${id}`);
-        // In una vera app qui faresti una chiamata API e redirigeresti l'utente
-        // o lanceresti un evento per rimuovere dallo store
+        if (!tenant) return;
+        deleteTenantById(tenant.id);
     };
 
     const inviteTenant = async () => {
-        // Simulazione generazione/invio link
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log(`[API Mock] Inviato invito al tenant ${id}`);
-        if (tenant) {
-            setTenant({
-                ...tenant,
-                loginStatus: { status: 'pending_invitation' }
-            });
-        }
+        if (!tenant) return;
+        sendTenantInvite(tenant.id);
     };
 
     const copyInviteLink = () => {
         if (tenant?.inviteLink?.url) {
-            navigator.clipboard.writeText(tenant.inviteLink.url)
-                .then(() => {
-                    // Ideale: mostrare un toast/snackbar
-                    console.log('Link copiato');
-                })
-                .catch(err => {
-                    console.error('Errore copia clipboard', err);
-                });
+            void navigator.clipboard.writeText(tenant.inviteLink.url);
         }
     };
 
@@ -95,6 +67,6 @@ export function useTenantDetail(id: string | undefined): UseTenantDetailReturn {
         error,
         deleteTenant,
         inviteTenant,
-        copyInviteLink
+        copyInviteLink,
     };
 }

@@ -16,7 +16,6 @@ export function Tab1Info() {
                     <Select
                         name="PropertyTypeID"
                         label="Tipo"
-                        required
                         orientation="horizontal"
                         options={[
                             { value: 'appartamento', label: 'Appartamento' },
@@ -51,8 +50,8 @@ export function Tab1Info() {
                         name="PropertyTitle"
                         label="Identificativo"
                         placeholder="Nuova proprietà"
-                        required
                         orientation="horizontal"
+                        required
                         helpText="Assegna un identificativo, un nome o un numero univoco. Puoi inserire o inventare un riferimento libero."
                     />
                     <div className="grid grid-cols-[160px_1fr] md:grid-cols-[200px_1fr] items-start gap-4">
@@ -125,7 +124,6 @@ export function Tab1Info() {
                     <Select
                         name="PropertyCountry"
                         label="Paese"
-                        required
                         orientation="horizontal"
                         options={[
                             { value: 'IT', label: 'Italia' },

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { FormSection } from '../ui/FormSection';
 import { PlusCircle, User, Edit2, Trash2, X } from 'lucide-react';
@@ -6,58 +6,42 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { TextInput } from '../ui/TextInput';
 import { TextArea } from '../ui/TextArea';
 import { Select } from '../ui/Select';
+import type { PropertyContactFormData } from '../schema';
+
+function newLocalId(prefix: string): string {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 interface ContactModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: any) => void;
-    initialData: any;
+    onSave: (data: PropertyContactFormData) => void;
+    initialData: PropertyContactFormData | null;
 }
 
 function ContactModal({ isOpen, onClose, onSave, initialData }: ContactModalProps) {
-    const methods = useForm({
-        defaultValues: {
-            firstName: '',
-            lastName: '',
-            profession: '',
-            email: '',
-            phone: '',
-            comments: ''
-        }
+    const defaultValues: PropertyContactFormData = {
+        id: '',
+        firstName: '',
+        lastName: '',
+        profession: '',
+        email: '',
+        phone: '',
+        comments: '',
+    };
+    const methods = useForm<PropertyContactFormData>({
+        defaultValues,
     });
 
-    useState(() => {
-        if (isOpen) {
-            methods.reset(initialData || {
-                firstName: '',
-                lastName: '',
-                profession: '',
-                email: '',
-                phone: '',
-                comments: ''
-            });
-        }
-    });
-
-    import('react').then((React) => {
-        React.useEffect(() => {
-            if (isOpen) {
-                methods.reset(initialData || {
-                    firstName: '',
-                    lastName: '',
-                    profession: '',
-                    email: '',
-                    phone: '',
-                    comments: ''
-                });
-            }
-        }, [isOpen, initialData, methods]);
-    });
+    useEffect(() => {
+        if (isOpen) methods.reset(initialData || defaultValues);
+    }, [isOpen, initialData, methods]);
 
     if (!isOpen) return null;
 
     const handleSubmit = methods.handleSubmit((data) => {
-        onSave({ id: initialData?.id || Date.now().toString(), ...data });
+        onSave({ ...data, id: initialData?.id || data.id || newLocalId('contact') });
         onClose();
     });
 
@@ -76,7 +60,7 @@ function ContactModal({ isOpen, onClose, onSave, initialData }: ContactModalProp
 
                 <div className="flex-1 overflow-y-auto p-6">
                     <FormProvider {...methods}>
-                        <form id="contact-modal-form" onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-6">
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <TextInput
@@ -122,7 +106,7 @@ function ContactModal({ isOpen, onClose, onSave, initialData }: ContactModalProp
                                 label="Note opzionali"
                             />
 
-                        </form>
+                        </div>
                     </FormProvider>
                 </div>
 
@@ -135,8 +119,8 @@ function ContactModal({ isOpen, onClose, onSave, initialData }: ContactModalProp
                         Annulla
                     </button>
                     <button
-                        type="submit"
-                        form="contact-modal-form"
+                        type="button"
+                        onClick={() => void handleSubmit()}
                         className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium text-white hover:bg-green-700 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-sm"
                     >
                         Salva
@@ -152,7 +136,8 @@ export function Tab8Contacts() {
     const { control } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control,
-        name: 'PropertyContacts'
+        name: 'PropertyContacts',
+        keyName: '_rhfId',
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -168,7 +153,7 @@ export function Tab8Contacts() {
         setIsModalOpen(true);
     };
 
-    const handleSave = (data: any) => {
+    const handleSave = (data: PropertyContactFormData) => {
         if (editingIndex !== null) {
             update(editingIndex, data);
         } else {
@@ -192,7 +177,7 @@ export function Tab8Contacts() {
                         {fields.length > 0 && (
                             <div className="flex flex-col gap-3 mb-4">
                                 {fields.map((field: any, index) => (
-                                    <div key={field.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-center justify-between group">
+                                    <div key={field._rhfId} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
                                             <div className="h-10 w-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-semibold border shadow-sm">
                                                 {field.firstName ? field.firstName.charAt(0).toUpperCase() : <User className="w-5 h-5 text-indigo-500" />}
@@ -249,7 +234,7 @@ export function Tab8Contacts() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleSave}
-                initialData={editingIndex !== null ? fields[editingIndex] : null}
+                initialData={editingIndex !== null ? fields[editingIndex] as unknown as PropertyContactFormData : null}
             />
         </div>
     );

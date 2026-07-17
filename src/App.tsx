@@ -12,6 +12,8 @@ import { TenantsPage } from './pages/TenantsPage';
 import { TenantDetailPage } from './pages/TenantDetailPage';
 import { NewLeasePage } from './landlord/leases/pages/NewLeasePage';
 import { LeasesPage } from './pages/LeasesPage';
+import { LeaseDetailPage } from './pages/LeaseDetailPage';
+import { EditLeasePage } from './pages/EditLeasePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +43,8 @@ function App() {
             <Route path="/tenants/:id" element={<TenantDetailPage />} />
             <Route path="/leases" element={<LeasesPage />} />
             <Route path="/leases/new" element={<NewLeasePage />} />
+            <Route path="/leases/:id/edit" element={<EditLeasePage />} />
+            <Route path="/leases/:id" element={<LeaseDetailPage />} />
           </Routes>
         </Layout>
       </Router>
@@ -49,4 +53,3 @@ function App() {
 }
 
 export default App;
-

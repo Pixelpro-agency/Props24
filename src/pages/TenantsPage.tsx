@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+﻿import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { VisibilityState } from '@tanstack/react-table';
 
@@ -14,18 +14,20 @@ import { ImportErrorModal } from '../components/tenants/ImportErrorModal';
 import { TerminateLeaseModal } from '../components/tenants/TerminateLeaseModal';
 import { EmailNotificationModal } from '../components/tenants/EmailNotificationModal';
 import { FeedbackBox } from '../components/tenants/FeedbackBox';
+import { StatusToast, type StatusToastState } from '../components/ui/StatusToast';
 
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useTableSelection } from '../hooks/useTableSelection';
 import { useTenantFilters, useTenantRecipients } from '../hooks/useTenantFilters';
 import { useTenantActions } from '../hooks/useTenantActions';
+import { sendTenantInvite } from '../db/tenantRepository';
 
 
 
-// Mock lease options (will come from API later)
+// Opzioni locali usate dai modali ancora non collegati.
 const leaseOptions = [
-    { value: 'lease-001', label: 'Appartamento Centrale — dal 01/01/2025' },
-    { value: 'lease-002', label: 'Ufficio Duomo — dal 15/03/2024' },
+    { value: 'lease-001', label: 'Appartamento Centrale - dal 01/01/2025' },
+    { value: 'lease-002', label: 'Ufficio Duomo - dal 15/03/2024' },
 ];
 
 export function TenantsPage() {
@@ -33,6 +35,8 @@ export function TenantsPage() {
 
     // Tab state
     const [activeTab, setActiveTab] = useState('active');
+    const [toast, setToast] = useState<StatusToastState | null>(null);
+    const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
 
     // Filtering (hook)
     const { filters, setFilters, filteredData, updateQuery } = useTenantFilters({ activeTab });
@@ -70,8 +74,29 @@ export function TenantsPage() {
         [clearSelection],
     );
 
+    const handleSendInvite = useCallback((tenantId: string) => {
+        if (sendingInviteId) return;
+        setSendingInviteId(tenantId);
+        try {
+            sendTenantInvite(tenantId);
+            setToast({
+                title: 'Successo',
+                message: "L'invito è stato inviato.\nChiedi al tuo locatario (inquilino) di leggere l'email e cliccare sul link di invito per accettarlo.",
+            });
+        } catch (error) {
+            setToast({
+                variant: 'error',
+                title: 'Errore',
+                message: error instanceof Error ? error.message : "L'invito non è stato inviato.",
+            });
+        } finally {
+            setSendingInviteId(null);
+        }
+    }, [sendingInviteId]);
+
     return (
         <div className="max-w-full px-2 sm:px-4 lg:px-6 py-4 sm:py-6 min-h-[344px]">
+            <StatusToast toast={toast} onClose={() => setToast(null)} />
 
 
             {/* Page Header */}
@@ -102,6 +127,8 @@ export function TenantsPage() {
                         onColumnVisibilityChange={setColumnVisibility}
                         rowSelection={rowSelection}
                         onRowSelectionChange={setRowSelection}
+                        onSendInvite={handleSendInvite}
+                        sendingInviteId={sendingInviteId}
                     />
                 ) : (
                     <EmptyState onCreateClick={() => navigate('/tenants/new')} />

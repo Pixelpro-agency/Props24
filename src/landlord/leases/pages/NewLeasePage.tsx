@@ -1,46 +1,40 @@
-import React from 'react';
-import { useProperties } from '../hooks/useProperties';
-import { EmptyState } from '../components/EmptyState';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import { LeaseForm } from '../components/LeaseForm';
-import { MoreHorizontal } from 'lucide-react';
+import { getJsonDb, subscribeJsonDb } from '../../../db/jsonDb';
+
+function activePropertyCount(): number {
+    return getJsonDb().properties.filter((property) => !property.archived).length;
+}
 
 export const NewLeasePage: React.FC = () => {
-    const { hasProperties, isLoading } = useProperties();
+    const [propertyCount, setPropertyCount] = useState(() => activePropertyCount());
 
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-            </div>
-        );
-    }
+    useEffect(() => {
+        const refresh = () => setPropertyCount(activePropertyCount());
+        refresh();
+        return subscribeJsonDb(refresh);
+    }, []);
 
     return (
-        <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 font-sans">
-
-            {/* Page Header */}
-            <div className="flex justify-between items-end border-b border-gray-200 pb-3 mb-8">
-                <h1 className="text-3xl font-normal text-[#333] flex items-center gap-2 m-0">
-                    <a href="/leases" className="text-gray-300 hover:text-gray-500 font-light text-2xl" aria-label="Indietro">&lt;</a>
+        <div className="mx-auto max-w-7xl p-4 font-sans md:p-6 lg:p-8">
+            <div className="mb-8 flex items-end justify-between border-b border-gray-200 pb-3">
+                <h1 className="m-0 flex items-center gap-2 text-3xl font-normal text-[#333]">
+                    <Link to="/leases" className="text-gray-300 hover:text-gray-500" aria-label="Indietro">
+                        <ChevronLeft className="h-7 w-7" />
+                    </Link>
                     Nuova locazione
                 </h1>
-                <div className="flex items-center gap-2">
-                    <button className="p-1.5 border border-gray-300 rounded hover:bg-gray-100 bg-white shadow-sm transition-colors text-gray-600">
-                        <MoreHorizontal className="w-5 h-5" />
-                    </button>
-                </div>
             </div>
 
-            {/* Conditional Content */}
-            {!hasProperties ? (
-                <EmptyState
-                    message="Non avete delle Proprietà."
-                    highlightedText="Proprietà"
-                    action={{
-                        label: "Crea una Proprietà",
-                        href: "/properties/new"
-                    }}
-                />
+            {propertyCount === 0 ? (
+                <div className="rounded border border-dashed border-gray-300 bg-gray-50 px-6 py-14 text-center">
+                    <h2 className="text-xl font-semibold text-gray-800">Non avete delle Proprietà.</h2>
+                    <Link to="/properties/new" className="mt-5 inline-flex rounded bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700">
+                        Crea una Proprietà
+                    </Link>
+                </div>
             ) : (
                 <LeaseForm />
             )}

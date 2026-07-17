@@ -8,6 +8,7 @@ export interface DropdownItem {
     icon?: LucideIcon;
     href?: string;
     danger?: boolean;
+    warning?: boolean;
     onClick?: () => void;
 }
 
@@ -83,21 +84,27 @@ export function Dropdown({ trigger, items, align = 'left', className = '' }: Dro
                     >
                         {items.map((item) => {
                             const Icon = item.icon;
+                            const warningStyle = item.warning
+                                ? { color: '#ca8a04', backgroundColor: '#fef08a', borderColor: '#eab308' }
+                                : undefined;
                             return (
                                 <button
                                     key={item.id}
                                     type="button"
                                     onClick={(e) => handleItemClick(e, item)}
+                                    style={warningStyle}
                                     className={`
                     w-full flex items-center gap-2 px-4 py-2 text-sm
                     transition-colors duration-150 cursor-pointer
                     ${item.danger
                                             ? 'text-red-600 hover:bg-red-50'
-                                            : 'text-gray-700 hover:bg-gray-50'
+                                            : item.warning
+                                                ? 'missing-route'
+                                                : 'text-gray-700 hover:bg-gray-50'
                                         }
                   `}
                                 >
-                                    {Icon && <Icon className="w-4 h-4" />}
+                                    {Icon && <Icon className="w-4 h-4" style={item.warning ? { color: '#ca8a04' } : undefined} />}
                                     {item.label}
                                 </button>
                             );

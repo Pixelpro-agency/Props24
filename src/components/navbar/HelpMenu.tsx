@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { HelpCircle, ChevronDown, ExternalLink } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { NavbarMenuItem } from '../../types/navbar';
+import { isKnownRoute } from '../../utils/routes';
 
 interface HelpMenuProps {
     items: NavbarMenuItem[];
@@ -58,11 +59,24 @@ export function HelpMenu({ items, isOpen, onToggle, onClose }: HelpMenuProps) {
                     >
                         {items.map((item) => {
                             const isExternal = item.target === '_blank';
+                            const isMissingRoute = !isExternal && Boolean(item.href && !isKnownRoute(item.href));
+                            const missingRouteStyle = isMissingRoute
+                                ? { color: '#ca8a04', backgroundColor: '#fef08a', borderColor: '#eab308' }
+                                : undefined;
 
                             const content = (
-                                <div className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                                <div
+                                    className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isMissingRoute
+                                    ? 'missing-route'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                    }`}
+                                    style={missingRouteStyle}
+                                >
                                     {item.icon && (
-                                        <item.icon className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <item.icon
+                                            className="w-4 h-4 text-gray-400 shrink-0"
+                                            style={isMissingRoute ? { color: '#ca8a04' } : undefined}
+                                        />
                                     )}
                                     <span className="flex-1">{item.label}</span>
                                     {item.isBeta && (

@@ -2,17 +2,12 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, FileText, FileType, FileSpreadsheet } from 'lucide-react';
 import { Select } from '../ui/Select';
-import { mockProperties } from '../../data/mockProperties';
+import { usePropertiesDb } from '../../hooks/usePropertiesDb';
 
 interface DownloadModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
-
-const propertyOptions = mockProperties.map((p) => ({
-    value: p.id,
-    label: p.title,
-}));
 
 const downloadFormats = [
     { id: 'pdf', label: 'Scarica in formato Adobe PDF', icon: FileText, color: 'text-red-500' },
@@ -23,6 +18,11 @@ const downloadFormats = [
 export function DownloadModal({ isOpen, onClose }: DownloadModalProps) {
     const [selectedProperty, setSelectedProperty] = useState('');
     const [error, setError] = useState('');
+    const properties = usePropertiesDb();
+    const propertyOptions = properties.map((p) => ({
+        value: p.id,
+        label: p.title,
+    }));
 
     function handleDownload(format: string) {
         if (!selectedProperty) {

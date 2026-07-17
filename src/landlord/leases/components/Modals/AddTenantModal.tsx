@@ -1,135 +1,143 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { tenantApi } from '../../services/tenantApi';
-import type { TenantFormData, Tenant } from '../../types/tenant.types';
-import { X, UserPlus, Building2, User } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Building2, Search, User, UserPlus, X } from 'lucide-react';
+import { createTenant } from '../../../../db/tenantRepository';
+import { getJsonDb, subscribeJsonDb } from '../../../../db/jsonDb';
+import type { TenantRecord } from '../../../../db/database.types';
+import { defaultTenantValues, normalizeTenantFormData } from '../../../../components/tenant-form/schema';
 
 interface AddTenantModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onTenantAdded: (tenant: Tenant) => void;
-    existingTenantIds: number[];
+    onTenantAdded: (tenantId: string) => void;
+    onError?: (message: string) => void;
+    existingTenantIds: string[];
 }
 
-const inputClass = "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#337ab7]/30 focus:border-[#337ab7] transition-colors";
+const inputClass = 'w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#337ab7] focus:outline-none focus:ring-2 focus:ring-[#337ab7]/30';
 
-export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onTenantAdded, existingTenantIds }) => {
+function tenantName(tenant: TenantRecord): string {
+    return tenant.type === 'company'
+        ? tenant.companyName || 'Società'
+        : `${tenant.firstName} ${tenant.lastName}`.replace(/\s+/g, ' ').trim() || 'Inquilino';
+}
+
+function activeTenants(): TenantRecord[] {
+    return getJsonDb().tenants.filter((tenant) => !tenant.archived);
+}
+
+export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onTenantAdded, onError, existingTenantIds }) => {
     const [mode, setMode] = useState<'select' | 'create'>('create');
-    const [emailWarning, setEmailWarning] = useState('');
-    const [nameWarning, setNameWarning] = useState('');
+    const [tenantType, setTenantType] = useState<'person' | 'company'>('person');
+    const [query, setQuery] = useState('');
+    const [tenants, setTenants] = useState<TenantRecord[]>(() => activeTenants());
+    const [values, setValues] = useState({ firstName: '', lastName: '', companyName: '', email: '', phone: '' });
+    const [error, setError] = useState('');
 
-    const { data: existingTenants = [] } = useQuery({
-        queryKey: ['tenants', 'list'],
-        queryFn: tenantApi.getExistingTenants,
-        enabled: isOpen
-    });
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        const refresh = () => setTenants(activeTenants());
+        refresh();
+        return subscribeJsonDb(refresh);
+    }, [isOpen]);
 
-    const form = useForm<TenantFormData>({
-        defaultValues: {
-            TenantType: 'person',
-            TenantFirstName: '',
-            TenantLastName: '',
-            TenantCompanyName: '',
-            TenantEmail: '',
-            TenantMobilePhone: '',
-            TenantEmailIgnoreUnique: false
-        }
-    });
-
-    const { register, watch, handleSubmit, reset } = form;
-    const tenantType = watch('TenantType');
-
-    const createMutation = useMutation({
-        mutationFn: tenantApi.createTenant,
-        onSuccess: (tenant) => {
-            onTenantAdded(tenant);
-            reset();
-            onClose();
-        }
-    });
-
-    // Duplicate email check
-    const handleEmailBlur = async (email: string) => {
-        if (!email) { setEmailWarning(''); return; }
-        const exists = await tenantApi.checkEmail(email);
-        setEmailWarning(exists ? 'Questa email è già associata a un altro inquilino.' : '');
-    };
-
-    // Duplicate name check
-    const handleNameBlur = async () => {
-        const firstName = form.getValues('TenantFirstName') || '';
-        const lastName = form.getValues('TenantLastName') || '';
-        if (!firstName || !lastName) { setNameWarning(''); return; }
-        const exists = await tenantApi.checkNames(firstName, lastName);
-        setNameWarning(exists ? 'Un inquilino con questo nome esiste già.' : '');
-    };
-
-    const onSubmitForm = handleSubmit((data) => {
-        createMutation.mutate(data);
-    });
-
-    const handleSelectExisting = (tenant: Tenant) => {
-        onTenantAdded(tenant);
-        onClose();
-    };
+    const availableTenants = useMemo(() => {
+        const normalized = query.trim().toLowerCase();
+        return tenants
+            .filter((tenant) => !existingTenantIds.includes(tenant.id))
+            .filter((tenant) => {
+                if (!normalized) return true;
+                return [tenantName(tenant), tenant.email, tenant.mobilePhone, tenant.phone]
+                    .join(' ')
+                    .toLowerCase()
+                    .includes(normalized);
+            });
+    }, [existingTenantIds, query, tenants]);
 
     if (!isOpen) return null;
 
-    const availableTenants = existingTenants.filter(t => !existingTenantIds.includes(t.TenantID));
+    const resetAndClose = () => {
+        setError('');
+        setQuery('');
+        setMode('create');
+        setValues({ firstName: '', lastName: '', companyName: '', email: '', phone: '' });
+        onClose();
+    };
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                        <UserPlus className="w-5 h-5" /> Aggiungi Inquilino
+    const createQuickTenant = () => {
+        setError('');
+        if (tenantType === 'person' && !values.firstName.trim()) {
+            setError('Inserisci il nome.');
+            return;
+        }
+        if (tenantType === 'person' && !values.lastName.trim()) {
+            setError('Inserisci il cognome.');
+            return;
+        }
+        if (tenantType === 'company' && !values.companyName.trim()) {
+            setError('Inserisci la società.');
+            return;
+        }
+
+        try {
+            const tenant = createTenant(normalizeTenantFormData({
+                ...defaultTenantValues,
+                TenantType: tenantType,
+                TenantFirstName: values.firstName,
+                TenantLastName: values.lastName,
+                TenantCompanyName: values.companyName,
+                TenantEmail: values.email,
+                TenantMobilePhoneNat: values.phone,
+                TenantPhoneNat: values.phone,
+            }));
+            onTenantAdded(tenant.id);
+            resetAndClose();
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Non è stato possibile creare l’inquilino.';
+            setError(message);
+            onError?.(message);
+        }
+    };
+
+    return createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onMouseDown={resetAndClose}>
+            <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl" onMouseDown={(event) => event.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800">
+                        <UserPlus className="h-5 w-5" /> Aggiungi inquilino
                     </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-                        <X className="w-5 h-5" />
+                    <button type="button" onClick={resetAndClose} className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                        <X className="h-5 w-5" />
                     </button>
                 </div>
 
-                {/* Mode Toggle */}
-                <div className="px-6 py-3 border-b border-gray-100 flex gap-2">
-                    <button
-                        type="button"
-                        onClick={() => setMode('create')}
-                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${mode === 'create' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                    >
+                <div className="flex gap-2 border-b border-gray-100 px-6 py-3">
+                    <button type="button" onClick={() => setMode('create')} className={`rounded px-4 py-2 text-sm font-medium ${mode === 'create' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
                         Nuovo
                     </button>
-                    <button
-                        type="button"
-                        onClick={() => setMode('select')}
-                        className={`px-4 py-2 text-sm font-medium rounded transition-colors ${mode === 'select' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                    >
+                    <button type="button" onClick={() => setMode('select')} className={`rounded px-4 py-2 text-sm font-medium ${mode === 'select' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
                         Esistente
                     </button>
                 </div>
 
                 {mode === 'select' ? (
-                    <div className="px-6 py-4">
+                    <div className="space-y-4 px-6 py-4">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                            <input value={query} onChange={(event) => setQuery(event.target.value)} className={`${inputClass} pl-9`} placeholder="Cerca per nome, email o telefono" />
+                        </div>
                         {availableTenants.length === 0 ? (
-                            <p className="text-gray-400 text-center py-8">Nessun inquilino disponibile da selezionare.</p>
+                            <p className="rounded border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">Nessun inquilino disponibile da selezionare.</p>
                         ) : (
-                            <div className="space-y-2">
-                                {availableTenants.map((t) => (
-                                    <button
-                                        key={t.TenantID}
-                                        type="button"
-                                        onClick={() => handleSelectExisting(t)}
-                                        className="w-full flex items-center gap-3 p-3 rounded border border-gray-200 hover:border-green-400 hover:bg-green-50 transition-colors text-left"
-                                    >
-                                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
-                                            {t.TenantType === 'company' ? <Building2 className="w-5 h-5" /> : <User className="w-5 h-5" />}
+                            <div className="grid gap-2">
+                                {availableTenants.map((tenant) => (
+                                    <button key={tenant.id} type="button" onClick={() => { onTenantAdded(tenant.id); resetAndClose(); }} className="flex items-center gap-3 rounded border border-gray-200 p-3 text-left hover:border-green-500 hover:bg-green-50">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                                            {tenant.type === 'company' ? <Building2 className="h-5 w-5" /> : <User className="h-5 w-5" />}
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-800">
-                                                {t.TenantType === 'company' ? t.TenantCompanyName : `${t.TenantFirstName} ${t.TenantLastName}`}
-                                            </p>
-                                            <p className="text-xs text-gray-400">{t.TenantEmail}</p>
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-medium text-gray-800">{tenantName(tenant)}</p>
+                                            <p className="truncate text-xs text-gray-500">{tenant.email || 'Nessuna email'} {tenant.mobilePhone || tenant.phone ? `- ${tenant.mobilePhone || tenant.phone}` : ''}</p>
                                         </div>
                                     </button>
                                 ))}
@@ -137,78 +145,39 @@ export const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose,
                         )}
                     </div>
                 ) : (
-                    <form onSubmit={onSubmitForm} className="px-6 py-4 space-y-4">
-                        {/* Type Toggle */}
-                        <div className="flex items-center gap-4 mb-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" value="person" {...register('TenantType')} className="accent-green-600" />
-                                <User className="w-4 h-4" /> <span className="text-sm">Persona</span>
+                    <div className="space-y-4 px-6 py-4">
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="radio" checked={tenantType === 'person'} onChange={() => setTenantType('person')} className="accent-green-600" />
+                                Persona
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" value="company" {...register('TenantType')} className="accent-green-600" />
-                                <Building2 className="w-4 h-4" /> <span className="text-sm">Società</span>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="radio" checked={tenantType === 'company'} onChange={() => setTenantType('company')} className="accent-green-600" />
+                                Società
                             </label>
                         </div>
 
                         {tenantType === 'person' ? (
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-xs font-medium text-gray-500 mb-1 block">Nome</label>
-                                    <input type="text" {...register('TenantFirstName')} onBlur={handleNameBlur} className={inputClass} placeholder="Nome" />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-medium text-gray-500 mb-1 block">Cognome</label>
-                                    <input type="text" {...register('TenantLastName')} onBlur={handleNameBlur} className={inputClass} placeholder="Cognome" />
-                                </div>
-                                {nameWarning && <p className="col-span-2 text-xs text-orange-500">{nameWarning}</p>}
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <input className={inputClass} placeholder="Nome" value={values.firstName} onChange={(event) => setValues((prev) => ({ ...prev, firstName: event.target.value }))} />
+                                <input className={inputClass} placeholder="Cognome" value={values.lastName} onChange={(event) => setValues((prev) => ({ ...prev, lastName: event.target.value }))} />
                             </div>
                         ) : (
-                            <div>
-                                <label className="text-xs font-medium text-gray-500 mb-1 block">Ragione sociale</label>
-                                <input type="text" {...register('TenantCompanyName')} className={inputClass} placeholder="Ragione sociale" />
-                            </div>
+                            <input className={inputClass} placeholder="Società" value={values.companyName} onChange={(event) => setValues((prev) => ({ ...prev, companyName: event.target.value }))} />
                         )}
 
-                        <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Email</label>
-                            <input
-                                type="email"
-                                {...register('TenantEmail')}
-                                onBlur={(e) => handleEmailBlur(e.target.value)}
-                                className={inputClass}
-                                placeholder="email@esempio.it"
-                            />
-                            {emailWarning && (
-                                <div className="mt-1">
-                                    <p className="text-xs text-orange-500">{emailWarning}</p>
-                                    <label className="flex items-center gap-2 mt-1 cursor-pointer">
-                                        <input type="checkbox" {...register('TenantEmailIgnoreUnique')} className="accent-green-600" />
-                                        <span className="text-xs text-gray-500">Ignora e continua comunque</span>
-                                    </label>
-                                </div>
-                            )}
-                        </div>
+                        <input className={inputClass} placeholder="Email facoltativa" type="email" value={values.email} onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))} />
+                        <input className={inputClass} placeholder="Telefono facoltativo" value={values.phone} onChange={(event) => setValues((prev) => ({ ...prev, phone: event.target.value }))} />
+                        {error && <p className="text-sm text-red-600">{error}</p>}
 
-                        <div>
-                            <label className="text-xs font-medium text-gray-500 mb-1 block">Telefono</label>
-                            <input type="tel" {...register('TenantMobilePhone')} className={inputClass} placeholder="+39 333 123 4567" />
+                        <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+                            <button type="button" onClick={resetAndClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Annulla</button>
+                            <button type="button" onClick={createQuickTenant} className="rounded bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700">Aggiungi inquilino</button>
                         </div>
-
-                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
-                                Annulla
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={createMutation.isPending}
-                                className="px-6 py-2 bg-[#5cb85c] hover:bg-[#449d44] text-white text-sm font-medium rounded transition-colors disabled:opacity-50"
-                            >
-                                {createMutation.isPending ? 'Salvataggio...' : 'Aggiungi inquilino'}
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 };

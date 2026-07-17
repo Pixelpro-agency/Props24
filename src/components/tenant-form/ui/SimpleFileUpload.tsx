@@ -1,9 +1,16 @@
 // Upload file semplice per documenti identità e altri file
 // Senza drag & drop, solo file input standard
 import { useState, useRef } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { Upload, X, FileText } from 'lucide-react';
+import {
+    calculateTenantAttachmentBytes,
+    MAX_TENANT_DOCUMENT_BYTES,
+    MAX_TENANT_TOTAL_ATTACHMENT_BYTES,
+    type TenantFormData,
+} from '../schema';
 
 interface SimpleFileUploadProps {
     name: string;
@@ -21,12 +28,13 @@ export function SimpleFileUpload({
     label,
     className,
     helpText,
-    maxSizeMB = 15,
-    accept = '.gif,.png,.jpg,.jpeg,.pdf,.doc,.docx',
+    maxSizeMB = 2,
+    accept = '.pdf,.jpg,.jpeg,.png,.webp',
     orientation = 'horizontal',
     onFileSelected,
 }: SimpleFileUploadProps) {
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const { control, getValues, setValue } = useFormContext<TenantFormData>();
+    const value = useWatch({ control, name: name as any }) as { name?: string; type?: string; size?: number; dataUrl?: string } | null;
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -35,19 +43,43 @@ export function SimpleFileUpload({
         if (!file) return;
 
         // Validazione dimensione
-        if (file.size > maxSizeMB * 1024 * 1024) {
-            setError(`Il file supera la dimensione massima di ${maxSizeMB}MB`);
+        const maxBytes = Math.min(maxSizeMB * 1024 * 1024, MAX_TENANT_DOCUMENT_BYTES);
+        if (file.size > maxBytes) {
+            setError(`Il file supera la dimensione massima di ${Math.min(maxSizeMB, 2)}MB`);
+            return;
+        }
+        const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            setError('Formato file non supportato. Usa PDF, JPG, PNG o WEBP.');
             return;
         }
 
         setError(null);
-        setSelectedFile(file);
-        onFileSelected?.(file);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const storedFile = {
+                id: `${name}-${file.lastModified}-${file.size}`,
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                lastModified: file.lastModified,
+                dataUrl: event.target?.result as string,
+            };
+            const nextValues = { ...getValues(), [name]: storedFile };
+            if (calculateTenantAttachmentBytes(nextValues) > MAX_TENANT_TOTAL_ATTACHMENT_BYTES) {
+                setError("Limite allegati superato. La dimensione totale dei file dell'inquilino non può superare 3 MB.");
+                if (inputRef.current) inputRef.current.value = '';
+                return;
+            }
+            setValue(name as keyof TenantFormData, storedFile as any, { shouldDirty: true, shouldValidate: true });
+            onFileSelected?.(file);
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleRemove = () => {
-        setSelectedFile(null);
         setError(null);
+        setValue(name as any, null, { shouldDirty: true });
         onFileSelected?.(null);
         if (inputRef.current) {
             inputRef.current.value = '';
@@ -71,12 +103,12 @@ export function SimpleFileUpload({
                 id={`${name}-upload`}
             />
 
-            {selectedFile ? (
+            {value ? (
                 <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-md">
                     <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{selectedFile.name}</p>
-                        <p className="text-xs text-gray-500">{formatFileSize(selectedFile.size)}</p>
+                        <p className="text-sm font-medium text-gray-800 truncate">{value.name}</p>
+                        <p className="text-xs text-gray-500">{value.type} - {formatFileSize(value.size || 0)}</p>
                     </div>
                     <button
                         type="button"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { FormSection } from '../ui/FormSection';
 import { PlusCircle, Key, Edit2, Trash2, X } from 'lucide-react';
@@ -7,57 +7,43 @@ import { TextInput } from '../ui/TextInput';
 import { NumberInput } from '../ui/NumberInput';
 import { TextArea } from '../ui/TextArea';
 import { Select } from '../ui/Select';
+import type { PropertyKeyFormData } from '../schema';
+
+function newLocalId(prefix: string): string {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 interface KeyModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: any) => void;
-    initialData: any;
+    onSave: (data: PropertyKeyFormData) => void;
+    initialData: PropertyKeyFormData | null;
 }
 
 function KeyModal({ isOpen, onClose, onSave, initialData }: KeyModalProps) {
-    const methods = useForm({
+    const defaultValues: PropertyKeyFormData = {
+        id: '',
+        description: '',
+        number: '',
+        quantity: 1,
+        holder: '',
+        comments: '',
+    };
+    const methods = useForm<PropertyKeyFormData>({
         defaultValues: {
-            description: '',
-            number: '',
-            quantity: 1,
-            holder: '',
-            comments: ''
+            ...defaultValues,
         }
     });
 
-    // Reset form when modal opens with new data
-    useState(() => {
-        if (isOpen) {
-            methods.reset(initialData || {
-                description: '',
-                number: '',
-                quantity: 1,
-                holder: '',
-                comments: ''
-            });
-        }
-    });
-
-    // We also need an effect to catch subsequent opens
-    import('react').then((React) => {
-        React.useEffect(() => {
-            if (isOpen) {
-                methods.reset(initialData || {
-                    description: '',
-                    number: '',
-                    quantity: 1,
-                    holder: '',
-                    comments: ''
-                });
-            }
-        }, [isOpen, initialData, methods]);
-    });
+    useEffect(() => {
+        if (isOpen) methods.reset(initialData || defaultValues);
+    }, [isOpen, initialData, methods]);
 
     if (!isOpen) return null;
 
     const handleSubmit = methods.handleSubmit((data) => {
-        onSave({ id: initialData?.id || Date.now().toString(), ...data });
+        onSave({ ...data, id: initialData?.id || data.id || newLocalId('key') });
         onClose();
     });
 
@@ -69,14 +55,14 @@ function KeyModal({ isOpen, onClose, onSave, initialData }: KeyModalProps) {
                     <h2 className="text-lg font-medium text-gray-900">
                         {initialData ? 'Modifica' : 'Aggiungi'} Password o codice
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                    <button type="button" onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6">
                     <FormProvider {...methods}>
-                        <form id="key-modal-form" onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-6">
 
                             <TextInput
                                 name="description"
@@ -111,7 +97,7 @@ function KeyModal({ isOpen, onClose, onSave, initialData }: KeyModalProps) {
                                 placeholder="Note aggiuntive..."
                             />
 
-                        </form>
+                        </div>
                     </FormProvider>
                 </div>
 
@@ -124,8 +110,8 @@ function KeyModal({ isOpen, onClose, onSave, initialData }: KeyModalProps) {
                         Annulla
                     </button>
                     <button
-                        type="submit"
-                        form="key-modal-form"
+                        type="button"
+                        onClick={() => void handleSubmit()}
                         className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium text-white hover:bg-green-700 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-sm"
                     >
                         Salva
@@ -141,7 +127,8 @@ export function Tab4Passwords() {
     const { control } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control,
-        name: 'PropertyKeys'
+        name: 'PropertyKeys',
+        keyName: '_rhfId',
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -157,7 +144,7 @@ export function Tab4Passwords() {
         setIsModalOpen(true);
     };
 
-    const handleSave = (data: any) => {
+    const handleSave = (data: PropertyKeyFormData) => {
         if (editingIndex !== null) {
             update(editingIndex, data);
         } else {
@@ -182,7 +169,7 @@ export function Tab4Passwords() {
                         {fields.length > 0 && (
                             <div className="flex flex-col gap-3 mb-4">
                                 {fields.map((field: any, index) => (
-                                    <div key={field.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-center justify-between group">
+                                    <div key={field._rhfId} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
                                             <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center border shadow-sm text-gray-400">
                                                 <Key className="w-5 h-5" />
@@ -238,7 +225,7 @@ export function Tab4Passwords() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleSave}
-                initialData={editingIndex !== null ? fields[editingIndex] : null}
+                initialData={editingIndex !== null ? fields[editingIndex] as unknown as PropertyKeyFormData : null}
             />
         </div>
     );

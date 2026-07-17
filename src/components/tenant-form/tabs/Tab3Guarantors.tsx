@@ -1,6 +1,8 @@
 // Tab 3: Garanti — lista dinamica con modal aggiungi/modifica
 // Gestisce un array di garanti in stato locale con card e azioni
 import { useState } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
+import type { TenantFormData } from '../schema';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Pencil, Trash2, Info, User, Building2 } from 'lucide-react';
 import { Modal } from '../../property-form/ui/Modal';
@@ -48,8 +50,28 @@ const emptyGuarantor: Omit<Guarantor, 'id'> = {
     comments: '',
 };
 
+function toFormGuarantor(id: string, data: Omit<Guarantor, 'id'>): TenantFormData['TenantGuarantors'][number] {
+    return {
+        id,
+        contactType: data.contactType,
+        companyName: data.companyName || '',
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        birthDate: data.birthDate || '',
+        birthPlace: data.birthPlace || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        address: data.address || '',
+        city: data.city || '',
+        zip: data.zip || '',
+        country: data.country || '',
+        comments: data.comments || '',
+    };
+}
+
 export function Tab3Guarantors() {
-    const [guarantors, setGuarantors] = useState<Guarantor[]>([]);
+    const { control } = useFormContext<TenantFormData>();
+    const { fields: guarantors, append, update, remove } = useFieldArray({ control, name: 'TenantGuarantors', keyName: 'fieldId' });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -85,7 +107,7 @@ export function Tab3Guarantors() {
 
     const confirmDelete = () => {
         if (deleteIndex !== null) {
-            setGuarantors(prev => prev.filter((_, i) => i !== deleteIndex));
+            remove(deleteIndex);
         }
         setIsDeleteModalOpen(false);
         setDeleteIndex(null);
@@ -149,13 +171,9 @@ export function Tab3Guarantors() {
         if (!validateForm()) return;
 
         if (editingIndex !== null) {
-            // Modifica esistente
-            setGuarantors(prev =>
-                prev.map((g, i) => i === editingIndex ? { ...g, ...formData } : g)
-            );
+            update(editingIndex, toFormGuarantor(guarantors[editingIndex].id, { ...emptyGuarantor, ...formData }));
         } else {
-            // Aggiungi nuovo
-            setGuarantors(prev => [...prev, { id: generateId(), ...formData }]);
+            append(toFormGuarantor(generateId(), { ...emptyGuarantor, ...formData }));
         }
         setIsModalOpen(false);
     };

@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Select } from '../ui/Select';
 import { SearchInput } from '../ui/SearchInput';
-import { mockProperties } from '../../data/mockProperties';
+import { usePropertiesDb } from '../../hooks/usePropertiesDb';
 import type { TenantFilterState } from '../../hooks/useTenantFilters';
 
 interface FilterPanelProps {
@@ -10,18 +10,17 @@ interface FilterPanelProps {
     onFilterChange: (filters: TenantFilterState) => void;
 }
 
-/** Build property options for the dropdown from mock data */
-const propertyOptions = mockProperties.map((p) => ({
-    value: p.id,
-    label: p.title,
-}));
-
 function hasActiveFilters(filters: TenantFilterState): boolean {
     return filters.propertyId !== '' || filters.query !== '';
 }
 
 export function FilterPanel({ filters, onFilterChange }: FilterPanelProps) {
     const showReset = hasActiveFilters(filters);
+    const properties = usePropertiesDb();
+    const propertyOptions = properties.map((p) => ({
+        value: p.id,
+        label: p.title,
+    }));
 
     function updateFilter<K extends keyof TenantFilterState>(key: K, value: TenantFilterState[K]) {
         onFilterChange({ ...filters, [key]: value });

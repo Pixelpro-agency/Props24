@@ -15,7 +15,6 @@ import { Link } from 'react-router-dom';
 import type { Property } from '../../types/property';
 import { STATUS_CONFIG } from '../../types/property';
 import { propertyTypes } from '../../data/propertyTypes';
-import { mockTenantList } from '../../data/mockTenantList';
 
 interface DataTableProps {
     data: Property[];
@@ -122,17 +121,10 @@ export function DataTable({
                         return <span className="text-sm text-gray-400 italic">Nessuno</span>;
                     }
 
-                    const tenantMatch = mockTenantList.find(t => t.displayName === val);
-                    const tenantId = tenantMatch ? tenantMatch.id : 'tenant-001';
-
                     return (
-                        <Link
-                            to={`/tenants/${tenantId}`}
-                            className="text-sm font-medium text-gray-800 hover:text-green-600 transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                        >
+                        <span className="text-sm font-medium text-gray-800">
                             {val}
-                        </Link>
+                        </span>
                     );
                 },
                 size: 160,
@@ -207,6 +199,7 @@ export function DataTable({
         getSortedRowModel: getSortedRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         enableRowSelection: true,
+        getRowId: (row) => row.id,
         initialState: {
             pagination: { pageSize },
         },

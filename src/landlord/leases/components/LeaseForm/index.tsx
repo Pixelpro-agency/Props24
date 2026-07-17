@@ -1,881 +1,629 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Link, useNavigate } from 'react-router-dom';
+import { AlertTriangle, CheckCircle, Plus, Save, Trash2, UserPlus, X } from 'lucide-react';
 import { LeaseTabs } from './LeaseTabs';
-import { propertyApi } from '../../services/propertyApi';
-import { leaseApi } from '../../services/leaseApi';
-import type { LeaseFormData, LeaseType as LeaseTypeInterface } from '../../types/lease.types';
-import type { Property } from '../../types/property.types';
-import type { Tenant, Garant } from '../../types/tenant.types';
-import { recalculateLeaseRent, calculateDuration, proposeEndDate, calculateFirstPayment } from '../../utils/calculations';
-import { Plus, Trash2, Calculator, UserPlus, ShieldCheck, X, CheckCircle, AlertTriangle, Save } from 'lucide-react';
 import { AddTenantModal } from '../Modals/AddTenantModal';
-import { AddGarantModal } from '../Modals/AddGarantModal';
-import { SignatureSection } from '../Signature/SignatureSection';
-import { DocumentSection } from '../Documents/DocumentSection';
-import { ChangePropertyModal } from '../Modals/ChangePropertyModal';
-import { UpgradeModal } from '../Modals/UpgradeModal';
+import { AddGuarantorModal } from '../Modals/AddGuarantorModal';
+import { LEASE_TYPES, getLeaseTypeById } from '../../data/leaseTypes';
+import { createLease, updateLease } from '../../../../db/leaseRepository';
+import { getDraft, getJsonDb, setDraft, subscribeJsonDb } from '../../../../db/jsonDb';
+import type { ContactRecord, PropertyRecord, TenantRecord } from '../../../../db/database.types';
+import { StatusToast, type StatusToastState } from '../../../../components/ui/StatusToast';
+import {
+    calculateLeasePeriodicAmount,
+    defaultLeaseValues,
+    isVatEnabled,
+    leaseFormSchema,
+    normalizeLeaseDraft,
+    normalizeLeaseFormData,
+    type LeaseFormData,
+} from '../../schema/leaseFormSchema';
+import { TenantLeaseConflictError } from '../../../../db/databaseErrors';
 
-// ─── Styled form helpers ───────────────────────────────────
-const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <h3 className="text-lg font-semibold text-[#333] mb-4 pb-2 border-b border-gray-200">{children}</h3>
-);
+const inputClass = 'w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#337ab7] focus:outline-none focus:ring-2 focus:ring-[#337ab7]/30';
+const errorClass = 'mt-1 text-xs text-red-600';
 
-const FormRow: React.FC<{ label: string; required?: boolean; help?: string; children: React.ReactNode }> = ({
-    label, required, help, children
-}) => (
-    <div className="flex flex-col md:flex-row md:items-start gap-2 mb-5">
-        <label className="md:w-48 shrink-0 text-sm font-medium text-gray-600 pt-2">
-            {label}{required && <span className="text-red-500 ml-0.5">*</span>}
-        </label>
-        <div className="flex-1">
-            {children}
-            {help && <p className="text-xs text-gray-400 mt-1">{help}</p>}
-        </div>
-    </div>
-);
+function activeDbSnapshot() {
+    const db = getJsonDb();
+    return {
+        properties: db.properties.filter((property) => !property.archived),
+        tenants: db.tenants.filter((tenant) => !tenant.archived),
+        contacts: db.contacts,
+    };
+}
 
-const inputClass = "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#337ab7]/30 focus:border-[#337ab7] transition-colors";
-const selectClass = inputClass;
+function propertyLabel(property: PropertyRecord): string {
+    const f = property.formData;
+    const address = [f.PropertyAddress, f.PropertyPostalCode, f.PropertyCity].filter(Boolean).join(', ');
+    return `${f.PropertyTitle || 'Unità senza nome'}${address ? ` - ${address}` : ''}`;
+}
 
-// ─── Main LeaseForm ────────────────────────────────────────
-export const LeaseForm: React.FC = () => {
+function tenantName(tenant: TenantRecord): string {
+    return tenant.type === 'company'
+        ? tenant.companyName || 'Società'
+        : `${tenant.firstName} ${tenant.lastName}`.replace(/\s+/g, ' ').trim() || 'Inquilino';
+}
+
+function firstErrorTab(errors: Record<string, unknown>): 'general' | 'tenants' | 'guarantors' {
+    if (errors.LeaseTenantIds) return 'tenants';
+    if (errors.LeaseGarantIds) return 'guarantors';
+    return 'general';
+}
+
+function toastFromError(error: unknown): string {
+    if (error instanceof TenantLeaseConflictError) {
+        return "L'inquilino selezionato possiede già una locazione sovrapposta su un'altra proprietà.\nModifica le date oppure seleziona un altro inquilino.";
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return 'Non è stato possibile creare la locazione.';
+}
+
+export interface LeaseFormProps {
+    mode?: 'create' | 'edit';
+    leaseId?: string;
+    initialValues?: LeaseFormData;
+}
+
+function buildLeaseDraftSignature(formData: LeaseFormData, activeTab: string): string {
+    return JSON.stringify({
+        formData: normalizeLeaseFormData(formData),
+        activeTab,
+    });
+}
+
+export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, initialValues }) => {
+    const isEditMode = mode === 'edit';
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('general');
-    const [isTenantModalOpen, setIsTenantModalOpen] = useState(false);
-    const [selectedTenants, setSelectedTenants] = useState<Tenant[]>([]);
-    const [isGarantModalOpen, setIsGarantModalOpen] = useState(false);
-    const [isChangePropertyModalOpen, setIsChangePropertyModalOpen] = useState(false);
+    const [tenantModalOpen, setTenantModalOpen] = useState(false);
+    const [guarantorModalOpen, setGuarantorModalOpen] = useState(false);
+    const [snapshot, setSnapshot] = useState(activeDbSnapshot);
     const [pendingPropertyId, setPendingPropertyId] = useState<string | null>(null);
-    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-    const [selectedGarants, setSelectedGarants] = useState<Garant[]>([]);
+    const [toast, setToast] = useState<StatusToastState | null>(null);
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+    const restoredDraftRef = useRef(false);
+    const draftHydratedRef = useRef(false);
+    const draftTimerRef = useRef<number | null>(null);
+    const lastSavedSignatureRef = useRef('');
+    const isCreatingLeaseRef = useRef(false);
+    const endDateEditedRef = useRef(false);
+    const renewEditedRef = useRef(false);
 
-    // Autosave state
-    const [isSaving, setIsSaving] = useState(false);
-    const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
-    const [validationError, setValidationError] = useState<string | null>(null);
-
-    // API queries
-    const { data: properties = [] } = useQuery({
-        queryKey: ['properties', 'list'],
-        queryFn: propertyApi.getPropertiesList
-    });
-
-    const { data: leaseTypes = [] } = useQuery({
-        queryKey: ['leases', 'types'],
-        queryFn: leaseApi.getLeaseTypes
-    });
-
-    // Form
     const form = useForm<LeaseFormData>({
-        defaultValues: {
-            PropertyID: '',
-            LeaseType: '',
-            LeaseIdentificativo: 'Nuova locazione',
-            LeaseNumeroRegistrazione: '',
-            LeaseStartDate: '',
-            LeaseEndDate: '',
-            LeaseRinnovoTacito: true,
-            LeaseBillingPeriod: 'monthly',
-            LeasePaymentTiming: 'anticipato',
-            LeasePaymentMethod: '',
-            LeasePaymentDay: 1,
-            LeaseRentHC: 0,
-            LeaseMaintenance: 0,
-            LeaseSpeseType: 'anticipo',
-            LeaseMonthlyAmount: 0,
-            LeaseVatType: '0',
-            LeaseVatPercent: 0,
-            LeaseFirstBill: false,
-            LeaseFirstBillEndDate: '',
-            LeaseFirstBillAmount: 0,
-            LeaseFirstBillCharges: 0,
-            PaymentItems: [],
-            LeaseDeposit: 0,
-            LeaseDepositType: 'trattenuto',
-            LeaseDepositDate: '',
-            LeasePrepaidRent: 0,
-            LeaseUpdateType: 'nessuno',
-            LeaseUpdateIndex: '',
-            LeaseUpdateAuto: false,
-            LeaseUpdateDateType: 'anniversario',
-            LeaseUpdateDateSpecific: '',
-            LeaseDraft: 1
-        }
+        resolver: zodResolver(leaseFormSchema) as never,
+        defaultValues: initialValues ? normalizeLeaseFormData(initialValues) : defaultLeaseValues,
+        mode: 'onSubmit',
     });
+    const { register, control, watch, setValue, getValues, reset, formState: { errors, isSubmitting } } = form;
+    const { fields, append, remove } = useFieldArray({ control, name: 'PaymentItems' });
 
-    const { register, watch, setValue, control } = form;
+    const values = watch();
+    const draftSignature = buildLeaseDraftSignature(values, activeTab);
+    const selectedTenantIds = watch('LeaseTenantIds') || [];
+    const selectedGuarantorIds = watch('LeaseGarantIds') || [];
+    const selectedTenants = useMemo(() => selectedTenantIds
+        .map((id: string) => snapshot.tenants.find((tenant: TenantRecord) => tenant.id === id))
+        .filter((tenant): tenant is TenantRecord => Boolean(tenant)), [selectedTenantIds, snapshot.tenants]);
+    const selectedGuarantors = useMemo(() => selectedGuarantorIds
+        .map((id: string) => snapshot.contacts.find((contact: ContactRecord) => contact.id === id))
+        .filter((contact): contact is ContactRecord => Boolean(contact)), [selectedGuarantorIds, snapshot.contacts]);
+    const selectedProperty = snapshot.properties.find((property) => property.id === watch('PropertyID'));
+    const selectedBillingPeriod = watch('LeaseBillingPeriod');
 
-    // PaymentItems dynamic list
-    const { fields: paymentItems, append: addPaymentItem, remove: removePaymentItem } = useFieldArray({
-        control,
-        name: 'PaymentItems'
-    });
-
-    // Watchers
-    const selectedPropertyId = watch('PropertyID');
-    const selectedLeaseType = watch('LeaseType');
-    const rentHC = watch('LeaseRentHC');
-    const maintenance = watch('LeaseMaintenance');
-    const startDate = watch('LeaseStartDate');
-    const endDate = watch('LeaseEndDate');
-    const firstBillEnabled = watch('LeaseFirstBill');
-    // const speseType = watch('LeaseSpeseType'); // Will be used for conditional logic
-    const vatType = watch('LeaseVatType');
-
-    // Get selected lease type object
-    const selectedLeaseTypeObj = useMemo(() =>
-        leaseTypes.find((lt: LeaseTypeInterface) => lt.LeaseTypeID === selectedLeaseType),
-        [leaseTypes, selectedLeaseType]
-    );
-
-    // ─── Auto-calculate total rent ─────────
     useEffect(() => {
-        const total = recalculateLeaseRent(rentHC || 0, maintenance || 0);
-        setValue('LeaseMonthlyAmount', total);
-    }, [rentHC, maintenance, setValue]);
+        const refresh = () => setSnapshot(activeDbSnapshot());
+        refresh();
+        return subscribeJsonDb(refresh);
+    }, []);
 
-    // ─── Auto-calculate duration text ─────
-    const durationText = useMemo(() => {
-        return calculateDuration(startDate, endDate || '');
-    }, [startDate, endDate]);
-
-    // ─── Auto-propose end date on lease type change ─────
     useEffect(() => {
-        if (selectedLeaseTypeObj && startDate) {
-            const proposed = proposeEndDate(startDate, selectedLeaseTypeObj.LeaseTypeDuration);
-            if (proposed) setValue('LeaseEndDate', proposed);
-        }
-    }, [selectedLeaseType, startDate, selectedLeaseTypeObj, setValue]);
-
-    // ─── Update defaults on property change ─────
-    useEffect(() => {
-        if (selectedPropertyId) {
-            const prop = properties.find((p: Property) => String(p.PropertyID) === selectedPropertyId);
-            if (prop) {
-                if (prop.PropertyRent) setValue('LeaseRentHC', prop.PropertyRent);
-                if (prop.PropertyMaintenance) setValue('LeaseMaintenance', prop.PropertyMaintenance);
+        if (isEditMode) return;
+        if (restoredDraftRef.current) return;
+        try {
+            const draft = normalizeLeaseDraft(getDraft('leaseForm'));
+            restoredDraftRef.current = true;
+            if (!draft) {
+                lastSavedSignatureRef.current = buildLeaseDraftSignature(getValues(), activeTab);
+                draftHydratedRef.current = true;
+                return;
             }
+            const nextActiveTab = draft.activeTab === 'tenants' || draft.activeTab === 'guarantors' ? draft.activeTab : 'general';
+            const next = normalizeLeaseFormData({
+                ...draft.formData,
+                PropertyID: snapshot.properties.some((property) => property.id === draft.formData.PropertyID) ? draft.formData.PropertyID : '',
+                LeaseTenantIds: (draft.formData.LeaseTenantIds || []).filter((id: string) => snapshot.tenants.some((tenant: TenantRecord) => tenant.id === id)),
+                LeaseGarantIds: (draft.formData.LeaseGarantIds || []).filter((id: string) => snapshot.contacts.some((contact: ContactRecord) => contact.id === id)),
+            });
+            reset(next);
+            setActiveTab(nextActiveTab);
+            lastSavedSignatureRef.current = buildLeaseDraftSignature(next, nextActiveTab);
+            draftHydratedRef.current = true;
+        } catch {
+            restoredDraftRef.current = true;
+            lastSavedSignatureRef.current = buildLeaseDraftSignature(getValues(), activeTab);
+            draftHydratedRef.current = true;
+            setToast({ variant: 'error', title: 'Bozza', message: 'Una parte della bozza non era più valida ed è stata ignorata.' });
         }
-    }, [selectedPropertyId, properties, setValue]);
-
-    // ─── First bill calculation ─────
-    const handleCalculateFirstBill = () => {
-        const firstBillEndDate = watch('LeaseFirstBillEndDate');
-        if (!startDate || !firstBillEndDate) return;
-
-        const calculation = calculateFirstPayment(startDate, firstBillEndDate, rentHC || 0, maintenance || 0);
-        if (calculation) {
-            setValue('LeaseFirstBillAmount', calculation.rent);
-            setValue('LeaseFirstBillCharges', calculation.charges);
-        }
-    };
-
-    // ─── Autosave implementation (Task 15) ─────
-    const saveMutation = useMutation({
-        mutationFn: leaseApi.saveLease,
-        onSuccess: (data) => {
-            if (data.leaseId) {
-                // setLastSavedId(data.leaseId);
-                // Update URL quietly if needed: window.history.replaceState(null, '', `/leases/${data.leaseId}/edit`);
-            }
-            setIsSaving(false);
-            setLastSavedTime(new Date());
-        },
-        onError: () => {
-            setIsSaving(false);
-        }
-    });
-
-    const triggerSave = (isDraft: boolean) => {
-        const currentData = form.getValues();
-        // Basic requirement: property and lease type must exist to even draft
-        if (!currentData.PropertyID || !currentData.LeaseType) return;
-
-        setIsSaving(true);
-        currentData.LeaseDraft = isDraft ? 1 : 0;
-
-        // Ensure tenants and garants are mapped correctly into the payload
-        currentData.LeaseTenantIds = selectedTenants.map(t => t.TenantID).join(',');
-        currentData.LeaseGarantIds = selectedGarants.map(g => g.ContactID).join(',');
-
-        saveMutation.mutate(currentData);
-    };
+    }, [activeTab, getValues, isEditMode, reset, snapshot.contacts, snapshot.properties, snapshot.tenants]);
 
     useEffect(() => {
-        // Autosave every 120 seconds
-        const interval = setInterval(() => {
-            triggerSave(true); // Save as draft periodically
-        }, 120000);
+        if (!isEditMode || !initialValues) return;
+        const next = normalizeLeaseFormData(initialValues);
+        reset(next);
+        lastSavedSignatureRef.current = buildLeaseDraftSignature(next, activeTab);
+        draftHydratedRef.current = true;
+    }, [activeTab, initialValues, isEditMode, reset]);
 
-        return () => clearInterval(interval);
-    }, [selectedTenants, selectedGarants]); // Included dependencies that affect payload
+    useEffect(() => {
+        const next = calculateLeasePeriodicAmount(values);
+        if (next !== values.LeaseMonthlyAmount) setValue('LeaseMonthlyAmount', next, { shouldDirty: true });
+    }, [setValue, values]);
 
-    // ─── Final Validation (Task 15) ─────
-    const handleFinalSubmit = form.handleSubmit((data) => {
-        setValidationError(null);
+    useEffect(() => {
+        const selectedType = getLeaseTypeById(values.LeaseType);
+        if (!selectedType || !selectedType.durationMonths || !values.LeaseStartDate || endDateEditedRef.current) return;
+        const start = new Date(`${values.LeaseStartDate}T00:00:00Z`);
+        start.setUTCMonth(start.getUTCMonth() + selectedType.durationMonths);
+        start.setUTCDate(start.getUTCDate() - 1);
+        setValue('LeaseEndDate', start.toISOString().slice(0, 10), { shouldDirty: true });
+    }, [setValue, values.LeaseEndDate, values.LeaseStartDate, values.LeaseType]);
 
-        // Core validation
-        if (!data.PropertyID) {
-            setValidationError('Seleziona una proprietà per continuare.');
-            setActiveTab('general');
-            return;
+    useEffect(() => {
+        if (isEditMode) return undefined;
+        if (!draftHydratedRef.current || isCreatingLeaseRef.current) return undefined;
+        if (draftSignature === lastSavedSignatureRef.current) return undefined;
+        if (draftTimerRef.current !== null) window.clearTimeout(draftTimerRef.current);
+
+        draftTimerRef.current = window.setTimeout(() => {
+            setIsSavingDraft(true);
+            try {
+                const formData = normalizeLeaseFormData(getValues());
+                setDraft('leaseForm', {
+                    formData,
+                    activeTab,
+                    updatedAt: new Date().toISOString(),
+                });
+                setLastSavedAt(new Date().toLocaleTimeString());
+                lastSavedSignatureRef.current = buildLeaseDraftSignature(formData, activeTab);
+            } catch {
+                setToast({ variant: 'error', title: 'Bozza', message: 'Non è stato possibile salvare la bozza.' });
+            } finally {
+                setIsSavingDraft(false);
+                draftTimerRef.current = null;
+            }
+        }, 1000);
+
+        return () => {
+            if (draftTimerRef.current !== null) {
+                window.clearTimeout(draftTimerRef.current);
+                draftTimerRef.current = null;
+            }
+        };
+    }, [activeTab, draftSignature, getValues, isEditMode]);
+
+    const applyProperty = (propertyId: string) => {
+        const property = snapshot.properties.find((item) => item.id === propertyId);
+        setValue('PropertyID', propertyId, { shouldDirty: true, shouldValidate: true });
+        if (property) {
+            setValue('LeaseRentHC', property.formData.PropertyRent ?? 0, { shouldDirty: true });
+            setValue('LeaseMaintenance', property.formData.PropertyMaintenance ?? 0, { shouldDirty: true });
         }
-        if (!data.LeaseType) {
-            setValidationError('Seleziona il tipo di contratto.');
-            setActiveTab('general');
-            return;
-        }
-        if (!data.LeaseStartDate) {
-            setValidationError("La data di inizio contratto è obbligatoria.");
-            setActiveTab('general');
-            return;
-        }
-        if (selectedTenants.length === 0) {
-            setValidationError("Aggiungi almeno un inquilino al contratto.");
-            setActiveTab('tenants');
-            return;
-        }
+        setPendingPropertyId(null);
+    };
 
-        // Se tutto ok, salva definivamente
-        triggerSave(false);
-        alert('Contratto salvato e attivato con successo!'); // In a real app, redirect to detail page
-    });
-
-    // ─── RENDER TAB CONTENT ───────
-    const renderTabContent = () => {
-        switch (activeTab) {
-            case 'general':
-                return renderGeneralTab();
-            case 'tenants': // Replacing 'additional' for now to fit Task 10
-                return renderTenantsTab();
-            case 'receipts':
-                return <div className="text-gray-400 text-center py-12">Ricevute — in arrivo</div>;
-            case 'settings':
-                return <div className="text-gray-400 text-center py-12">Altre Impostazioni — in arrivo</div>;
-            case 'guarantors':
-                return renderGarantsTab();
-            case 'insurance':
-                return <div className="text-gray-400 text-center py-12">Assicurazione — in arrivo</div>;
-            case 'documents':
-                return <DocumentSection leaseId={1} />;
-            case 'signature':
-                return <SignatureSection tenants={selectedTenants} garants={selectedGarants} leaseId={1} />;
-            default:
-                return null;
+    const handleLeaseTypeChange = (leaseTypeId: string) => {
+        const selectedType = getLeaseTypeById(leaseTypeId);
+        setValue('LeaseType', leaseTypeId, { shouldDirty: true, shouldValidate: true });
+        if (selectedType && !renewEditedRef.current) {
+            setValue('LeaseRinnovoTacito', selectedType.autoRenewDefault, { shouldDirty: true });
+        }
+        if (selectedType?.durationMonths && values.LeaseStartDate && !endDateEditedRef.current) {
+            const start = new Date(`${values.LeaseStartDate}T00:00:00Z`);
+            start.setUTCMonth(start.getUTCMonth() + selectedType.durationMonths);
+            start.setUTCDate(start.getUTCDate() - 1);
+            setValue('LeaseEndDate', start.toISOString().slice(0, 10), { shouldDirty: true, shouldValidate: true });
         }
     };
 
-    // ═══════════════════════════════════════════════════════════
-    //  TASK 7 + 8: Tab "Informazioni Generali"
-    // ═══════════════════════════════════════════════════════════
+    const addTenantId = (tenantId: string) => {
+        const current = getValues('LeaseTenantIds');
+        if (!current.includes(tenantId)) setValue('LeaseTenantIds', [...current, tenantId], { shouldDirty: true, shouldValidate: true });
+    };
+
+    const removeTenantId = (tenantId: string) => {
+        setValue('LeaseTenantIds', getValues('LeaseTenantIds').filter((id) => id !== tenantId), { shouldDirty: true, shouldValidate: true });
+    };
+
+    const addGuarantorId = (contactId: string) => {
+        const current = getValues('LeaseGarantIds');
+        if (!current.includes(contactId)) setValue('LeaseGarantIds', [...current, contactId], { shouldDirty: true, shouldValidate: true });
+    };
+
+    const removeGuarantorId = (contactId: string) => {
+        setValue('LeaseGarantIds', getValues('LeaseGarantIds').filter((id) => id !== contactId), { shouldDirty: true, shouldValidate: true });
+    };
+
+    const saveDraftNow = () => {
+        if (isEditMode) return;
+        if (draftTimerRef.current !== null) {
+            window.clearTimeout(draftTimerRef.current);
+            draftTimerRef.current = null;
+        }
+
+        try {
+            const formData = normalizeLeaseFormData(getValues());
+            setDraft('leaseForm', { formData, activeTab, updatedAt: new Date().toISOString() });
+            lastSavedSignatureRef.current = buildLeaseDraftSignature(formData, activeTab);
+            setLastSavedAt(new Date().toLocaleTimeString());
+            setToast({ variant: 'success', title: 'Bozza', message: 'La bozza è stata salvata.' });
+        } catch {
+            setToast({ variant: 'error', title: 'Bozza', message: 'Non è stato possibile salvare la bozza.' });
+        }
+    };
+
+    const onSubmit = form.handleSubmit((data) => {
+        try {
+            isCreatingLeaseRef.current = true;
+            if (draftTimerRef.current !== null) {
+                window.clearTimeout(draftTimerRef.current);
+                draftTimerRef.current = null;
+            }
+            const savedLease = isEditMode && leaseId ? updateLease(leaseId, data) : createLease(data);
+            navigate(isEditMode ? `/leases/${savedLease.id}` : '/leases', {
+                state: {
+                    toast: { variant: 'success', title: 'Successo', message: isEditMode ? 'La locazione è stata aggiornata.' : 'La locazione è stata creata.' },
+                },
+            });
+        } catch (error) {
+            isCreatingLeaseRef.current = false;
+            setToast({ variant: 'error', title: 'Errore', message: toastFromError(error) });
+        }
+    }, (invalid) => {
+        const tab = firstErrorTab(invalid);
+        setActiveTab(tab);
+        setToast({ variant: 'error', title: 'Errore di validazione', message: 'Controlla i campi evidenziati prima di creare la locazione.' });
+            const firstName = Object.keys(invalid)[0];
+        window.setTimeout(() => {
+            const element = document.querySelector(firstName === 'PaymentItems' ? '[name^="PaymentItems"]' : `[name="${firstName}"]`) as HTMLElement | null;
+            element?.focus();
+        }, 0);
+    });
+
     const renderGeneralTab = () => (
         <div className="space-y-8">
-
-            {/* ── Proprietà affittata ── */}
-            <section>
-                <SectionTitle>Proprietà affittata</SectionTitle>
-                <FormRow label="Proprietà" required>
+            <section className="space-y-4">
+                <h3 className="border-b border-gray-200 pb-2 text-lg font-semibold text-gray-800">Proprietà e tipo</h3>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Proprietà *</label>
                     <select
-                        value={watch('PropertyID') || ''}
-                        onChange={(e) => {
-                            const newId = e.target.value;
-                            if (watch('PropertyID') && watch('PropertyID') !== newId) {
-                                setPendingPropertyId(newId);
-                                setIsChangePropertyModalOpen(true);
-                            } else {
-                                setValue('PropertyID', newId);
-                            }
+                        {...register('PropertyID')}
+                        value={watch('PropertyID')}
+                        className={inputClass}
+                        onChange={(event) => {
+                            const nextId = event.target.value;
+                            const current = getValues('PropertyID');
+                            if (current && current !== nextId) setPendingPropertyId(nextId);
+                            else applyProperty(nextId);
                         }}
-                        className={selectClass}
                     >
-                        <option value="">— Seleziona proprietà —</option>
-                        {properties.map((p: Property) => (
-                            <option key={p.PropertyID} value={String(p.PropertyID)}>
-                                {p.PropertyAddress}
-                            </option>
-                        ))}
+                        <option value="">Seleziona proprietà</option>
+                        {snapshot.properties.map((property) => <option key={property.id} value={property.id}>{propertyLabel(property)}</option>)}
                     </select>
-                </FormRow>
-            </section>
-
-            {/* ── Tipo ── */}
-            <section>
-                <SectionTitle>Tipo</SectionTitle>
-                <FormRow label="Tipo" required>
-                    <select {...register('LeaseType')} className={selectClass}>
-                        <option value="">— Seleziona tipo —</option>
-                        {leaseTypes.map((lt: LeaseTypeInterface) => (
-                            <option key={lt.LeaseTypeID} value={lt.LeaseTypeID}>
-                                {lt.LeaseTypeTitle}
-                            </option>
-                        ))}
+                    {errors.PropertyID && <p className={errorClass}>{errors.PropertyID.message}</p>}
+                </div>
+                {selectedProperty && (
+                    <p className="rounded bg-gray-50 px-3 py-2 text-sm text-gray-600">{propertyLabel(selectedProperty)}</p>
+                )}
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Tipo *</label>
+                    <select {...register('LeaseType')} value={watch('LeaseType')} onChange={(event) => handleLeaseTypeChange(event.target.value)} className={inputClass}>
+                        <option value="">Seleziona tipo</option>
+                        {LEASE_TYPES.map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}
                     </select>
-                </FormRow>
+                    {errors.LeaseType && <p className={errorClass}>{errors.LeaseType.message}</p>}
+                </div>
             </section>
 
-            {/* ── Identificativo / Riferimento ── */}
-            <section>
-                <SectionTitle>Identificativo / Riferimento</SectionTitle>
-                <FormRow label="Identificativo" help="Assegna un identificativo, un nome o un numero univoci. Puoi inserire o inventare un riferimento libero.">
-                    <input type="text" {...register('LeaseIdentificativo')} className={inputClass} />
-                </FormRow>
-                <FormRow label="Numero registrazione" help="Inserire il numero di registrazione del contratto presso l'Agenzia delle Entrate.">
-                    <input type="text" {...register('LeaseNumeroRegistrazione')} className={inputClass} />
-                </FormRow>
+            <section className="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Identificativo</label>
+                    <input {...register('LeaseIdentificativo')} className={inputClass} />
+                </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Numero registrazione</label>
+                    <input {...register('LeaseNumeroRegistrazione')} className={inputClass} />
+                </div>
             </section>
 
-            {/* ── Durata ── */}
-            <section>
-                <SectionTitle>Durata</SectionTitle>
-                <FormRow label="Inizio della locazione" required>
+            <section className="grid gap-4 md:grid-cols-3">
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Inizio *</label>
                     <input type="date" {...register('LeaseStartDate')} className={inputClass} />
-                </FormRow>
-                <FormRow label="Fine della locazione">
-                    <input type="date" {...register('LeaseEndDate')} className={inputClass} />
-                </FormRow>
-                <FormRow label="Durata del contratto">
-                    <input type="text" value={durationText} readOnly className={`${inputClass} bg-gray-50 text-gray-500`} />
-                </FormRow>
-                <FormRow label="Rinnovo">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <div className="relative">
-                            <input type="checkbox" {...register('LeaseRinnovoTacito')} className="sr-only peer" />
-                            <div className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors"></div>
-                            <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
-                        </div>
-                        <span className="text-sm text-gray-600">Tacito rinnovo</span>
-                    </label>
-                    <p className="text-xs text-gray-400 mt-1">Se si seleziona l'opzione tacito rinnovo, il sito continuerà a generare rendite dopo la data di fine locazione.</p>
-                </FormRow>
+                    {errors.LeaseStartDate && <p className={errorClass}>{errors.LeaseStartDate.message}</p>}
+                </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Fine *</label>
+                    <input type="date" {...register('LeaseEndDate', { onChange: () => { endDateEditedRef.current = true; } })} className={inputClass} />
+                    {errors.LeaseEndDate && <p className={errorClass}>{errors.LeaseEndDate.message}</p>}
+                </div>
+                <label className="flex items-end gap-2 pb-2 text-sm text-gray-700">
+                    <input type="checkbox" {...register('LeaseRinnovoTacito', { onChange: () => { renewEditedRef.current = true; } })} className="accent-green-600" />
+                    Tacito rinnovo
+                </label>
             </section>
 
-            {/* ── Pagamento (Task 8) ── */}
-            <section>
-                <SectionTitle>Pagamento</SectionTitle>
-                <FormRow label="Pagamento" required>
-                    <select {...register('LeaseBillingPeriod')} className={selectClass}>
-                        <option value="monthly">Mensile</option>
+            <section className="grid gap-4 md:grid-cols-4">
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Periodicità *</label>
+                    <select {...register('LeaseBillingPeriod')} className={inputClass}>
                         <option value="weekly">Settimanale</option>
                         <option value="biweekly">Bisettimanale</option>
+                        <option value="monthly">Mensile</option>
                         <option value="quarterly">Trimestrale</option>
                         <option value="semiannual">Semestrale</option>
                         <option value="annual">Annuale</option>
                     </select>
-                </FormRow>
-                <FormRow label="">
-                    <div className="flex items-center gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" value="anticipato" {...register('LeasePaymentTiming')} className="accent-green-600" />
-                            <span className="text-sm">Pagamento anticipato</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" value="arretrato" {...register('LeasePaymentTiming')} className="accent-green-600" />
-                            <span className="text-sm">Pagamento in arretrato</span>
-                        </label>
-                    </div>
-                </FormRow>
-                <FormRow label="Modalità di pagamento" help="Se scegli come sistema di pagamento l'addebito diretto, il sistema indicherà automaticamente come pagati gli affitti in maturazione, risparmiandoti l'operazione di aggiornamento in Finanze.">
-                    <select {...register('LeasePaymentMethod')} className={selectClass}>
+                </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Scadenza</label>
+                    <select {...register('LeasePaymentTiming')} className={inputClass}>
+                        <option value="anticipato">Anticipato</option>
+                        <option value="arretrato">Arretrato</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Metodo</label>
+                    <select {...register('LeasePaymentMethod')} className={inputClass}>
                         <option value="">Scegli</option>
+                        <option value="bonifico">Bonifico</option>
                         <option value="addebito">Addebito diretto</option>
-                        <option value="bonifico">Bonifico bancario</option>
                         <option value="contanti">Contanti</option>
-                        <option value="assegno">Assegno</option>
                     </select>
-                </FormRow>
-                <FormRow label="Data del pagamento" help="Data di pagamento del canone di locazione previsto dal contratto.">
-                    <select {...register('LeasePaymentDay', { valueAsNumber: true })} className={`${selectClass} w-24`}>
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                            <option key={d} value={d}>{d}</option>
-                        ))}
-                    </select>
-                </FormRow>
+                </div>
+                {selectedBillingPeriod !== 'weekly' && selectedBillingPeriod !== 'biweekly' && (
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700">Giorno</label>
+                        <input type="number" min={1} max={31} {...register('LeasePaymentDay', { valueAsNumber: true })} className={inputClass} />
+                        {errors.LeasePaymentDay && <p className={errorClass}>{errors.LeasePaymentDay.message}</p>}
+                    </div>
+                )}
             </section>
 
-            {/* ── Affitto (Task 8) ── */}
-            <section>
-                <SectionTitle>Affitto</SectionTitle>
-                <FormRow label="Affitto (spese escluse)" required>
-                    <div className="flex items-center gap-2">
-                        <span className="text-gray-500">€</span>
-                        <input type="number" step="0.01" {...register('LeaseRentHC', { valueAsNumber: true })} className={inputClass} />
-                        {vatType !== '0' && (
-                            <div className="flex items-center gap-1">
-                                <input type="number" step="0.01" {...register('LeaseVatPercent', { valueAsNumber: true })} className={`${inputClass} w-20`} />
-                                <span className="text-xs text-gray-500">% IVA</span>
-                            </div>
-                        )}
-                    </div>
-                </FormRow>
-                <FormRow label="Spese accessorie">
-                    <div className="flex items-center gap-2">
-                        <span className="text-gray-500">€</span>
-                        <input type="number" step="0.01" {...register('LeaseMaintenance', { valueAsNumber: true })} className={inputClass} />
-                    </div>
-                </FormRow>
-                <FormRow label="">
-                    <div className="flex items-center gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" value="anticipo" {...register('LeaseSpeseType')} className="accent-green-600" />
-                            <span className="text-sm">Anticipo spese affitto</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" value="forfait" {...register('LeaseSpeseType')} className="accent-green-600" />
-                            <span className="text-sm">Spese pagate a forfait</span>
-                        </label>
-                    </div>
-                </FormRow>
-                <FormRow label="Canone spese incluse" required>
-                    <div className="flex items-center gap-2">
-                        <span className="text-gray-500">€</span>
-                        <input
-                            type="number"
-                            step="0.01"
-                            readOnly
-                            {...register('LeaseMonthlyAmount', { valueAsNumber: true })}
-                            className={`${inputClass} bg-gray-50 text-gray-500 font-medium`}
-                        />
-                    </div>
-                </FormRow>
+            <section className="grid gap-4 md:grid-cols-4">
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Canone</label>
+                    <input type="number" step="0.01" {...register('LeaseRentHC', { valueAsNumber: true })} className={inputClass} />
+                </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Spese</label>
+                    <input type="number" step="0.01" {...register('LeaseMaintenance', { valueAsNumber: true })} className={inputClass} />
+                    {errors.LeaseMaintenance && <p className={errorClass}>{errors.LeaseMaintenance.message}</p>}
+                </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Tipo IVA</label>
+                    <select {...register('LeaseVatType')} className={inputClass}>
+                        <option value="0">Nessuna IVA</option>
+                        <option value="percent">Percentuale</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Importo periodico</label>
+                    <input value={values.LeaseMonthlyAmount || 0} readOnly className={`${inputClass} bg-gray-50`} />
+                </div>
             </section>
 
-            {/* ── Altre Spese (Task 8) ── */}
-            <section>
-                <SectionTitle>Altre spese</SectionTitle>
-                {paymentItems.map((item, index) => (
-                    <div key={item.id} className="flex items-center gap-2 mb-3 p-3 bg-gray-50 rounded border border-gray-100">
-                        <span className="text-gray-500 text-sm font-medium shrink-0">Pagamenti:</span>
-                        <div className="flex items-center gap-1">
-                            <span className="text-gray-500 text-xs">€</span>
-                            <input
-                                type="number"
-                                step="0.01"
-                                {...register(`PaymentItems.${index}.LeasePaymentItems_Amount` as never, { valueAsNumber: true })}
-                                className={`${inputClass} w-28`}
-                                placeholder="Ammontare"
-                            />
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <input
-                                type="number"
-                                step="0.01"
-                                {...register(`PaymentItems.${index}.LeasePaymentItems_TaxPercent` as never, { valueAsNumber: true })}
-                                className={`${inputClass} w-16`}
-                                placeholder="%"
-                            />
-                            <span className="text-gray-500 text-xs">% IVA</span>
-                        </div>
-                        <select {...register(`PaymentItems.${index}.LeasePaymentItems_Type` as never)} className={`${selectClass} w-36`}>
-                            <option value="">Spese accesso...</option>
-                            <option value="garage">Garage</option>
-                            <option value="giardino">Giardino</option>
-                            <option value="pulizie">Pulizie</option>
-                            <option value="altro">Altro</option>
+            {isVatEnabled(values.LeaseVatType) && (
+                <section className="grid gap-4 md:grid-cols-4">
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700">IVA %</label>
+                        <input type="number" step="0.01" {...register('LeaseVatPercent', { valueAsNumber: true })} className={inputClass} />
+                        {errors.LeaseVatPercent && <p className={errorClass}>{errors.LeaseVatPercent.message}</p>}
+                    </div>
+                </section>
+            )}
+
+            <section className="grid gap-4 md:grid-cols-3">
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Tipo spese</label>
+                    <select {...register('LeaseSpeseType')} className={inputClass}>
+                        <option value="anticipo">Anticipo</option>
+                        <option value="forfait">Forfait</option>
+                    </select>
+                </div>
+            </section>
+
+            <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-gray-800">Elementi ricorrenti</h3>
+                    <button type="button" onClick={() => append({ LeasePaymentItems_Amount: 0, LeasePaymentItems_TaxPercent: 0, LeasePaymentItems_Type: 'recurring', LeasePaymentItems_Description: '' })} className="flex items-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
+                        <Plus className="h-4 w-4" /> Aggiungi
+                    </button>
+                </div>
+                {fields.map((field, index) => (
+                    <div key={field.id} className="grid gap-3 rounded border border-gray-200 p-3 md:grid-cols-[1fr_120px_120px_140px_auto]">
+                        <input {...register(`PaymentItems.${index}.LeasePaymentItems_Description`)} className={inputClass} placeholder="Descrizione" />
+                        <input type="number" step="0.01" {...register(`PaymentItems.${index}.LeasePaymentItems_Amount`, { valueAsNumber: true })} className={inputClass} placeholder="Importo" />
+                        <input type="number" step="0.01" {...register(`PaymentItems.${index}.LeasePaymentItems_TaxPercent`, { valueAsNumber: true })} className={inputClass} placeholder="IVA %" />
+                        <select {...register(`PaymentItems.${index}.LeasePaymentItems_Type`)} className={inputClass}>
+                            <option value="recurring">Ricorrente</option>
+                            <option value="charge">Spesa</option>
+                            <option value="service">Servizio</option>
                         </select>
-                        <input
-                            type="text"
-                            {...register(`PaymentItems.${index}.LeasePaymentItems_Description` as never)}
-                            className={`${inputClass} flex-1`}
-                            placeholder="Descrizione"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => removePaymentItem(index)}
-                            className="p-1.5 text-white bg-red-500 hover:bg-red-600 rounded-full transition-colors shrink-0"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+                        <button type="button" onClick={() => remove(index)} className="rounded p-2 text-red-600 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
                     </div>
                 ))}
-                <button
-                    type="button"
-                    onClick={() => addPaymentItem({
-                        LeasePaymentItems_Amount: 0,
-                        LeasePaymentItems_TaxPercent: 0,
-                        LeasePaymentItems_Type: '',
-                        LeasePaymentItems_Description: ''
-                    })}
-                    className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
-                >
-                    <Plus className="w-4 h-4" /> Aggiungi un altro elemento
-                </button>
-                <p className="text-xs text-gray-400 mt-2">Altre spese in capo all'inquilino ma anticipate dal locatore. Questi pagamenti appariranno sulla ricevuta e verranno aggiunti al canone.</p>
             </section>
 
-            {/* ── Prima ricevuta (Task 8) ── */}
-            <section>
-                <SectionTitle>Prima ricevuta</SectionTitle>
-                <FormRow label="">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" {...register('LeaseFirstBill')} className="w-4 h-4 accent-green-600 rounded" />
-                        <span className="text-sm text-gray-600">Selezionare la casella in caso di primo affitto su base pro-rata.</span>
-                    </label>
-                </FormRow>
-
-                {firstBillEnabled && (
+            <section className="grid gap-4 md:grid-cols-4">
+                <label className="flex items-end gap-2 pb-2 text-sm text-gray-700">
+                    <input type="checkbox" {...register('LeaseFirstBill')} className="accent-green-600" />
+                    Prima ricevuta
+                </label>
+                {values.LeaseFirstBill && (
                     <>
-                        <FormRow label="Data di fine periodo" help="Data di fine periodo per la prima ricevuta.">
-                            <input type="date" {...register('LeaseFirstBillEndDate')} className={inputClass} />
-                        </FormRow>
-                        <div className="flex justify-start mb-4 ml-0 md:ml-48">
-                            <button
-                                type="button"
-                                onClick={handleCalculateFirstBill}
-                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded shadow-sm text-sm hover:bg-gray-50 transition-colors"
-                            >
-                                <Calculator className="w-4 h-4" /> Calcola gli importi
-                            </button>
-                        </div>
-                        <FormRow label="Affitto (spese escluse)">
-                            <div className="flex items-center gap-2">
-                                <span className="text-gray-500">€</span>
-                                <input type="number" step="0.01" {...register('LeaseFirstBillAmount', { valueAsNumber: true })} className={inputClass} />
-                            </div>
-                        </FormRow>
-                        <FormRow label="Spese accessorie">
-                            <div className="flex items-center gap-2">
-                                <span className="text-gray-500">€</span>
-                                <input type="number" step="0.01" {...register('LeaseFirstBillCharges', { valueAsNumber: true })} className={inputClass} />
-                            </div>
-                        </FormRow>
+                        <input type="date" {...register('LeaseFirstBillEndDate')} className={inputClass} />
+                        <input type="number" step="0.01" {...register('LeaseFirstBillAmount', { valueAsNumber: true })} className={inputClass} placeholder="Canone prima rata" />
+                        <input type="number" step="0.01" {...register('LeaseFirstBillCharges', { valueAsNumber: true })} className={inputClass} placeholder="Spese prima rata" />
                     </>
                 )}
             </section>
 
-            {/* ── Deposito Cauzionale (Task 9) ── */}
-            <section>
-                <SectionTitle>Deposito cauzionale</SectionTitle>
-                <FormRow label="Monto">
-                    <div className="flex items-center gap-2">
-                        <span className="text-gray-500">€</span>
-                        <input type="number" step="0.01" {...register('LeaseDeposit', { valueAsNumber: true })} className={inputClass} />
-                    </div>
-                </FormRow>
-                <FormRow label="Tipo">
-                    <select {...register('LeaseDepositType')} className={selectClass}>
-                        <option value="trattenuto">Trattenuto dal locatore</option>
-                        <option value="banca">Depositato in banca</option>
-                        <option value="altro">Altro</option>
+            <section className="grid gap-4 md:grid-cols-4">
+                <input type="number" step="0.01" {...register('LeaseDeposit', { valueAsNumber: true })} className={inputClass} placeholder="Deposito" />
+                <select {...register('LeaseDepositType')} className={inputClass}>
+                    <option value="trattenuto">Trattenuto</option>
+                    <option value="versato">Versato</option>
+                </select>
+                <input type="date" {...register('LeaseDepositDate')} className={inputClass} />
+                <input type="number" step="0.01" {...register('LeasePrepaidRent', { valueAsNumber: true })} className={inputClass} placeholder="Affitti prepagati" />
+            </section>
+
+            <section className="space-y-4">
+                <h3 className="border-b border-gray-200 pb-2 text-base font-semibold text-gray-800">Aggiornamento del canone</h3>
+                <div className="grid gap-4 md:grid-cols-3">
+                    <select {...register('LeaseUpdateType')} className={inputClass}>
+                        <option value="nessuno">Nessuno</option>
+                        <option value="indice">In base all'indice</option>
+                        <option value="percentuale">Percentuale fissa</option>
                     </select>
-                </FormRow>
-                <FormRow label="Data di versamento">
-                    <input type="date" {...register('LeaseDepositDate')} className={inputClass} />
-                </FormRow>
+                    <input {...register('LeaseUpdateIndex')} className={inputClass} placeholder="Indice base" />
+                    <select {...register('LeaseUpdatePeriod')} className={inputClass}>
+                        <option value="annual">Annuale</option>
+                        <option value="semiannual">Semestrale</option>
+                    </select>
+                </div>
+                <div className="grid gap-4 md:grid-cols-4">
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" {...register('LeaseUpdateAuto')} className="accent-green-600" />
+                        Automatico
+                    </label>
+                    <select {...register('LeaseUpdateDateType')} className={inputClass}>
+                        <option value="anniversario">Anniversario</option>
+                        <option value="specifica">Data specifica</option>
+                    </select>
+                    <input type="date" {...register('LeaseUpdateDateSpecific')} className={inputClass} />
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                    <input {...register('LeaseIrlIndex')} className={inputClass} placeholder="IRL" />
+                    <input {...register('LeaseIlcIndex')} className={inputClass} placeholder="ILC" />
+                    <input {...register('LeaseIccIndex')} className={inputClass} placeholder="ICC" />
+                </div>
             </section>
-
-            {/* ── Affitti Prepagati (Task 9) ── */}
-            <section>
-                <SectionTitle>Affitti prepagati</SectionTitle>
-                <FormRow label="Ammontare">
-                    <div className="flex items-center gap-2">
-                        <span className="text-gray-500">€</span>
-                        <input type="number" step="0.01" {...register('LeasePrepaidRent', { valueAsNumber: true })} className={inputClass} />
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">L'ammontare verrà aggiunto al saldo del locatario.</p>
-                </FormRow>
-            </section>
-
-            {/* ── Aggiornamento del canone (Task 9) ── */}
-            <section>
-                <SectionTitle>Aggiornamento del canone</SectionTitle>
-                <FormRow label="Tipo di aggiornamento">
-                    <div className="flex items-center gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" value="nessuno" {...register('LeaseUpdateType')} className="accent-green-600" />
-                            <span className="text-sm">Non rivedere</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" value="indice" {...register('LeaseUpdateType')} className="accent-green-600" />
-                            <span className="text-sm">In base all'indice</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" value="percentuale" {...register('LeaseUpdateType')} className="accent-green-600" />
-                            <span className="text-sm">Percentuale fissa</span>
-                        </label>
-                    </div>
-                </FormRow>
-
-                {watch('LeaseUpdateType') !== 'nessuno' && (
-                    <>
-                        {watch('LeaseUpdateType') === 'indice' && (
-                            <FormRow label="Indice base">
-                                <select {...register('LeaseUpdateIndex')} className={selectClass}>
-                                    <option value="">Selezionare l'indice</option>
-                                    <option value="istat_foi">ISTAT FOI</option>
-                                    <option value="istat_nic">ISTAT NIC</option>
-                                </select>
-                            </FormRow>
-                        )}
-                        <FormRow label="">
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                <div className="relative">
-                                    <input type="checkbox" {...register('LeaseUpdateAuto')} className="sr-only peer" />
-                                    <div className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors"></div>
-                                    <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
-                                </div>
-                                <span className="text-sm text-gray-600">Applica un incremento automatico sul canone quando arriva la data</span>
-                            </label>
-                        </FormRow>
-                        <FormRow label="Data di revisione">
-                            <div className="flex flex-col gap-3">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" value="anniversario" {...register('LeaseUpdateDateType')} className="accent-green-600" />
-                                    <span className="text-sm">Regolazione all'anniversario dell'inizio della locazione</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" value="specifica" {...register('LeaseUpdateDateType')} className="accent-green-600" />
-                                    <span className="text-sm">Data di revisione specifica</span>
-                                </label>
-                            </div>
-                            {watch('LeaseUpdateDateType') === 'specifica' && (
-                                <div className="mt-2">
-                                    <input type="date" {...register('LeaseUpdateDateSpecific')} className={`${inputClass} w-auto`} />
-                                </div>
-                            )}
-                        </FormRow>
-                    </>
-                )}
-            </section>
-
-            {/* ── Footer: Salva / Annulla ── */}
-            <div className="flex items-center gap-3 pt-6 border-t border-gray-200">
-                <button
-                    type="button"
-                    onClick={() => {
-                        triggerSave(true);
-                        alert("Bozza salvata!");
-                    }}
-                    className="bg-[#5cb85c] hover:bg-[#449d44] text-white font-medium py-2 px-6 rounded transition-colors shadow-sm"
-                >
-                    Salva Bozza
-                </button>
-                <a
-                    href="/leases"
-                    className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
-                >
-                    Annulla
-                </a>
-            </div>
         </div>
     );
 
-    // ═══════════════════════════════════════════════════════════
-    //  TASK 10: Tab "Inquilini"
-    // ═══════════════════════════════════════════════════════════
     const renderTenantsTab = () => (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+        <div className="space-y-5">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                 <div>
-                    <h3 className="text-lg font-semibold text-[#333]">Inquilini</h3>
-                    <p className="text-sm text-gray-500">Aggiungi gli inquilini associati a questo contratto di locazione.</p>
+                    <h3 className="text-lg font-semibold text-gray-800">Inquilini</h3>
+                    <p className="text-sm text-gray-500">Seleziona o crea gli inquilini collegati alla locazione.</p>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => setIsTenantModalOpen(true)}
-                    className="flex items-center gap-2 bg-[#5cb85c] hover:bg-[#449d44] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
-                >
-                    <UserPlus className="w-4 h-4" /> Aggiungi inquilino
+                <button type="button" onClick={() => setTenantModalOpen(true)} className="flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                    <UserPlus className="h-4 w-4" /> Aggiungi inquilino
                 </button>
             </div>
-
+            {errors.LeaseTenantIds && <p className={errorClass}>{errors.LeaseTenantIds.message}</p>}
             {selectedTenants.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50 rounded border border-dashed border-gray-300">
-                    <UserPlus className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">Nessun inquilino aggiunto</p>
-                    <p className="text-sm text-gray-400 mt-1">Clicca su "Aggiungi inquilino" per iniziare.</p>
-                </div>
+                <div className="rounded border border-dashed border-gray-300 bg-gray-50 py-10 text-center text-sm text-gray-500">Nessun inquilino aggiunto.</div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {selectedTenants.map(tenant => (
-                        <div key={tenant.TenantID} className="relative p-4 border border-gray-200 rounded-lg shadow-sm bg-white group">
-                            <button
-                                type="button"
-                                onClick={() => setSelectedTenants(prev => prev.filter(t => t.TenantID !== tenant.TenantID))}
-                                className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                                <X className="w-4 h-4" />
+                <div className="grid gap-3 md:grid-cols-2">
+                    {selectedTenants.map((tenant: TenantRecord) => (
+                        <div key={tenant.id} className="flex items-center justify-between rounded border border-gray-200 bg-white p-4">
+                            <div>
+                                <p className="font-medium text-gray-800">{tenantName(tenant)}</p>
+                                <p className="text-sm text-gray-500">{tenant.email || 'Nessuna email'} {tenant.mobilePhone || tenant.phone ? `- ${tenant.mobilePhone || tenant.phone}` : ''}</p>
+                            </div>
+                            <button type="button" onClick={() => removeTenantId(tenant.id)} className="rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                                <X className="h-4 w-4" />
                             </button>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold">
-                                    {tenant.TenantType === 'company' ? '🏠' : (tenant.TenantFirstName?.charAt(0) || 'U')}
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-gray-800">
-                                        {tenant.TenantType === 'company' ? tenant.TenantCompanyName : `${tenant.TenantFirstName} ${tenant.TenantLastName}`}
-                                    </p>
-                                    <p className="text-xs text-gray-500">{tenant.TenantEmail}</p>
-                                </div>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-100 flex justify-between">
-                                <span>{tenant.TenantMobilePhone || 'Nessun telefono'}</span>
-                            </div>
                         </div>
                     ))}
                 </div>
             )}
-
-            <AddTenantModal
-                isOpen={isTenantModalOpen}
-                onClose={() => setIsTenantModalOpen(false)}
-                onTenantAdded={(tenant) => {
-                    if (!selectedTenants.find(t => t.TenantID === tenant.TenantID)) {
-                        setSelectedTenants(prev => [...prev, tenant]);
-                    }
-                }}
-                existingTenantIds={selectedTenants.map(t => t.TenantID)}
-            />
+            <AddTenantModal isOpen={tenantModalOpen} onClose={() => setTenantModalOpen(false)} onTenantAdded={addTenantId} onError={(message) => setToast({ variant: 'error', title: 'Inquilino', message })} existingTenantIds={selectedTenantIds} />
         </div>
     );
 
-    // ═══════════════════════════════════════════════════════════
-    //  TASK 11: Tab "Garanti"
-    // ═══════════════════════════════════════════════════════════
-    const renderGarantsTab = () => (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+    const renderGuarantorsTab = () => (
+        <div className="space-y-5">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                 <div>
-                    <h3 className="text-lg font-semibold text-[#333]">Garanti</h3>
-                    <p className="text-sm text-gray-500">Aggiungi i garanti associati a questo contratto di locazione.</p>
+                    <h3 className="text-lg font-semibold text-gray-800">Garanti</h3>
+                    <p className="text-sm text-gray-500">Seleziona contatti esistenti o crea un nuovo garante.</p>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => setIsGarantModalOpen(true)}
-                    className="flex items-center gap-2 bg-[#337ab7] hover:bg-[#286090] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
-                >
-                    <ShieldCheck className="w-4 h-4" /> Aggiungi garante
+                <button type="button" onClick={() => setGuarantorModalOpen(true)} className="flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                    <UserPlus className="h-4 w-4" /> Aggiungi garante
                 </button>
             </div>
-
-            {selectedGarants.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50 rounded border border-dashed border-gray-300">
-                    <ShieldCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">Nessun garante aggiunto</p>
-                    <p className="text-sm text-gray-400 mt-1">Clicca su "Aggiungi garante" per iniziare.</p>
-                </div>
+            {selectedGuarantors.length === 0 ? (
+                <div className="rounded border border-dashed border-gray-300 bg-gray-50 py-10 text-center text-sm text-gray-500">Nessun garante aggiunto.</div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {selectedGarants.map(garant => (
-                        <div key={garant.ContactID} className="relative p-4 border border-gray-200 rounded-lg shadow-sm bg-white group hover:border-[#337ab7] transition-colors">
-                            <button
-                                type="button"
-                                onClick={() => setSelectedGarants(prev => prev.filter(g => g.ContactID !== garant.ContactID))}
-                                className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                                <X className="w-4 h-4" />
+                <div className="grid gap-3 md:grid-cols-2">
+                    {selectedGuarantors.map((contact) => (
+                        <div key={contact.id} className="flex items-center justify-between rounded border border-gray-200 bg-white p-4">
+                            <div>
+                                <p className="font-medium text-gray-800">{contact.type === 'company' ? contact.companyName : `${contact.firstName} ${contact.lastName}`.trim()}</p>
+                                <p className="text-sm text-gray-500">{contact.email || contact.phone || 'Nessun contatto'}{contact.archived ? ' - archiviato' : ''}</p>
+                            </div>
+                            <button type="button" onClick={() => removeGuarantorId(contact.id)} className="rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                                <X className="h-4 w-4" />
                             </button>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-[#337ab7] font-bold">
-                                    {garant.ContactType === 'company' ? '🏢' : (garant.ContactFirstName?.charAt(0) || 'U')}
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-gray-800">
-                                        {garant.ContactType === 'company' ? garant.ContactCompanyName : `${garant.ContactFirstName} ${garant.ContactLastName}`}
-                                    </p>
-                                    <p className="text-xs text-gray-500">{garant.ContactEmail}</p>
-                                </div>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-100 flex justify-between">
-                                <span>{garant.ContactMobilePhone || 'Nessun telefono'}</span>
-                            </div>
                         </div>
                     ))}
                 </div>
             )}
-
-            <AddGarantModal
-                isOpen={isGarantModalOpen}
-                onClose={() => setIsGarantModalOpen(false)}
-                onGarantAdded={(garant) => {
-                    if (!selectedGarants.find(g => g.ContactID === garant.ContactID)) {
-                        setSelectedGarants(prev => [...prev, garant]);
-                    }
-                }}
-                existingGarantIds={selectedGarants.map(g => g.ContactID)}
-            />
+            <AddGuarantorModal isOpen={guarantorModalOpen} onClose={() => setGuarantorModalOpen(false)} onGuarantorAdded={addGuarantorId} onError={(message) => setToast({ variant: 'error', title: 'Garante', message })} existingGuarantorIds={selectedGuarantorIds} linkedGuarantorIds={selectedGuarantorIds} />
         </div>
     );
 
-    // ─── RENDER ──────────────────────────────────────────────
     return (
-        <form onSubmit={handleFinalSubmit}>
-            <LeaseTabs activeTab={activeTab} onTabChange={setActiveTab}>
-                {renderTabContent()}
-            </LeaseTabs>
+        <>
+            <form onSubmit={onSubmit}>
+                <LeaseTabs activeTab={activeTab} onTabChange={setActiveTab}>
+                    {activeTab === 'tenants' ? renderTenantsTab() : activeTab === 'guarantors' ? renderGuarantorsTab() : renderGeneralTab()}
+                </LeaseTabs>
 
-            <ChangePropertyModal
-                isOpen={isChangePropertyModalOpen}
-                onClose={() => {
-                    setIsChangePropertyModalOpen(false);
-                    setPendingPropertyId(null);
-                }}
-                onConfirm={() => {
-                    if (pendingPropertyId) {
-                        setValue('PropertyID', pendingPropertyId);
-                        // Future implementation: logic to reset fields (rent, expenses, etc.)
-                        console.log(`Resetting financial fields for new property: ${pendingPropertyId}`);
-                    }
-                }}
-                newPropertyName={properties.find(p => String(p.PropertyID) === pendingPropertyId)?.PropertyAddress}
-            />
-
-            <UpgradeModal
-                isOpen={isUpgradeModalOpen}
-                onClose={() => setIsUpgradeModalOpen(false)}
-            />
-
-            {/* Validation Error Toast */}
-            {validationError && (
-                <div className="fixed bottom-24 right-8 z-50 bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-lg max-w-md flex items-start gap-3 animate-fade-in">
-                    <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                        <h4 className="text-red-800 font-medium text-sm">Errore di validazione</h4>
-                        <p className="text-red-700 text-sm mt-1">{validationError}</p>
+                <div className="mt-8 flex flex-col gap-4 border-t border-gray-200 pt-6 md:flex-row md:items-center md:justify-between">
+                    <div className="text-sm text-gray-500">
+                        {isEditMode ? 'Modifica locazione' : isSavingDraft ? 'Salvataggio bozza...' : lastSavedAt ? (
+                            <span className="inline-flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Bozza aggiornata alle {lastSavedAt}</span>
+                        ) : 'Bozza non ancora salvata'}
                     </div>
-                    <button onClick={() => setValidationError(null)} className="text-red-500 hover:text-red-700">
-                        <X className="w-4 h-4" />
-                    </button>
+                    <div className="flex justify-end gap-3">
+                        <Link to="/leases" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Annulla</Link>
+                        {!isEditMode && (
+                            <button type="button" onClick={saveDraftNow} className="flex items-center gap-2 rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <Save className="h-4 w-4" /> Salva bozza
+                            </button>
+                        )}
+                        <button type="submit" disabled={isSubmitting} className="rounded bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60">
+                            {isSubmitting ? (isEditMode ? 'Salvataggio...' : 'Creazione...') : (isEditMode ? 'Salva modifiche' : 'Crea locazione')}
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            {pendingPropertyId !== null && (
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+                    <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                        <div className="mb-3 flex items-center gap-2 text-amber-700">
+                            <AlertTriangle className="h-5 w-5" />
+                            <h3 className="font-semibold">Cambio proprietà</h3>
+                        </div>
+                        <p className="text-sm text-gray-600">Vuoi aggiornare canone, spese e importo periodico con i valori della nuova proprietà?</p>
+                        <div className="mt-5 flex justify-end gap-3">
+                            <button type="button" onClick={() => setPendingPropertyId(null)} className="px-4 py-2 text-sm text-gray-600">Annulla</button>
+                            <button type="button" onClick={() => applyProperty(pendingPropertyId)} className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">Conferma</button>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* Footer Form Actions */}
-            <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
-                <div className="flex items-center gap-2">
-                    {isSaving ? (
-                        <span className="text-gray-500 text-sm flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-[#337ab7] border-t-transparent rounded-full animate-spin"></div>
-                            Salvataggio in corso...
-                        </span>
-                    ) : lastSavedTime ? (
-                        <span className="text-gray-500 text-sm flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                            Ultimo salvataggio automatico: {lastSavedTime.toLocaleTimeString()}
-                        </span>
-                    ) : (
-                        <span className="text-gray-400 text-sm italic">
-                            Modifiche non salvate
-                        </span>
-                    )}
-                </div>
-                <div className="flex justify-end gap-3">
-                    <button
-                        type="button"
-                        onClick={() => triggerSave(true)}
-                        className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded hover:bg-gray-50 flex items-center gap-2 transition-colors disabled:opacity-50"
-                        disabled={isSaving}
-                    >
-                        <Save className="w-4 h-4" />
-                        Salva Bozza
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleFinalSubmit}
-                        className="px-6 py-2 bg-[#5cb85c] hover:bg-[#449d44] text-white font-bold rounded shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2"
-                        disabled={isSaving}
-                    >
-                        {isSaving ? 'Salvataggio...' : 'Attiva Contratto'}
-                    </button>
-                </div>
-            </div>
-        </form>
+            <StatusToast toast={toast} onClose={() => setToast(null)} />
+        </>
     );
 };

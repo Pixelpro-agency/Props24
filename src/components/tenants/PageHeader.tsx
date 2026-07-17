@@ -19,7 +19,7 @@ export function PageHeader({ activeTab, onTabChange }: PageHeaderProps) {
 
     const newTenantItems: DropdownItem[] = [
         { id: 'new', label: 'Nuovo inquilino', icon: PlusCircle, onClick: () => navigate('/tenants/new') },
-        { id: 'import', label: 'Importa', icon: CloudUpload, onClick: () => navigate('/tenants/import') },
+        { id: 'import', label: 'Importa', icon: CloudUpload, warning: true, onClick: () => navigate('/tenants/import') },
     ];
 
     return (

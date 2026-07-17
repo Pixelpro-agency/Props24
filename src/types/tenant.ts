@@ -1,4 +1,5 @@
 // Tipi e interfacce per la gestione inquilini
+import type { StoredLocalFile } from '../components/property-form/schema';
 
 export type TenantType = 'person' | 'company';
 export type ContactType = 'person' | 'company';
@@ -95,21 +96,32 @@ export interface EmergencyContact {
 // Documento caricato
 export interface TenantDocument {
     id: string;
+    existingDocumentId?: string;
     fileName: string;
     categoryId: number;
     categoryLabel: string;
+    description?: string;
     uploadDate: string;
     fileSize: number;
     isShared: boolean;
     fileUrl?: string;
+    file?: StoredLocalFile | null;
 }
 
-// Inquilino completo (per mock data e lista)
+export interface TenantInvitation {
+    status: 'not_sent' | 'pending' | 'accepted';
+    email: string;
+    sentAt: string | null;
+    acceptedAt: string | null;
+}
+
+// Inquilino completo per dettaglio e lista
 export interface Tenant {
     id: string;
     type: TenantType;
     avatarColor?: string;
     avatarUrl?: string;
+    photo?: StoredLocalFile | null;
     // Persona
     title?: TenantTitle;
     firstName?: string;
@@ -125,6 +137,7 @@ export interface Tenant {
     idType?: IDType;
     idNumber?: string;
     idExpiry?: string;
+    identityDocumentFile?: StoredLocalFile | null;
     // Società
     companyName?: string;
     vatNumber?: string;
@@ -166,6 +179,7 @@ export interface Tenant {
     guarantors: Guarantor[];
     emergencyContacts: EmergencyContact[];
     documents: TenantDocument[];
+    invitation?: TenantInvitation;
 }
 
 // Lista paesi (ridotta ai più comuni, Italia prima)

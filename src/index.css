@@ -65,3 +65,23 @@ body {
 .animate-shimmer {
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+.missing-route {
+  background-color: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+}
+
+.missing-route:hover {
+  background-color: #fde68a !important;
+  color: #92400e !important;
+}
+
+.missing-route svg,
+.missing-route .navbar-icon-hover {
+  color: #b45309 !important;
+}
+
+.missing-route-text {
+  color: #b45309 !important;
+}

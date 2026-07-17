@@ -59,14 +59,14 @@ export function TenantLeasesTab({ leases }: TenantLeasesTabProps) {
                         </div>
 
                         <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                            <button className="flex-1 flex justify-center items-center gap-2 py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            <Link to={`/leases/${lease.id}/edit`} className="flex-1 flex justify-center items-center gap-2 py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                                 <Edit2 className="w-4 h-4" />
                                 Modifica
-                            </button>
-                            <button className="flex-1 flex justify-center items-center gap-2 py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            </Link>
+                            <Link to={`/leases/${lease.id}`} className="flex-1 flex justify-center items-center gap-2 py-2 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                                 <Eye className="w-4 h-4" />
                                 Visualizza
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>

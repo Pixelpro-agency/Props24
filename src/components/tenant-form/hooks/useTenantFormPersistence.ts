@@ -1,68 +1,54 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
+import { normalizeTenantDraft, type TenantFormData } from '../schema';
+import { clearDraft as clearDatabaseDraft, getDraft, setDraft } from '../../../db/jsonDb';
 
-const STORAGE_KEY = 'tenant_form_draft';
-const AUTOSAVE_INTERVAL_MS = 30000; // Salvataggio automatico ogni 30 secondi
+const AUTOSAVE_DEBOUNCE_MS = 500;
 
-export function useTenantFormPersistence(methods: UseFormReturn<any>) {
-    // Carica la bozza al mount del componente
+export function useTenantFormPersistence(methods: UseFormReturn<TenantFormData>) {
+    const [draftError, setDraftError] = useState<string | null>(null);
+
     useEffect(() => {
-        const loadDraft = () => {
-            try {
-                const savedDraft = localStorage.getItem(STORAGE_KEY);
-                if (savedDraft) {
-                    const parsedData = JSON.parse(savedDraft);
-                    methods.reset(parsedData);
-                    console.log('Bozza inquilino ripristinata dal LocalStorage.');
-                }
-            } catch (error) {
-                console.error('Errore caricamento bozza inquilino:', error);
-            }
-        };
-
-        const timeout = setTimeout(loadDraft, 50);
-        return () => clearTimeout(timeout);
+        try {
+            const savedDraft = getDraft('tenantForm');
+            if (savedDraft) methods.reset(normalizeTenantDraft(savedDraft));
+            setDraftError(null);
+        } catch (error) {
+            setDraftError('Impossibile ripristinare la bozza inquilino.');
+            console.error('Errore caricamento bozza inquilino:', error);
+        }
     }, [methods]);
 
-    // Autosalvataggio ogni 30 secondi (solo se il form è stato modificato)
     useEffect(() => {
-        const interval = setInterval(() => {
-            const values = methods.getValues();
-            if (methods.formState.isDirty && Object.keys(values).length > 0) {
-                try {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
-                    console.log('Bozza inquilino salvata automaticamente.');
-                } catch (error) {
-                    console.error('Errore salvataggio bozza inquilino:', error);
-                }
-            }
-        }, AUTOSAVE_INTERVAL_MS);
-
-        return () => clearInterval(interval);
-    }, [methods]);
-
-    // Salva anche al cambio valori (debounced tramite watch)
-    useEffect(() => {
+        let timeoutId: number | undefined;
         const subscription = methods.watch((value) => {
-            try {
-                if (Object.keys(value).length > 0) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+            window.clearTimeout(timeoutId);
+            timeoutId = window.setTimeout(() => {
+                try {
+                    setDraft('tenantForm', normalizeTenantDraft(value));
+                    setDraftError(null);
+                } catch (error) {
+                    setDraftError('Impossibile salvare i dati nel browser. Riduci la dimensione degli allegati e riprova.');
+                    console.error('Errore salvataggio automatico inquilino:', error);
                 }
-            } catch (error) {
-                console.error('Errore salvataggio automatico inquilino:', error);
-            }
+            }, AUTOSAVE_DEBOUNCE_MS);
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            window.clearTimeout(timeoutId);
+            subscription.unsubscribe();
+        };
     }, [methods]);
 
     const clearDraft = () => {
         try {
-            localStorage.removeItem(STORAGE_KEY);
+            clearDatabaseDraft('tenantForm');
         } catch (error) {
             console.error('Errore pulizia bozza inquilino:', error);
         }
     };
 
-    return { clearDraft };
+    const clearDraftError = () => setDraftError(null);
+
+    return { clearDraft, draftError, clearDraftError };
 }

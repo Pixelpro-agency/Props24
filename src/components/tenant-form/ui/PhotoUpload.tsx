@@ -1,9 +1,15 @@
 // Upload foto avatar con preview — senza drag & drop, solo file input
 import { useState, useRef } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import {
+    calculateTenantAttachmentBytes,
+    MAX_TENANT_PHOTO_BYTES,
+    MAX_TENANT_TOTAL_ATTACHMENT_BYTES,
+    type TenantFormData,
+} from '../schema';
 
 interface PhotoUploadProps {
     name: string;
@@ -18,51 +24,58 @@ export function PhotoUpload({
     name,
     label,
     className,
-    helpText = 'Formati accettati: GIF, JPG, PNG. Dimensione massima: 15 Mega',
-    maxSizeMB = 15,
-    accept = '.gif,.png,.jpg,.jpeg',
+    helpText = 'Formati accettati: JPG, PNG, WebP. Dimensione massima: 1MB.',
+    maxSizeMB = 1,
+    accept = '.jpg,.jpeg,.png,.webp',
 }: PhotoUploadProps) {
-    const { setValue } = useFormContext();
-    const [preview, setPreview] = useState<string | null>(null);
-    const [fileName, setFileName] = useState<string | null>(null);
+    const { control, getValues, setValue } = useFormContext<TenantFormData>();
+    const value = useWatch({ control, name: name as any }) as { name?: string; type?: string; size?: number; dataUrl?: string } | null;
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const maxBytes = Math.min(maxSizeMB * 1024 * 1024, MAX_TENANT_PHOTO_BYTES);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         // Validazione dimensione
-        if (file.size > maxSizeMB * 1024 * 1024) {
-            setError(`Il file supera la dimensione massima di ${maxSizeMB}MB`);
+        if (file.size > maxBytes) {
+            setError('La foto supera la dimensione massima di 1MB.');
             return;
         }
 
-        // Validazione tipo
-        const validTypes = ['image/gif', 'image/jpeg', 'image/png'];
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
         if (!validTypes.includes(file.type)) {
-            setError('Formato file non supportato. Usa GIF, JPG o PNG.');
+            setError('Formato file non supportato. Usa JPG, PNG o WEBP.');
             return;
         }
 
         setError(null);
-        setFileName(file.name);
-
-        // Crea preview
         const reader = new FileReader();
         reader.onload = (event) => {
             const result = event.target?.result as string;
-            setPreview(result);
-            setValue(name, result);
+            const storedFile = {
+                id: `${name}-${file.lastModified}-${file.size}`,
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                lastModified: file.lastModified,
+                dataUrl: result,
+            };
+            const nextValues = { ...getValues(), [name]: storedFile };
+            if (calculateTenantAttachmentBytes(nextValues) > MAX_TENANT_TOTAL_ATTACHMENT_BYTES) {
+                setError("Limite allegati superato. La dimensione totale dei file dell'inquilino non può superare 3 MB.");
+                if (inputRef.current) inputRef.current.value = '';
+                return;
+            }
+            setValue(name as keyof TenantFormData, storedFile as any, { shouldDirty: true, shouldValidate: true });
         };
         reader.readAsDataURL(file);
     };
 
     const handleRemove = () => {
-        setPreview(null);
-        setFileName(null);
         setError(null);
-        setValue(name, '');
+        setValue(name as any, null, { shouldDirty: true, shouldValidate: true });
         if (inputRef.current) {
             inputRef.current.value = '';
         }
@@ -79,11 +92,11 @@ export function PhotoUpload({
                     <div
                         className={clsx(
                             "w-20 h-20 rounded-lg border-2 border-dashed flex items-center justify-center overflow-hidden flex-shrink-0 transition-colors",
-                            preview ? "border-green-300 bg-green-50" : "border-gray-300 bg-gray-50"
+                            value?.dataUrl ? "border-green-300 bg-green-50" : "border-gray-300 bg-gray-50"
                         )}
                     >
-                        {preview ? (
-                            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                        {value?.dataUrl ? (
+                            <img src={value.dataUrl} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
                             <ImageIcon className="w-8 h-8 text-gray-400" />
                         )}
@@ -106,9 +119,9 @@ export function PhotoUpload({
                                 className="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 transition-colors"
                             >
                                 <Upload className="w-4 h-4" />
-                                {preview ? 'Modifica' : 'Sfoglia'}
+                                {value ? 'Modifica' : 'Sfoglia'}
                             </button>
-                            {preview && (
+                            {value && (
                                 <button
                                     type="button"
                                     onClick={handleRemove}
@@ -118,8 +131,8 @@ export function PhotoUpload({
                                 </button>
                             )}
                         </div>
-                        {fileName && (
-                            <p className="text-xs text-gray-500 truncate max-w-[200px]">{fileName}</p>
+                        {value?.name && (
+                            <p className="text-xs text-gray-500 truncate max-w-[200px]">{value.name}</p>
                         )}
                     </div>
                 </div>
