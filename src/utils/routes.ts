@@ -10,6 +10,8 @@ const KNOWN_ROUTES = [
     '/tenants/new',
     '/leases',
     '/leases/new',
+    '/logout',
+    '/documents/all-templates',
 ];
 
 const DYNAMIC_ROUTE_PATTERNS = [
@@ -24,5 +26,10 @@ export function isKnownRoute(href?: string): boolean {
 
     const path = href.split(/[?#]/)[0];
 
-    return KNOWN_ROUTES.includes(path) || DYNAMIC_ROUTE_PATTERNS.some((pattern) => pattern.test(path));
+    return (
+        KNOWN_ROUTES.includes(path) ||
+        DYNAMIC_ROUTE_PATTERNS.some((pattern) =>
+            pattern.test(path),
+        )
+    );
 }

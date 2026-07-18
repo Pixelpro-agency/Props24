@@ -75,6 +75,28 @@ export function Tab1General() {
                 {!isPerson && (
                     <motion.div key="company-info" variants={sectionVariants} initial="hidden" animate="visible" exit="exit">
                         <FormSection title="Informazioni società">
+                            {/* TODO: implementare lato backend la verifica di qualità, completezza,
+                                data di emissione e validità della visura prima dell'estrazione dei dati.
+                                Controllare tutte le pagine, eventuali QR Code o codici ufficiali e la
+                                coerenza dei dati societari estratti. Validare sempre i dati prima della
+                                compilazione automatica. Lo stato verde attuale indica soltanto che il
+                                file è stato letto e salvato localmente. */}
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[160px_minmax(0,1fr)] md:grid-cols-[200px_minmax(0,1fr)]">
+                                <div className="w-full min-w-0 max-w-[500px] sm:col-start-2">
+                                    <SimpleFileUpload
+                                        name="TenantCompanyRegistryFile"
+                                        label="Visura camerale"
+                                        buttonLabel="Carica visura camerale"
+                                        allowAnyFileType={true}
+                                        successMessage="Visura camerale acquisita correttamente."
+                                        readErrorMessage="Impossibile acquisire la visura camerale. Riprova."
+                                        helpText="Carica la visura camerale completa come PDF."
+                                        orientation="vertical"
+                                        hideLabel={true}
+                                        className="h-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 p-3"
+                                    />
+                                </div>
+                            </div>
                             <TextInput
                                 name="TenantCompanyName"
                                 label="Società"
@@ -124,6 +146,38 @@ export function Tab1General() {
                 {isPerson && (
                     <motion.div key="identity" variants={sectionVariants} initial="hidden" animate="visible" exit="exit">
                         <FormSection title="Documento di identità">
+                            {/* TODO: implementare lato backend la verifica di qualità, completezza e
+                                validità del documento prima dell'estrazione dei dati. Controllare
+                                leggibilità, presenza e coerenza di fronte e retro, scadenza e autenticità
+                                quando tecnicamente verificabile. Validare sempre i dati estratti prima
+                                della compilazione automatica. Gli stati verdi attuali indicano soltanto
+                                che i file sono stati letti e salvati localmente. */}
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[160px_minmax(0,1fr)] md:grid-cols-[200px_minmax(0,1fr)]">
+                                <div className="grid w-full min-w-0 max-w-[500px] grid-cols-1 items-stretch gap-4 sm:col-start-2 sm:grid-cols-2">
+                                    <SimpleFileUpload
+                                        name="TenantIDCard"
+                                        label="Fronte della carta d'identità"
+                                        buttonLabel="Carica fronte"
+                                        allowAnyFileType={true}
+                                        successMessage="Fronte acquisito correttamente."
+                                        readErrorMessage="Impossibile acquisire il fronte. Riprova."
+                                        orientation="vertical"
+                                        hideLabel={true}
+                                        className="h-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 p-3"
+                                    />
+                                    <SimpleFileUpload
+                                        name="TenantIDCardBack"
+                                        label="Retro della carta d'identità"
+                                        buttonLabel="Carica retro"
+                                        allowAnyFileType={true}
+                                        successMessage="Retro acquisito correttamente."
+                                        readErrorMessage="Impossibile acquisire il retro. Riprova."
+                                        orientation="vertical"
+                                        hideLabel={true}
+                                        className="h-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 p-3"
+                                    />
+                                </div>
+                            </div>
                             <Select
                                 name="TenantIDType"
                                 label="Tipo"
@@ -138,12 +192,6 @@ export function Tab1General() {
                             />
                             <TextInput name="TenantIDNumber" label="Numero" orientation="horizontal" />
                             <TextInput name="TenantIDExpiry" label="Scadenza" orientation="horizontal" type="date" />
-                            <SimpleFileUpload
-                                name="TenantIDCard"
-                                label="File"
-                                accept=".pdf,.jpg,.jpeg,.png,.webp"
-                                helpText="Copia dell'ID. Formati accettati: PDF, JPEG, PNG, WebP."
-                            />
                         </FormSection>
                     </motion.div>
                 )}

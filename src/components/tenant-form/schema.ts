@@ -87,6 +87,7 @@ const tenantBaseSchema = z.object({
     TenantIDNumber: stringField,
     TenantIDExpiry: stringField,
     TenantIDCard: tenantStoredFileSchema,
+    TenantIDCardBack: tenantStoredFileSchema,
     TenantEmail: z.string().email('Formato email non valido').or(z.literal('')).default(''),
     TenantEmailSecond: z.string().email('Formato email non valido').or(z.literal('')).default(''),
     TenantMobilePhoneNat: stringField,
@@ -102,6 +103,7 @@ const tenantBaseSchema = z.object({
     TenantSiret: stringField,
     TenantCapital: stringField,
     TenantCompanyDescription: stringField,
+    TenantCompanyRegistryFile: tenantStoredFileSchema,
     TenantProEmployer: stringField,
     TenantProAddress: stringField,
     TenantProCity: stringField,
@@ -159,6 +161,8 @@ export function calculateTenantAttachmentBytes(data: Partial<TenantFormData>): n
     const files = [
         data.TenantPhoto,
         data.TenantIDCard,
+        data.TenantIDCardBack,
+        data.TenantCompanyRegistryFile,
         ...(data.TenantDocuments || []).map((document) => document.file),
     ].filter((file): file is NonNullable<typeof file> => Boolean(file));
     return files.reduce((total, file) => total + JSON.stringify(file).length, 0);
@@ -183,6 +187,7 @@ export const defaultTenantValues: DefaultValues<TenantFormData> = {
     TenantIDNumber: '',
     TenantIDExpiry: '',
     TenantIDCard: null,
+    TenantIDCardBack: null,
     TenantEmail: '',
     TenantEmailSecond: '',
     TenantMobilePhoneNat: '',
@@ -198,6 +203,7 @@ export const defaultTenantValues: DefaultValues<TenantFormData> = {
     TenantSiret: '',
     TenantCapital: '',
     TenantCompanyDescription: '',
+    TenantCompanyRegistryFile: null,
     TenantProEmployer: '',
     TenantProAddress: '',
     TenantProCity: '',

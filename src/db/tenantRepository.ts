@@ -116,12 +116,19 @@ export function createTenant(formDataInput: TenantFormData): TenantRecord {
         idType: formData.TenantIDType === 'ID' || formData.TenantIDType === 'passport' || formData.TenantIDType === 'drivinglicense' || formData.TenantIDType === 'residencepermit' ? formData.TenantIDType : '',
         idNumber: stringValue(formData.TenantIDNumber),
         idExpiry: stringValue(formData.TenantIDExpiry),
-        identityDocumentFile: formData.TenantIDCard,
+        identityDocumentFile:
+            formData.TenantType === 'person' ? formData.TenantIDCard : null,
+        identityDocumentBackFile:
+            formData.TenantType === 'person' ? formData.TenantIDCardBack : null,
         companyName: stringValue(formData.TenantCompanyName),
         vatNumber: stringValue(formData.TenantVatNumber),
         siret: stringValue(formData.TenantSiret),
         capital: stringValue(formData.TenantCapital),
         companyDescription: stringValue(formData.TenantCompanyDescription),
+        companyRegistryFile:
+            formData.TenantType === 'company'
+                ? formData.TenantCompanyRegistryFile
+                : null,
         email: stringValue(formData.TenantEmail),
         emailSecondary: stringValue(formData.TenantEmailSecond),
         mobilePhone: stringValue(formData.TenantMobilePhoneNat),
@@ -231,6 +238,7 @@ export function getTenantById(id: string): TenantDetail | null {
         siret: tenant.siret,
         capital: tenant.capital,
         companyDescription: tenant.companyDescription,
+        companyRegistryFile: tenant.companyRegistryFile,
         email: tenant.email,
         emailSecondary: tenant.emailSecondary,
         mobilePhone: tenant.mobilePhone,
@@ -247,6 +255,7 @@ export function getTenantById(id: string): TenantDetail | null {
         idNumber: tenant.idNumber,
         idExpiry: tenant.idExpiry,
         identityDocumentFile: tenant.identityDocumentFile,
+        identityDocumentBackFile: tenant.identityDocumentBackFile,
         proEmployer: tenant.proEmployer,
         proAddress: tenant.proAddress,
         proCity: tenant.proCity,

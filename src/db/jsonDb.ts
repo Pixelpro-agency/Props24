@@ -33,6 +33,10 @@ const DB_EVENT = 'rentila-local-db-change';
 const SEED_VERSION = 3;
 
 const LEGACY_LOCAL_DB_KEYS = [OLD_DB_KEY_V3, PREVIOUS_DB_KEY, LEGACY_DB_KEY, TENANT_DRAFT_KEY, PROPERTY_DRAFT_KEY];
+const ACCOUNT_ID_PATTERN = /^user-[0-9]{3,}$/;
+const DEFAULT_DATABASE_ACCOUNT_ID = 'user-001';
+
+let activeDatabaseAccountId: string | null = null;
 let inMemoryDatabase: LocalDatabase | null = null;
 let fallbackIdCounter = 0;
 
@@ -364,11 +368,13 @@ function normalizeTenantRecord(input: unknown, fallbackId: string): TenantRecord
         idNumber: valueAsString(source.idNumber),
         idExpiry: normalizeIsoDate(source.idExpiry),
         identityDocumentFile: normalizeStoredLocalFile(source.identityDocumentFile),
+        identityDocumentBackFile: normalizeStoredLocalFile(source.identityDocumentBackFile),
         companyName: valueAsString(source.companyName) || (source.type === 'company' ? displayName : ''),
         vatNumber: valueAsString(source.vatNumber),
         siret: valueAsString(source.siret),
         capital: valueAsString(source.capital),
         companyDescription: valueAsString(source.companyDescription),
+        companyRegistryFile: normalizeStoredLocalFile(source.companyRegistryFile),
         email: valueAsString(source.email),
         emailSecondary: valueAsString(source.emailSecondary),
         mobilePhone: valueAsString(source.mobilePhone),
@@ -897,6 +903,43 @@ function setCachedDatabase(database: LocalDatabase): LocalDatabase {
     return clone(database);
 }
 
+export function getAccountDatabaseKey(accountId: string): string {
+    if (!ACCOUNT_ID_PATTERN.test(accountId)) {
+        throw new Error(`Account database non valido: ${accountId}`);
+    }
+
+    return `${LOCAL_DB_KEY}.${accountId}`;
+}
+
+function requireActiveDatabaseAccount(): string {
+    if (!activeDatabaseAccountId) {
+        throw new Error('Database locale non disponibile: nessun account autenticato.');
+    }
+
+    return activeDatabaseAccountId;
+}
+
+function requireActiveDatabaseKey(): string {
+    return getAccountDatabaseKey(requireActiveDatabaseAccount());
+}
+
+export function setActiveDatabaseAccount(accountId: string | null): void {
+    if (accountId !== null && !ACCOUNT_ID_PATTERN.test(accountId)) {
+        throw new Error(`Account database non valido: ${accountId}`);
+    }
+
+    if (activeDatabaseAccountId === accountId) {
+        return;
+    }
+
+    activeDatabaseAccountId = accountId;
+    inMemoryDatabase = null;
+
+    if (accountId !== null) {
+        initializeJsonDb();
+    }
+}
+
 function localStorageKeys(): string[] {
     return Array.from({ length: window.localStorage.length }, (_, index) => window.localStorage.key(index))
         .filter((key): key is string => Boolean(key));
@@ -941,7 +984,9 @@ function tryNormalizeSource(key: string, source: DatabaseSource): LocalDatabase 
     const stored = readJsonKey(key);
     if (!stored) return null;
     try {
-        return migrateFromUnknown(stored, source);
+        const database = migrateFromUnknown(stored, source);
+        assertDatabaseIntegrity(database);
+        return database;
     } catch (error) {
         console.warn('[local-db] sorgente non utilizzabile', { key, source, error });
         return null;
@@ -964,77 +1009,137 @@ function attachLegacyDrafts(database: LocalDatabase): LocalDatabase {
 }
 
 function legacyKeysToRemove(): string[] {
-    return [...LEGACY_LOCAL_DB_KEYS, ...corruptedBackupKeys()];
+    return [LOCAL_DB_KEY, ...LEGACY_LOCAL_DB_KEYS, ...corruptedBackupKeys()];
 }
 
-function removeLegacyKeysAfterVerifiedCanonical(): void {
+function removeLegacyKeysAfterVerifiedAccountDatabase(): void {
     for (const key of legacyKeysToRemove()) {
         window.localStorage.removeItem(key);
     }
 }
 
-function persistCanonicalDatabase(database: LocalDatabase): boolean {
+function verifyStoredDatabase(key: string): LocalDatabase {
+    const verifiedRaw = window.localStorage.getItem(key);
+    if (!verifiedRaw) {
+        throw new Error(`Database non rileggibile dopo la scrittura: ${key}`);
+    }
+
+    const verified = parseStoredDb(verifiedRaw);
+    assertDatabaseIntegrity(verified);
+    return verified;
+}
+
+function persistInitializedDatabase(
+    database: LocalDatabase,
+    removeLegacyAfterVerification: boolean,
+): LocalDatabase {
+    const key = requireActiveDatabaseKey();
+
     try {
-        writeLocalStorage(LOCAL_DB_KEY, JSON.stringify(database));
-        const verified = window.localStorage.getItem(LOCAL_DB_KEY);
-        if (!verified) throw new Error('Database canonico non rileggibile dopo la scrittura.');
-        parseStoredDb(verified);
-        removeLegacyKeysAfterVerifiedCanonical();
-        setCachedDatabase(database);
+        writeLocalStorage(key, JSON.stringify(database));
+        const verified = verifyStoredDatabase(key);
+
+        setCachedDatabase(verified);
+
+        if (removeLegacyAfterVerification) {
+            removeLegacyKeysAfterVerifiedAccountDatabase();
+        }
+
         emitDbChange();
-        return true;
+        return clone(verified);
     } catch (error) {
-        console.warn('[local-db] persistenza canonica non riuscita, uso cache in memoria', {
-            key: LOCAL_DB_KEY,
+        console.warn('[local-db] persistenza account non riuscita, uso cache in memoria', {
+            accountId: activeDatabaseAccountId,
+            key,
             quota: isQuotaExceededError(error),
             error,
         });
-        setCachedDatabase(database);
-        return false;
+
+        return setCachedDatabase(database);
     }
 }
 
-function canonicalFromSources(): LocalDatabase {
-    const canonicalRaw = window.localStorage.getItem(LOCAL_DB_KEY);
-    if (canonicalRaw) {
-        try {
-            const parsed = parseStoredDb(canonicalRaw);
-            const normalizedRaw = JSON.stringify(parsed);
-            if (normalizedRaw !== canonicalRaw) persistCanonicalDatabase(parsed);
-            else {
-                removeLegacyKeysAfterVerifiedCanonical();
-                setCachedDatabase(parsed);
-            }
-            return clone(inMemoryDatabase || parsed);
-        } catch (error) {
-            console.warn('[local-db] props24.localDb non utilizzabile, provo sorgenti legacy', { error });
-        }
+function existingAccountDatabase(key: string): LocalDatabase | null {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+
+    try {
+        const database = parseStoredDb(raw);
+        assertDatabaseIntegrity(database);
+        return database;
+    } catch (error) {
+        console.warn('[local-db] database account non utilizzabile', {
+            accountId: activeDatabaseAccountId,
+            key,
+            error,
+        });
+        return null;
+    }
+}
+
+function initializeDefaultAccountDatabase(key: string): LocalDatabase {
+    const existing = existingAccountDatabase(key);
+
+    if (existing) {
+        setCachedDatabase(existing);
+        removeLegacyKeysAfterVerifiedAccountDatabase();
+        return clone(existing);
     }
 
-    const sources: Array<{ key: string; source: DatabaseSource }> = [
+    const sharedDatabase = tryNormalizeSource(LOCAL_DB_KEY, 'migration-v2');
+
+    if (sharedDatabase) {
+        const migrated = attachLegacyDrafts(sharedDatabase);
+        return persistInitializedDatabase(migrated, true);
+    }
+
+    const legacySources: Array<{ key: string; source: DatabaseSource }> = [
         { key: OLD_DB_KEY_V3, source: 'migration-v2' },
         { key: PREVIOUS_DB_KEY, source: 'migration-v2' },
         { key: LEGACY_DB_KEY, source: 'migration-v1' },
         ...legacyCorruptedSources(),
     ];
 
-    for (const item of sources) {
+    for (const item of legacySources) {
         const migrated = tryNormalizeSource(item.key, item.source);
+
         if (migrated) {
             const database = attachLegacyDrafts(migrated);
-            persistCanonicalDatabase(database);
-            return clone(inMemoryDatabase || database);
+            return persistInitializedDatabase(database, true);
         }
     }
 
     const seeded = attachLegacyDrafts(migrateFromUnknown(seedDatabase, 'seed'));
-    persistCanonicalDatabase(seeded);
-    return clone(inMemoryDatabase || seeded);
+    return persistInitializedDatabase(seeded, true);
+}
+
+function initializeSecondaryAccountDatabase(key: string): LocalDatabase {
+    const existing = existingAccountDatabase(key);
+
+    if (existing) {
+        return setCachedDatabase(existing);
+    }
+
+    return persistInitializedDatabase(emptyDb('seed'), false);
+}
+
+function databaseForActiveAccount(): LocalDatabase {
+    const accountId = requireActiveDatabaseAccount();
+    const key = getAccountDatabaseKey(accountId);
+
+    return accountId === DEFAULT_DATABASE_ACCOUNT_ID
+        ? initializeDefaultAccountDatabase(key)
+        : initializeSecondaryAccountDatabase(key);
 }
 
 export function initializeJsonDb(): LocalDatabase {
-    if (inMemoryDatabase) return clone(inMemoryDatabase);
-    return canonicalFromSources();
+    requireActiveDatabaseAccount();
+
+    if (inMemoryDatabase) {
+        return clone(inMemoryDatabase);
+    }
+
+    return databaseForActiveAccount();
 }
 
 export function getJsonDb(): LocalDatabase {
@@ -1042,20 +1147,36 @@ export function getJsonDb(): LocalDatabase {
 }
 
 export function saveJsonDb(database: LocalDatabase): LocalDatabase {
+    const key = requireActiveDatabaseKey();
     const nextDb = normalizeV3Database({ ...database, meta: { ...database.meta, updatedAt: nowIso() } }, false);
+
     assertDatabaseIntegrity(nextDb);
-    writeLocalStorage(LOCAL_DB_KEY, JSON.stringify(nextDb));
-    setCachedDatabase(nextDb);
+    writeLocalStorage(key, JSON.stringify(nextDb));
+
+    const verified = verifyStoredDatabase(key);
+
+    setCachedDatabase(verified);
     emitDbChange();
-    return clone(nextDb);
+
+    return clone(verified);
 }
 
 export function resetJsonDb(): LocalDatabase {
-    const seeded = migrateFromUnknown(seedDatabase, 'seed');
-    writeLocalStorage(LOCAL_DB_KEY, JSON.stringify(seeded));
-    setCachedDatabase(seeded);
+    const accountId = requireActiveDatabaseAccount();
+    const key = getAccountDatabaseKey(accountId);
+    const resetDatabase = accountId === DEFAULT_DATABASE_ACCOUNT_ID
+        ? migrateFromUnknown(seedDatabase, 'seed')
+        : emptyDb('seed');
+
+    assertDatabaseIntegrity(resetDatabase);
+    writeLocalStorage(key, JSON.stringify(resetDatabase));
+
+    const verified = verifyStoredDatabase(key);
+
+    setCachedDatabase(verified);
     emitDbChange();
-    return clone(seeded);
+
+    return clone(verified);
 }
 
 export function getDraft<Name extends keyof LocalDatabase['drafts']>(name: Name): LocalDatabase['drafts'][Name] {
@@ -1143,15 +1264,23 @@ export function replaceCollection<Name extends LocalDatabaseCollectionName>(
 }
 
 export function subscribeJsonDb(callback: () => void): () => void {
+    requireActiveDatabaseAccount();
+
     const handleLocal = () => callback();
     const handleStorage = (event: StorageEvent) => {
-        if (event.key === LOCAL_DB_KEY) {
+        if (!activeDatabaseAccountId) {
+            return;
+        }
+
+        if (event.key === getAccountDatabaseKey(activeDatabaseAccountId)) {
             inMemoryDatabase = null;
             callback();
         }
     };
+
     window.addEventListener(DB_EVENT, handleLocal);
     window.addEventListener('storage', handleStorage);
+
     return () => {
         window.removeEventListener(DB_EVENT, handleLocal);
         window.removeEventListener('storage', handleStorage);

@@ -81,11 +81,13 @@ export interface TenantRecord {
     idNumber: string;
     idExpiry: string;
     identityDocumentFile: StoredLocalFile | null;
+    identityDocumentBackFile: StoredLocalFile | null;
     companyName: string;
     vatNumber: string;
     siret: string;
     capital: string;
     companyDescription: string;
+    companyRegistryFile: StoredLocalFile | null;
     email: string;
     emailSecondary: string;
     mobilePhone: string;

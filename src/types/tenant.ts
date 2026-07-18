@@ -138,12 +138,14 @@ export interface Tenant {
     idNumber?: string;
     idExpiry?: string;
     identityDocumentFile?: StoredLocalFile | null;
+    identityDocumentBackFile?: StoredLocalFile | null;
     // Società
     companyName?: string;
     vatNumber?: string;
     siret?: string;
     capital?: string;
     companyDescription?: string;
+    companyRegistryFile?: StoredLocalFile | null;
     // Contatti
     email?: string;
     emailSecondary?: string;

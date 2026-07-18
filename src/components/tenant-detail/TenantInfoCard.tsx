@@ -38,6 +38,7 @@ export function TenantInfoCard({ tenant, onInvite, onCopyLink }: TenantInfoCardP
         ['Registro imprese', tenant.siret],
         ['Capitale', tenant.capital],
         ['Settore di attività', tenant.companyDescription],
+        ['Visura camerale', tenant.companyRegistryFile?.name],
     ].filter(([, value]) => Boolean(String(value || '').trim()));
 
     const representativeRows = [
@@ -252,12 +253,13 @@ export function TenantInfoCard({ tenant, onInvite, onCopyLink }: TenantInfoCardP
 
             <div className="p-6 border-b border-gray-100">
                 <h3 className="text-sm font-medium text-gray-800 mb-2 font-semibold">Documento identita</h3>
-                {tenant.idType || tenant.idNumber || tenant.idExpiry || tenant.identityDocumentFile ? (
+                {tenant.idType || tenant.idNumber || tenant.idExpiry || tenant.identityDocumentFile || tenant.identityDocumentBackFile ? (
                     <div className="text-sm text-gray-600 space-y-1">
                         {tenant.idType && <div>Tipo: <span className="text-gray-800">{tenant.idType}</span></div>}
                         {tenant.idNumber && <div>Numero: <span className="text-gray-800">{tenant.idNumber}</span></div>}
                         {tenant.idExpiry && <div>Scadenza: <span className="text-gray-800">{tenant.idExpiry}</span></div>}
-                        {tenant.identityDocumentFile && <div>File: <span className="text-gray-800">{tenant.identityDocumentFile.name}</span></div>}
+                        {tenant.identityDocumentFile && <div>Fronte: <span className="text-gray-800">{tenant.identityDocumentFile.name}</span></div>}
+                        {tenant.identityDocumentBackFile && <div>Retro: <span className="text-gray-800">{tenant.identityDocumentBackFile.name}</span></div>}
                     </div>
                 ) : (
                     <p className="text-sm text-gray-500">Nessuna informazione</p>

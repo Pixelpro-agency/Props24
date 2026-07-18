@@ -1,12 +1,9 @@
 /**
  * Hook per il profilo dell'utente corrente.
- *
- * NOTE: Per ora restituisce un mock statico.
- * Quando verrà implementato il sistema di autenticazione, questo hook
- * verrà aggiornato per leggere i dati reali dall'auth provider / backend.
  */
+
+import { useAuth } from '../auth/AuthContext';
 import type { UserProfile } from '../types/dashboard';
-import { mockUserProfile } from '../data/mockUserProfile';
 
 interface UserProfileReturn {
     user: UserProfile;
@@ -15,15 +12,32 @@ interface UserProfileReturn {
     isLoading: boolean;
 }
 
-export function useUserProfile(): UserProfileReturn {
-    // TODO: sostituire con dati reali dal sistema di autenticazione
-    const user = mockUserProfile;
+const emptyUserProfile: UserProfile = {
+    id: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+};
 
-    const displayName = `${user.firstName} ${user.lastName}`.trim();
+export function useUserProfile(): UserProfileReturn {
+    const { account, isInitializing } = useAuth();
+
+    const user: UserProfile = account
+        ? {
+              id: account.id,
+              firstName: account.firstName,
+              lastName: account.lastName,
+              email: account.email,
+          }
+        : emptyUserProfile;
+
+    const displayName = account
+        ? `${account.firstName} ${account.lastName}`.trim()
+        : '';
 
     return {
         user,
         displayName,
-        isLoading: false,
+        isLoading: isInitializing,
     };
 }
