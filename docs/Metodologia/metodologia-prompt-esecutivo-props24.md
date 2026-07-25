@@ -6,13 +6,13 @@ Questo documento definisce come la Chat Amministratore / Analista deve preparare
 
 Il prompt deve fornire il contesto minimo sufficiente per realizzare una sola modifica verificabile sul codice corrente, senza lasciare all’Esecutore decisioni di prodotto, interpretazioni dei requisiti o libertà di ampliare lo scope.
 
-Questo documento integra `docs/metodologia-lavoro-props24.md`. In caso di conflitto prevalgono:
+Questo documento integra `docs/Metodologia/metodologia-lavoro-props24.md`. In caso di conflitto prevalgono:
 
 1. la decisione esplicita più recente dell’utente;
-2. `docs/metodologia-lavoro-props24.md`;
+2. `docs/Metodologia/metodologia-lavoro-props24.md`;
 3. il codice del branch e del commit SHA indicati;
 4. i test eseguiti sullo stesso SHA;
-5. `docs/implementazioni.md`;
+5. `docs/planning/implementazioni.md`;
 6. questo documento;
 7. vecchi report, prompt e conversazioni.
 
@@ -80,7 +80,7 @@ Deve inoltre verificare:
 - che i file candidati esistano sul branch base;
 - che i comandi di test derivino dagli script e dalla configurazione reali;
 - che eventuali file esterni forniti dall’utente siano sufficienti;
-- che la task sia coerente con `docs/implementazioni.md`, senza assumere che il piano prevalga sul codice.
+- che la task sia coerente con `docs/planning/implementazioni.md`, senza assumere che il piano prevalga sul codice.
 
 Se una decisione può cambiare schema dati, comportamento UI, regole CRUD, navigazione o risultato osservabile, l’Analista deve fermarsi e chiederla all’utente prima di scrivere il prompt.
 
@@ -106,7 +106,6 @@ Non chiedere automaticamente all’Esecutore di leggere:
 - tutte le pagine e tutti i componenti;
 - vecchi ZIP o Repomix;
 - vecchi report o conversazioni;
-- `COMING_SOON.md` come fonte autoritativa;
 - documentazione non collegata alla task;
 - dati generati, cache, build o log;
 - `package-lock.json`, salvo una task sulle dipendenze;
@@ -143,7 +142,7 @@ Esempio:
 File consultabili in sola lettura:
 - src/db/jsonDb.ts
 - src/db/propertyRepository.ts
-- docs/implementazioni.md, sezione TASK A1
+- docs/planning/implementazioni.md, sezione TASK A1
 ```
 
 I file consultabili non sono automaticamente modificabili.
@@ -213,7 +212,7 @@ Salvo autorizzazione esplicita, il prompt deve vietare:
 - uso di `Math.random` per ID persistiti;
 - scritture applicative in chiavi globali parallele al database account-scoped;
 - `console.log` o toast di successo come sostituti di una mutazione reale;
-- modifica di `docs/implementazioni.md` prima dell’approvazione finale e senza prompt documentale dedicato.
+- modifica di `docs/planning/implementazioni.md` prima dell’approvazione finale e senza prompt documentale dedicato.
 
 ## 9. Test tecnici
 
@@ -374,7 +373,7 @@ Non eseguire scritture Git o GitHub. L’utente applicherà le modifiche, creer�
 ## File consultabili in sola lettura
 
 - <percorso>
-- <sezione pertinente di docs/implementazioni.md>
+- <sezione pertinente di docs/planning/implementazioni.md>
 
 ## Comportamento richiesto
 

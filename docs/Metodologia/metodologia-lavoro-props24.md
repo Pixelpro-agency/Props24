@@ -115,7 +115,7 @@ Sono consentiti nello stesso branch:
 - il primo commit della task;
 - commit correttivi richiesti dalla Chat Amministratore;
 - test aggiunti o modificati se autorizzati;
-- aggiornamento finale di `docs/implementazioni.md` dopo l’approvazione;
+- aggiornamento finale di `docs/planning/implementazioni.md` dopo l’approvazione;
 - correzioni documentali strettamente collegate alla stessa task.
 
 Non sono consentiti nello stesso branch:
@@ -154,7 +154,7 @@ Le azioni di scrittura richiedono un’autorizzazione esplicita e vengono comunq
 - effettuare push;
 - aprire o aggiornare pull request;
 - segnare una task come completata;
-- aggiornare `docs/implementazioni.md`;
+- aggiornare `docs/planning/implementazioni.md`;
 - fare merge;
 - eliminare branch.
 
@@ -162,9 +162,9 @@ Le azioni di scrittura richiedono un’autorizzazione esplicita e vengono comunq
 
 # 2. Documenti operativi
 
-## 2.1 `docs/implementazioni.md`
+## 2.1 `docs/planning/implementazioni.md`
 
-`docs/implementazioni.md` è il piano operativo vivo del lavoro ancora da svolgere.
+`docs/planning/implementazioni.md` è il piano operativo vivo del lavoro ancora da svolgere.
 
 Deve contenere:
 
@@ -207,7 +207,7 @@ Quando le fonti sono in conflitto, usare questo ordine:
 2. codice del commit SHA in revisione;
 3. test eseguiti su quello stesso commit;
 4. documentazione tecnica owner aggiornata;
-5. `docs/implementazioni.md`;
+5. `docs/planning/implementazioni.md`;
 6. vecchi report, prompt e conversazioni.
 
 Un documento vecchio non prevale sul codice corrente senza una verifica.
@@ -222,7 +222,7 @@ La Chat Amministratore:
 
 - raccoglie i requisiti dell’utente;
 - legge il repository GitHub;
-- legge `docs/implementazioni.md`;
+- legge `docs/planning/implementazioni.md`;
 - individua i confini della task;
 - chiede i file o le decisioni mancanti;
 - verifica se una richiesta è già implementata;
@@ -235,7 +235,7 @@ La Chat Amministratore:
 - autorizza il passaggio al collaudo;
 - valuta il report del Collaudatore;
 - dichiara la task approvata o da correggere;
-- prepara il prompt per aggiornare `docs/implementazioni.md`;
+- prepara il prompt per aggiornare `docs/planning/implementazioni.md`;
 - indica all’utente quando il branch può essere unito.
 
 ## 3.2 Azioni vietate
@@ -268,7 +268,7 @@ Branch base
 Task o macroblocco da analizzare
 Requisiti dell’utente
 File di riferimento esterni, se necessari
-docs/implementazioni.md aggiornato
+docs/planning/implementazioni.md aggiornato
 ```
 
 ## 3.4 Output dell’analisi
@@ -327,7 +327,7 @@ Dopo il push del branch, la Chat Amministratore deve controllare:
 - messaggi di commit;
 - assenza di segreti;
 - assenza di file generati inutili;
-- coerenza con `docs/implementazioni.md`;
+- coerenza con `docs/planning/implementazioni.md`;
 - compatibilità con le task già chiuse.
 
 Esiti ammessi:
@@ -383,7 +383,7 @@ La Chat Esecutore:
 - propone nome del branch, messaggio di commit e contenuto della draft pull request;
 - restituisce file preparati, istruzioni, comandi, test e report;
 - prepara eventuali correzioni riferendosi allo stesso branch task creato dall’utente;
-- prepara l’aggiornamento di `docs/implementazioni.md` soltanto dopo un prompt esplicito.
+- prepara l’aggiornamento di `docs/planning/implementazioni.md` soltanto dopo un prompt esplicito.
 
 L’Esecutore può leggere GitHub e può operare su una copia locale o su file separati. Il risultato diventa condiviso soltanto dopo che l’utente lo ha applicato e pushato nel repository remoto.
 
@@ -406,7 +406,7 @@ La Chat Esecutore non deve:
 - fare rebase distruttivi;
 - fare merge;
 - segnare autonomamente la task come approvata;
-- aggiornare `docs/implementazioni.md` prima del collaudo finale;
+- aggiornare `docs/planning/implementazioni.md` prima del collaudo finale;
 - eseguire un collaudo browser sostituendosi alla Chat Desktop;
 - proseguire dopo tre tentativi falliti.
 
@@ -620,7 +620,7 @@ Serve un nuovo collaudo almeno sulle aree influenzate.
 
 Eccezione:
 
-- un commit successivo modifica esclusivamente `docs/implementazioni.md` o altra documentazione non runtime;
+- un commit successivo modifica esclusivamente `docs/planning/implementazioni.md` o altra documentazione non runtime;
 - la Chat Amministratore verifica che la diff successiva al collaudo sia esclusivamente documentale.
 
 ## 5.5 Report del Collaudatore
@@ -690,7 +690,7 @@ L’utente:
 - approva i prompt;
 - decide quando l’Esecutore può scrivere;
 - decide quando aprire la PR;
-- decide quando aggiornare `docs/implementazioni.md`;
+- decide quando aggiornare `docs/planning/implementazioni.md`;
 - decide quando rendere la PR pronta;
 - autorizza il merge;
 - decide se eliminare il branch;
@@ -739,7 +739,7 @@ La Chat Amministratore non scrive codice.
 La Chat Amministratore:
 
 1. legge GitHub;
-2. legge `docs/implementazioni.md`;
+2. legge `docs/planning/implementazioni.md`;
 3. verifica lo stato corrente;
 4. chiede ciò che manca;
 5. propone una task;
@@ -813,7 +813,7 @@ Dopo `APPROVATO FINALE`, la Chat Amministratore prepara un prompt documentale.
 La Chat Esecutore prepara l’aggiornamento del solo file:
 
 ```txt
-docs/implementazioni.md
+docs/planning/implementazioni.md
 ```
 
 salvo altri file documentali esplicitamente autorizzati.
@@ -1033,7 +1033,7 @@ Diventa pronta soltanto dopo:
 - revisione statica;
 - collaudo;
 - fix conclusi;
-- aggiornamento `docs/implementazioni.md`;
+- aggiornamento `docs/planning/implementazioni.md`;
 - controllo finale.
 
 ---
@@ -1120,7 +1120,7 @@ Dati finali
 ```txt
 Ruolo permanente: Amministratore e Analista del progetto Props24.
 
-Leggi il repository GitHub e docs/implementazioni.md.
+Leggi il repository GitHub e docs/planning/implementazioni.md.
 Non modificare codice, non creare branch, commit, push o merge.
 Non eseguire il collaudo browser.
 
@@ -1158,7 +1158,7 @@ Non ampliare lo scope.
 Non modificare main.
 Non approvare il tuo lavoro.
 Non eseguire il collaudo browser.
-Non aggiornare docs/implementazioni.md senza un prompt esplicito successivo
+Non aggiornare docs/planning/implementazioni.md senza un prompt esplicito successivo
 all’approvazione finale.
 
 Fai massimo 3 tentativi ragionati. Dopo il terzo tentativo fermati e riporta
@@ -1200,7 +1200,7 @@ Prima del prompt:
 [ ] Repository identificato
 [ ] Branch base identificato
 [ ] Codice corrente letto
-[ ] docs/implementazioni.md letto
+[ ] docs/planning/implementazioni.md letto
 [ ] Un solo obiettivo
 [ ] File autorizzati minimi
 [ ] Test definiti
@@ -1228,7 +1228,7 @@ Prima del merge:
 [ ] Collaudo approvato
 [ ] Nessun finding bloccante
 [ ] Eventuali commit successivi al QA esclusivamente documentali
-[ ] docs/implementazioni.md aggiornato
+[ ] docs/planning/implementazioni.md aggiornato
 [ ] PR pronta
 [ ] CI valida
 [ ] Autorizzazione esplicita dell’utente
@@ -1363,7 +1363,7 @@ CHAT AMMINISTRATORE
   ↓ prompt aggiornamento piano
 
 CHAT ESECUTORE
-  ↓ prepara aggiornamento docs/implementazioni.md
+  ↓ prepara aggiornamento docs/planning/implementazioni.md
 
 UTENTE
   ↓ applica aggiornamento → commit → push

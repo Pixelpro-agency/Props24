@@ -24,8 +24,10 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA esaminato: 8b17cf3c3515c36615173e0db8e916192b8b904f
+SHA esaminato: 07d52ea49960cd164dff335603f5b0f2572b4fab
 ```
+
+Lo stato tecnico del piano deriva dallo snapshot precedente. Il commit `07d52ea49960cd164dff335603f5b0f2572b4fab` è stato verificato come riorganizzazione esclusivamente documentale; il codice applicativo non è stato riesaminato integralmente a questo nuovo SHA.
 
 Prima di trasformare una voce in prompt esecutivo, verificarla nuovamente sul codice corrente.
 
@@ -33,27 +35,40 @@ Prima di trasformare una voce in prompt esecutivo, verificarla nuovamente sul co
 
 Ogni prompt deve seguire:
 
-- `docs/metodologia-lavoro-props24.md`;
-- `docs/metodologia-prompt-esecutivo-props24.md`.
+- `docs/Metodologia/metodologia-lavoro-props24.md`;
+- `docs/Metodologia/metodologia-prompt-esecutivo-props24.md`.
 
 Regole minime:
 
 - una sola task verificabile;
-- modalità esplicita `GITHUB_READ_ONLY` oppure `DESKTOP_ESECUTORE`;
+- modalità operativa esplicita, scelta esclusivamente tra:
+  - `GITHUB_READ_ONLY`: analisi o revisione statica senza modifica dei file;
+  - `DESKTOP_ESECUTORE`: preparazione o applicazione locale delle modifiche autorizzate e test tecnici, senza scritture GitHub da parte della chat;
+  - `DESKTOP_COLLAUDATORE`: collaudo browser sul branch e sullo SHA approvati, senza modifica del codice;
 - file modificabili e file consultabili separati;
 - nessun refactor fuori scope;
 - massimo tre tentativi ragionati;
 - test tecnici mirati;
-- `fileModificati.md` dopo ogni prompt che modifica file;
-- revisione statica e collaudo prima del commit;
-- Git e GitHub in scrittura riservati all’utente;
-- commit e push soltanto dopo `APPROVATO FINALE`.
+- branch, commit e diff remota come fonte ordinaria delle modifiche;
+- `fileModificati.md` non deve essere generato né committato normalmente;
+- `fileModificati.md` può essere richiesto esplicitamente dalla Chat Amministratore come fallback quando GitHub non è temporaneamente accessibile o per modifiche locali non ancora pubblicate;
+- Git e GitHub in scrittura riservati all’utente.
+
+Flusso Git, revisione e collaudo:
+
+1. l’utente crea il branch task;
+2. l’utente applica le modifiche;
+3. vengono eseguiti i test tecnici;
+4. l’utente crea commit e push sul branch task;
+5. la Chat Amministratore revisiona branch, SHA e diff remota;
+6. quando necessario, il Collaudatore verifica lo SHA approvato staticamente;
+7. eventuali fix producono nuovi commit e un nuovo SHA;
+8. soltanto il merge richiede `APPROVATO FINALE` e l’autorizzazione esplicita dell’utente.
 
 Non:
 
 - ripristinare o inventare smoke test;
 - correggere il lint globale come effetto collaterale;
-- trattare `COMING_SOON.md` come fonte autoritativa;
 - applicare il vecchio vincolo “una sola chiave `props24.localDb`”;
 - cancellare chiavi auth o database account-scoped;
 - introdurre backend o servizi esterni dentro task locali non correlate;
@@ -806,23 +821,19 @@ Classificare:
 - codice mock non più usato;
 - richiede browser.
 
-## TASK G2 — Correggere `COMING_SOON.md`
+## TASK G2 — Integrare l’inventario route nella documentazione tecnica
 
-Il file è già obsoleto.
+**Dipendenza:** G1.
 
-Non devono più risultare mancanti:
+Dopo la TASK G1, l’inventario verificato delle route deve confluire nella futura documentazione tecnica.
 
-- `/leases/:id`;
-- `/leases/:id/edit`;
-- `/logout`;
-- `/documents/all-templates`.
+La task deve:
 
-Dopo G1:
-
-- aggiornare soltanto route realmente mancanti;
-- distinguere route da servizi non-route;
-- rimuovere priorità non approvate;
-- oppure eliminare il file se la futura documentazione sostituisce integralmente questo registro.
+- distinguere route reali, route mancanti, controlli disabilitati e servizi non-route;
+- usare come fonte tecnica il confronto tra `src/App.tsx`, `src/utils/routes.ts` e gli accessi UI reali;
+- non creare pagine vuote soltanto per far risultare una route esistente;
+- non assegnare priorità di prodotto non approvate dall’utente;
+- non creare un registro parallelo separato dalla documentazione tecnica.
 
 ## TASK G3 — Edifici, unità e inquilini
 
@@ -1263,10 +1274,6 @@ Basato sulle decisioni G1–G7:
 ---
 
 # BLOCCO L — Documentazione tecnica
-
-## TASK L0 — Pulizia documentale preliminare
-
-Eliminare o sostituire documenti obsoleti soltanto dopo avere integrato il backlog valido in questo file.
 
 ## TASK L1 — Acquisizione modello
 
