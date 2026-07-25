@@ -1,4 +1,4 @@
-# Props24 — Metodologia di lavoro con chat separate, GitHub e collaudo locale
+# Props24 — Metodologia di lavoro con chat separate, GitHub gestito dall’utente e collaudo locale
 
 ## Scopo
 
@@ -17,6 +17,37 @@ L’utente resta il proprietario del progetto e l’unico soggetto che autorizza
 - l’apertura o la modifica di una pull request;
 - il merge nel branch principale;
 - l’eventuale modifica di questa metodologia.
+
+Inoltre, l’utente è l’unico soggetto che applica materialmente le modifiche ai file del progetto e compie operazioni Git o GitHub di scrittura.
+
+## Modalità operativa senza scritture GitHub delle chat
+
+Per mantenere i permessi critici sotto il controllo dell’utente:
+
+- nessuna chat crea, modifica o elimina file nel repository remoto;
+- nessuna chat crea branch, commit, tag o pull request;
+- nessuna chat esegue push, force push, rebase o merge;
+- nessuna chat modifica direttamente `main` o un branch task;
+- le chat possono leggere GitHub e analizzare branch, commit, diff e pull request già creati dall’utente;
+- quando una modifica è autorizzata, la Chat Esecutore prepara la modifica e consegna all’utente un tutorial applicativo preciso;
+- l’utente applica le modifiche, crea il branch, esegue commit e push e, quando necessario, apre o aggiorna la pull request;
+- dopo il push dell’utente, tutte le revisioni devono basarsi sul branch e sul commit SHA remoto comunicati dall’utente.
+
+Il tutorial dell’Esecutore deve indicare:
+
+1. branch base consigliato;
+2. nome del branch task consigliato;
+3. file da creare, modificare o eliminare;
+4. per ogni file, posizione esatta e modifica completa da applicare;
+5. comandi tecnici da eseguire;
+6. risultati attesi;
+7. controlli sul working tree;
+8. messaggio di commit consigliato;
+9. comandi Git suggeriti per branch, commit e push;
+10. titolo e descrizione della draft PR, quando necessaria;
+11. divieto di merge finché la task non è approvata.
+
+Le istruzioni successive che attribuiscono all’Esecutore una scrittura Git o GitHub devono essere interpretate secondo questa modalità: l’Esecutore prepara e verifica la modifica, mentre l’utente la applica e pubblica.
 
 Lo scopo della separazione è evitare che una singola chat:
 
@@ -115,7 +146,7 @@ Il ruolo non cambia perché una task sembra semplice o perché una correzione ap
 
 La lettura e l’analisi possono essere svolte quando richieste.
 
-Le azioni di scrittura richiedono invece un’autorizzazione esplicita:
+Le azioni di scrittura richiedono un’autorizzazione esplicita e vengono comunque eseguite materialmente dall’utente:
 
 - creare branch;
 - modificare file;
@@ -225,7 +256,7 @@ La Chat Amministratore non deve:
 
 Può leggere GitHub e confrontare branch o commit.
 
-Può scrivere un documento fuori dal repository soltanto quando l’utente chiede esplicitamente di prepararlo; l’inserimento nel repository resta compito dell’Esecutore.
+Può scrivere un documento fuori dal repository soltanto quando l’utente chiede esplicitamente di prepararlo; l’inserimento nel repository resta compito dell’utente.
 
 ## 3.3 Input minimo
 
@@ -336,7 +367,7 @@ COLLAUDO BLOCCATO
 
 ---
 
-# 4. Ruolo 2 — Chat Esecutore GitHub
+# 4. Ruolo 2 — Chat Esecutore / Preparatore delle modifiche
 
 ## 4.1 Responsabilità
 
@@ -344,27 +375,17 @@ La Chat Esecutore:
 
 - legge il prompt approvato;
 - verifica repository e branch base;
-- sincronizza il branch base;
-- controlla il working tree;
-- crea il branch richiesto;
 - legge soltanto il contesto necessario;
-- modifica esclusivamente i file autorizzati;
-- applica la correzione minima;
-- esegue i test indicati;
-- crea commit comprensibili;
-- effettua push del branch;
-- apre una draft pull request quando richiesto;
-- restituisce branch, SHA, PR e report;
-- applica eventuali prompt correttivi nello stesso branch;
-- aggiorna `docs/implementazioni.md` soltanto dopo un prompt esplicito.
+- prepara modifiche esclusivamente per i file autorizzati;
+- applica la correzione minima in un ambiente locale o in artefatti consegnabili, senza scrivere sul repository remoto;
+- esegue i test indicati quando dispone di un checkout locale adatto;
+- prepara un tutorial completo per permettere all’utente di applicare le modifiche;
+- propone nome del branch, messaggio di commit e contenuto della draft pull request;
+- restituisce file preparati, istruzioni, comandi, test e report;
+- prepara eventuali correzioni riferendosi allo stesso branch task creato dall’utente;
+- prepara l’aggiornamento di `docs/implementazioni.md` soltanto dopo un prompt esplicito.
 
-L’Esecutore può operare tramite:
-
-- GitHub;
-- Codex con repository locale;
-- terminale Git locale collegato al remoto.
-
-In ogni caso il risultato deve essere visibile nel repository remoto.
+L’Esecutore può leggere GitHub e può operare su una copia locale o su file separati. Il risultato diventa condiviso soltanto dopo che l’utente lo ha applicato e pushato nel repository remoto.
 
 ## 4.2 Azioni vietate
 
@@ -377,6 +398,10 @@ La Chat Esecutore non deve:
 - correggere debito tecnico fuori scope;
 - cambiare dipendenze senza autorizzazione;
 - modificare `main`;
+- creare branch sul remoto;
+- creare commit o tag;
+- eseguire push;
+- aprire o aggiornare pull request;
 - fare force push;
 - fare rebase distruttivi;
 - fare merge;
@@ -385,9 +410,9 @@ La Chat Esecutore non deve:
 - eseguire un collaudo browser sostituendosi alla Chat Desktop;
 - proseguire dopo tre tentativi falliti.
 
-## 4.3 Preparazione del branch
+## 4.3 Tutorial per la preparazione del branch
 
-Prima di modificare:
+L’Esecutore deve fornire all’utente questi comandi, adattati al branch base reale:
 
 ```bash
 git fetch origin
@@ -399,16 +424,24 @@ git switch -c <branch-task>
 
 Se il branch base non è `main`, usare quello indicato nel prompt.
 
-Se il working tree contiene modifiche non previste:
+Se l’utente segnala che il working tree contiene modifiche non previste:
 
 - non cancellarle;
 - non nasconderle automaticamente;
 - non includerle nel commit;
 - fermarsi quando impediscono di isolare la task.
 
-## 4.4 Commit
+## 4.4 Modifica dei file e commit suggerito
 
-I commit devono essere piccoli e descrittivi.
+Per ciascun file l’Esecutore deve consegnare una delle seguenti forme:
+
+- file completo, quando è nuovo o la sostituzione integrale è più sicura;
+- patch precisa con contesto sufficiente;
+- istruzioni puntuali con simbolo, funzione o blocco da sostituire, senza formule vaghe come “aggiungilo sotto”.
+
+Deve anche indicare come verificare che la modifica sia stata applicata correttamente.
+
+I commit suggeriti devono essere piccoli e descrittivi.
 
 Formato consigliato:
 
@@ -437,15 +470,15 @@ fix stuff
 final
 ```
 
-## 4.5 Push e pull request
+## 4.5 Push e pull request eseguiti dall’utente
 
-Dopo i test:
+L’Esecutore suggerisce all’utente, dopo l’applicazione e i test:
 
 ```bash
 git push -u origin <branch-task>
 ```
 
-Quando richiesto, aprire una draft PR verso il branch base.
+Quando richiesta, l’Esecutore prepara titolo e descrizione della draft PR; l’utente la apre verso il branch base.
 
 La PR deve riportare:
 
@@ -466,8 +499,8 @@ Il report deve contenere esclusivamente:
 1. repository;
 2. branch base;
 3. branch task;
-4. commit SHA;
-5. pull request;
+4. commit SHA: `DA FORNIRE DALL’UTENTE DOPO IL PUSH`;
+5. pull request: `DA APRIRE DALL’UTENTE`, se prevista;
 6. file letti;
 7. file modificati;
 8. riepilogo delle modifiche;
@@ -477,10 +510,10 @@ Il report deve contenere esclusivamente:
 12. warning;
 13. limiti e non verificato;
 14. stato del working tree;
-15. conferma push;
-16. conferma che non è stato eseguito merge.
+15. tutorial di branch, commit e push consegnato;
+16. conferma che la chat non ha eseguito scritture GitHub o merge.
 
-Non deve incollare file completi quando sono leggibili da GitHub.
+Deve consegnare i file completi quando sono nuovi o quando una sostituzione integrale è più sicura; negli altri casi può consegnare patch precise.
 
 ## 4.7 Gestione dei fallimenti
 
@@ -498,7 +531,7 @@ Dopo il terzo fallimento:
 - fermarsi;
 - non ampliare lo scope;
 - non avviare un quarto tentativo;
-- pushare soltanto se il prompt lo consente e lo stato è chiaramente dichiarato;
+- indicare chiaramente se lo stato preparato è incompleto e non deve essere applicato;
 - riportare errore, stack, file coinvolti e cosa resta da capire;
 - attendere un nuovo prompt della Chat Amministratore.
 
@@ -509,11 +542,11 @@ Un prompt correttivo usa lo stesso branch.
 L’Esecutore deve:
 
 - verificare lo SHA corrente;
-- applicare soltanto il fix richiesto;
-- creare un nuovo commit;
-- non riscrivere la cronologia;
-- pushare senza force;
-- riportare il nuovo SHA.
+- preparare soltanto il fix richiesto;
+- indicare i file e i blocchi da aggiornare;
+- proporre un nuovo messaggio di commit;
+- ricordare all’utente di non riscrivere la cronologia e di pushare senza force;
+- attendere il nuovo SHA fornito dall’utente.
 
 La Chat Amministratore revisiona l’intera differenza branch-base, non soltanto l’ultimo commit.
 
@@ -722,14 +755,23 @@ L’utente trasferisce il prompt nella chat esecutiva.
 
 La Chat Esecutore:
 
+1. legge il branch base e il contesto autorizzato;
+2. prepara le modifiche ai soli file autorizzati;
+3. esegue i test possibili sul proprio ambiente;
+4. consegna file o patch e un tutorial applicativo completo;
+5. propone branch, commit e draft PR;
+6. restituisce il report senza scrivere su GitHub.
+
+L’utente:
+
 1. sincronizza il branch base;
 2. crea il branch task;
-3. modifica i soli file autorizzati;
-4. esegue test;
+3. applica le modifiche indicate;
+4. esegue i test indicati;
 5. crea commit;
-6. pusha il branch;
-7. apre draft PR se richiesto;
-8. restituisce il report.
+6. esegue push;
+7. apre o aggiorna la draft PR, se richiesta;
+8. comunica branch, SHA, PR e risultati alla Chat Amministratore.
 
 ## Fase 4 — Revisione statica
 
@@ -759,15 +801,16 @@ Quando il collaudo trova un difetto:
 
 1. la Chat Amministratore verifica il finding;
 2. scrive un prompt correttivo;
-3. l’Esecutore crea un nuovo commit nello stesso branch;
-4. la Chat Amministratore revisiona;
-5. il Collaudatore ripete il test sul nuovo SHA.
+3. l’Esecutore prepara il fix per lo stesso branch;
+4. l’utente applica il fix, crea un nuovo commit e pusha;
+5. la Chat Amministratore revisiona il nuovo SHA;
+6. il Collaudatore ripete il test sul nuovo SHA.
 
 ## Fase 7 — Aggiornamento del piano
 
 Dopo `APPROVATO FINALE`, la Chat Amministratore prepara un prompt documentale.
 
-La Chat Esecutore aggiorna soltanto:
+La Chat Esecutore prepara l’aggiornamento del solo file:
 
 ```txt
 docs/implementazioni.md
@@ -783,7 +826,7 @@ L’aggiornamento deve:
 - non aggiungere una cronologia estesa;
 - non dichiarare concluso ciò che non è stato collaudato.
 
-Il commit documentale viene pushato nello stesso branch.
+L’utente applica l’aggiornamento e pusha il commit documentale nello stesso branch.
 
 ## Fase 8 — Revisione finale e merge
 
@@ -1012,7 +1055,22 @@ Test
 Divieti
 ```
 
-## 11.2 Dall’Esecutore alla Chat Amministratore
+## 11.2 Dall’Esecutore all’utente
+
+Trasferire:
+
+```txt
+File completi o patch
+Posizione esatta di ogni modifica
+Tutorial di applicazione
+Comandi di test
+Branch suggerito
+Commit suggerito
+Draft PR suggerita
+Report
+```
+
+## 11.3 Dall’utente alla Chat Amministratore
 
 Trasferire:
 
@@ -1024,7 +1082,7 @@ PR
 Report
 ```
 
-## 11.3 Dalla Chat Amministratore al Collaudatore
+## 11.4 Dalla Chat Amministratore al Collaudatore
 
 Trasferire:
 
@@ -1039,7 +1097,7 @@ Stato finale richiesto
 Divieti
 ```
 
-## 11.4 Dal Collaudatore alla Chat Amministratore
+## 11.5 Dal Collaudatore alla Chat Amministratore
 
 Trasferire:
 
@@ -1079,20 +1137,25 @@ Per ogni richiesta:
 Non cambiare ruolo durante la conversazione.
 ```
 
-## 12.2 Chat Esecutore GitHub
+## 12.2 Chat Esecutore / Preparatore delle modifiche
 
 ```txt
-Ruolo permanente: Esecutore GitHub del progetto Props24.
+Ruolo permanente: Esecutore e preparatore delle modifiche del progetto Props24.
 
 Esegui soltanto prompt approvati dalla Chat Amministratore.
-Puoi creare branch, modificare file autorizzati, eseguire test, creare commit,
-pushare il branch e aprire draft PR.
+Puoi preparare modifiche ai file autorizzati ed eseguire test in un ambiente locale.
+Devi consegnare all’utente file completi o patch, posizioni esatte, comandi di test
+e un tutorial per creare branch, commit, push e draft PR.
+
+Non eseguire scritture sul repository GitHub.
+Non creare branch, commit, tag o pull request.
+Non eseguire push, force push, rebase o merge.
+L’applicazione delle modifiche e tutte le operazioni Git/GitHub di scrittura
+spettano esclusivamente all’utente.
 
 Non decidere requisiti.
 Non ampliare lo scope.
 Non modificare main.
-Non fare force push.
-Non fare merge.
 Non approvare il tuo lavoro.
 Non eseguire il collaudo browser.
 Non aggiornare docs/implementazioni.md senza un prompt esplicito successivo
@@ -1177,19 +1240,20 @@ Prima del merge:
 
 ```txt
 [ ] Prompt approvato
-[ ] Branch base aggiornato
-[ ] Working tree controllato
-[ ] Branch corretto creato
-[ ] Solo file autorizzati modificati
+[ ] Branch base e stato remoto verificati in lettura
+[ ] Solo file autorizzati preparati
 [ ] Nessuna dipendenza non richiesta
 [ ] Test eseguiti
 [ ] Massimo tre tentativi
-[ ] Commit descrittivo
-[ ] Branch pushato
-[ ] Draft PR aperta quando richiesta
-[ ] SHA riportato
+[ ] File completi o patch consegnati
+[ ] Posizioni di modifica precise
+[ ] Tutorial applicativo completo
+[ ] Branch e commit suggeriti
+[ ] Draft PR preparata quando richiesta
+[ ] SHA richiesto all’utente dopo il push
 [ ] Nessun force push
 [ ] Nessun merge
+[ ] Nessuna scrittura GitHub eseguita dalla chat
 ```
 
 ---
@@ -1279,8 +1343,11 @@ UTENTE
 CHAT AMMINISTRATORE
   ↓ analisi e prompt
 
-CHAT ESECUTORE GITHUB
-  ↓ branch → codice → test → commit → push → draft PR
+CHAT ESECUTORE
+  ↓ prepara file/patch → test possibili → tutorial applicativo
+
+UTENTE
+  ↓ applica modifiche → branch → test → commit → push → draft PR
 
 CHAT AMMINISTRATORE
   ↓ revisione statica
@@ -1296,7 +1363,10 @@ CHAT AMMINISTRATORE
   ↓ prompt aggiornamento piano
 
 CHAT ESECUTORE
-  ↓ aggiornamento docs/implementazioni.md → commit → push
+  ↓ prepara aggiornamento docs/implementazioni.md
+
+UTENTE
+  ↓ applica aggiornamento → commit → push
 
 CHAT AMMINISTRATORE
   ↓ revisione finale
