@@ -1,5 +1,5 @@
 import { ChevronDown, PlusCircle, CloudUpload } from 'lucide-react';
-import { Toggle } from '../ui/Toggle';
+import { ToggleGroup } from '../ui/ToggleGroup';
 import { Dropdown } from '../ui/Dropdown';
 import type { DropdownItem } from '../ui/Dropdown';
 import { useNavigate } from 'react-router-dom';
@@ -23,15 +23,17 @@ export function PageHeader({ activeTab, onTabChange }: PageHeaderProps) {
     ];
 
     return (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             {/* Left — Title */}
-            <h1 className="text-2xl font-normal text-gray-700">Inquilini</h1>
+            <h1 className="text-2xl font-normal text-gray-700 shrink-0">Inquilini</h1>
 
-            {/* Center + Right on mobile stacked, on desktop inline */}
-            <div className="flex items-center gap-3 flex-wrap">
-                {/* Toggle Attivi/Archivio */}
-                <Toggle options={toggleOptions} activeId={activeTab} onChange={onTabChange} />
+            {/* Center — Toggle Attivi / Archivio */}
+            <div className="w-full sm:w-64">
+                <ToggleGroup options={toggleOptions} activeId={activeTab} onChange={onTabChange} />
+            </div>
 
+            {/* Right — Nuovo inquilino */}
+            <div className="flex justify-end shrink-0">
                 {/* Dropdown "Nuovo inquilino" */}
                 <Dropdown
                     trigger={

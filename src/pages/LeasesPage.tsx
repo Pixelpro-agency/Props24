@@ -16,6 +16,7 @@ import { LeaseLifecycleModal, type LeaseLifecycleOperation } from '../components
 import { LeaseBulkActionModal, type LeaseBulkOperation } from '../components/lease-detail/LeaseBulkActionModal';
 import { LeaseEmailModal } from '../components/lease-detail/LeaseEmailModal';
 import { LeaseCsvModal } from '../components/lease-detail/LeaseCsvModal';
+import { ToggleGroup } from '../components/ui/ToggleGroup';
 
 const statusConfig = {
     current: { label: 'ATTIVA', className: 'bg-green-600 text-white' },
@@ -75,6 +76,10 @@ function MenuSeparator() {
 
 const menuActionClass = 'flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none data-focus:bg-gray-50';
 const destructiveMenuActionClass = 'flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50 focus:bg-red-50 focus:outline-none data-focus:bg-red-50';
+const leaseToggleOptions = [
+    { id: 'active', label: 'Attivi', icon: 'check' as const },
+    { id: 'archive', label: 'Archivio', icon: 'archive' as const },
+];
 
 function formatDate(value: string): string {
     if (!value) return '-';
@@ -169,23 +174,25 @@ export function LeasesPage() {
             transition={{ duration: 0.3 }}
             className="min-h-[344px] max-w-full px-2 py-4 sm:px-4 sm:py-6 lg:px-6"
         >
-            <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="shrink-0">
                     <h1 className="text-2xl font-semibold text-gray-900">Locazioni</h1>
                     <p className="text-sm text-gray-500">Elenco collegato al database locale props24.</p>
                 </div>
-                <Link to="/leases/new" className="inline-flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
-                    <Plus className="h-4 w-4" /> Nuova locazione
-                </Link>
-            </div>
 
-            <div className="mb-4 flex gap-2 border-b border-gray-200">
-                <button type="button" onClick={() => setActiveTab('active')} className={`border-b-2 px-4 py-2 text-sm font-medium ${activeTab === 'active' ? 'border-green-600 text-green-700' : 'border-transparent text-gray-500'}`}>
-                    Locazioni
-                </button>
-                <button type="button" onClick={() => setActiveTab('archive')} className={`border-b-2 px-4 py-2 text-sm font-medium ${activeTab === 'archive' ? 'border-green-600 text-green-700' : 'border-transparent text-gray-500'}`}>
-                    Archivio
-                </button>
+                <div className="w-full sm:w-64">
+                    <ToggleGroup
+                        options={leaseToggleOptions}
+                        activeId={activeTab}
+                        onChange={(id) => setActiveTab(id as 'active' | 'archive')}
+                    />
+                </div>
+
+                <div className="flex justify-end shrink-0">
+                    <Link to="/leases/new" className="inline-flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
+                        <Plus className="h-4 w-4" /> Nuova locazione
+                    </Link>
+                </div>
             </div>
 
             <div className="mb-4 grid gap-3 rounded-lg border border-gray-200 bg-white p-4 md:grid-cols-6">
