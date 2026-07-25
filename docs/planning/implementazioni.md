@@ -35,35 +35,37 @@ Prima di trasformare una voce in prompt esecutivo, verificarla nuovamente sul co
 
 Ogni prompt deve seguire:
 
-- `docs/Metodologia/metodologia-lavoro-props24.md`;
-- `docs/Metodologia/metodologia-prompt-esecutivo-props24.md`.
+- `docs/Metodologia/ruoli-e-flusso-operativo-props24.md`;
+- `docs/Metodologia/regole-prompt-esecutivi-props24.md`.
 
 Regole minime:
 
 - una sola task verificabile;
-- modalità operativa esplicita, scelta esclusivamente tra:
-  - `GITHUB_READ_ONLY`: analisi o revisione statica senza modifica dei file;
-  - `DESKTOP_ESECUTORE`: preparazione o applicazione locale delle modifiche autorizzate e test tecnici, senza scritture GitHub da parte della chat;
-  - `DESKTOP_COLLAUDATORE`: collaudo browser sul branch e sullo SHA approvati, senza modifica del codice;
+- Chat Analisi responsabile di analisi, prompt e revisione;
+- modalità Desktop esplicita, scelta tra:
+  - `DESKTOP_ESECUTORE`: modifica locale dei soli file autorizzati e controlli tecnici;
+  - `DESKTOP_COLLAUDATORE`: collaudo locale indipendente senza modifica dei file;
 - file modificabili e file consultabili separati;
 - nessun refactor fuori scope;
 - massimo tre tentativi ragionati;
 - test tecnici mirati;
-- branch, commit e diff remota come fonte ordinaria delle modifiche;
-- `fileModificati.md` non deve essere generato né committato normalmente;
-- `fileModificati.md` può essere richiesto esplicitamente dalla Chat Amministratore come fallback quando GitHub non è temporaneamente accessibile o per modifiche locali non ancora pubblicate;
-- Git e GitHub in scrittura riservati all’utente.
+- `fileModificati.md` obbligatorio e sovrascritto per ogni `DESKTOP_ESECUTORE`;
+- `fileModificati.md` non richiesto per `DESKTOP_COLLAUDATORE`;
+- nessun commit o push eseguito da Desktop;
+- revisione locale della Chat Analisi prima della pubblicazione;
+- commit e push su `main` eseguiti dall’utente soltanto dopo l’approvazione;
+- branch separati e pull request soltanto quando richiesti esplicitamente.
 
 Flusso Git, revisione e collaudo:
 
-1. l’utente crea il branch task;
-2. l’utente applica le modifiche;
-3. vengono eseguiti i test tecnici;
-4. l’utente crea commit e push sul branch task;
-5. la Chat Amministratore revisiona branch, SHA e diff remota;
-6. quando necessario, il Collaudatore verifica lo SHA approvato staticamente;
-7. eventuali fix producono nuovi commit e un nuovo SHA;
-8. soltanto il merge richiede `APPROVATO FINALE` e l’autorizzazione esplicita dell’utente.
+1. la Chat Analisi delimita la task e prepara il prompt;
+2. l’utente prepara localmente `main` e consegna il prompt a Desktop;
+3. Desktop Esecutore modifica i file, esegue i controlli e crea `fileModificati.md`;
+4. la Chat Analisi revisiona l’intero stato locale tramite l’artefatto e il report;
+5. eventuali fix usano un nuovo prompt `DESKTOP_ESECUTORE` e sovrascrivono l’artefatto;
+6. quando necessario, un prompt separato `DESKTOP_COLLAUDATORE` esegue il collaudo;
+7. soltanto dopo l’approvazione la Chat Analisi fornisce i comandi finali;
+8. l’utente elimina l’artefatto temporaneo, crea il commit e fa push su `main`.
 
 Non:
 
