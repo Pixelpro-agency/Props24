@@ -46,7 +46,11 @@ export function classifyLease(lease: LeaseRecord, referenceDate = todayIso()): L
 }
 
 export function isLeaseCurrentlyActive(lease: LeaseRecord, referenceDate = todayIso()): boolean {
-    return classifyLease(lease, referenceDate) === 'current';
+    if (lease.archived || lease.status !== 'attiva') return false;
+    if (!isValidIsoDate(lease.startDate) || !isValidIsoDate(lease.endDate) || !isValidIsoDate(referenceDate)) return false;
+    if (lease.startDate > referenceDate) return false;
+    if (lease.endDate >= referenceDate) return true;
+    return lease.formData.LeaseRinnovoTacito === true;
 }
 
 export function isPaymentOverdue(payment: PaymentRecord, referenceDate = todayIso()): boolean {
@@ -151,7 +155,7 @@ function occupiedDaysForYear(leases: LeaseRecord[], year: number): number {
         .filter((lease) => !lease.archived && (lease.status === 'attiva' || lease.status === 'terminata'))
         .forEach((lease) => {
             if (!isValidIsoDate(lease.startDate) || !isValidIsoDate(lease.endDate)) return;
-            let cursor = new Date(`${lease.startDate > startYear ? lease.startDate : startYear}T00:00:00Z`);
+            const cursor = new Date(`${lease.startDate > startYear ? lease.startDate : startYear}T00:00:00Z`);
             const end = new Date(`${lease.endDate < endYear ? lease.endDate : endYear}T00:00:00Z`);
             while (cursor <= end) {
                 days.add(cursor.toISOString().slice(0, 10));

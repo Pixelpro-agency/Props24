@@ -37,7 +37,7 @@ export function MenuItem({
     const activeState = isActive || isRouteActive;
 
     const baseClasses = clsx(
-        "w-full flex items-center py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 group",
+        "group flex w-full items-center rounded-md py-1.5 text-[13px] font-medium transition-colors duration-150",
         paddingLeft,
         isMissingRoute
             ? 'missing-route border'
@@ -71,7 +71,7 @@ export function MenuItem({
             {item.icon && (
                 <item.icon
                     className={clsx(
-                        "w-5 h-5 mr-3 shrink-0",
+                        "mr-2.5 h-4 w-4 shrink-0",
                         activeState ? "text-brand-blue" : "text-slate-400 group-hover:text-slate-600"
                     )}
                     style={isMissingRoute ? { color: '#ca8a04' } : undefined}
@@ -92,6 +92,7 @@ export function MenuItem({
                 {item.quickAdd && !item.quickAddActions && (
                     <div className="relative group/tooltip flex items-center justify-center">
                         <button
+                            type="button"
                             onClick={handleQuickAdd}
                             aria-label="Nuovo"
                             className={clsx(
@@ -116,6 +117,7 @@ export function MenuItem({
                 {item.quickAddActions && item.quickAddActions.map((action, idx) => (
                     <div key={idx} className="relative group/tooltip flex items-center justify-center">
                         <button
+                            type="button"
                             onClick={(e) => handleQuickAddAction(e, action.href)}
                             aria-label={action.tooltip}
                             className={clsx(
@@ -140,6 +142,7 @@ export function MenuItem({
                 {item.ellipsis && (
                     <div className="relative group/ellipsis flex items-center justify-center">
                         <button
+                            type="button"
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                             aria-label="Altre opzioni"
                             className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:text-brand-blue text-slate-400 focus:opacity-100 rounded-full"
@@ -170,7 +173,13 @@ export function MenuItem({
     // Se ha figli -> bottone per aprire l'accordion
     if (hasChildren) {
         return (
-            <button onClick={onToggle} className={baseClasses}>
+            <button
+                type="button"
+                aria-expanded={isExpanded}
+                aria-label={`${item.label}: ${isExpanded ? 'chiudi' : 'apri'} sottomenu`}
+                onClick={onToggle}
+                className={baseClasses}
+            >
                 {content}
             </button>
         );

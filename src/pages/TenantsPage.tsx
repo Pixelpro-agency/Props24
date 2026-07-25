@@ -78,10 +78,12 @@ export function TenantsPage() {
         if (sendingInviteId) return;
         setSendingInviteId(tenantId);
         try {
+            // TODO: collegare questa azione a un servizio backend/email reale.
+            // Per ora viene registrato soltanto lo stato locale dell'invito.
             sendTenantInvite(tenantId);
             setToast({
-                title: 'Successo',
-                message: "L'invito è stato inviato.\nChiedi al tuo locatario (inquilino) di leggere l'email e cliccare sul link di invito per accettarlo.",
+                title: 'Invito registrato',
+                message: "Lo stato dell'invito è stato aggiornato localmente. L'invio dell'email non è ancora disponibile.",
             });
         } catch (error) {
             setToast({

@@ -4,7 +4,7 @@ import { resetLocalSignatureProcess, startLocalSignatureProcess } from '../../db
 import type { LeaseDetail } from '../../types/leaseDetail';
 import { Button } from '../ui/Button';
 import { Modal } from '../property-form/ui/Modal';
-import { errorMessage, formatDate, type ToastHandler } from './shared';
+import { errorMessage, type ToastHandler } from './shared';
 import { LeaseSignaturePadModal } from './signature/LeaseSignaturePadModal';
 
 interface Props {
@@ -17,6 +17,7 @@ export function LeaseSignatureTab({ detail, notify }: Props) {
     const [resetOpen, setResetOpen] = useState(false);
     const [resetError, setResetError] = useState('');
     const process = detail.lease.signatureProcess;
+    const snapshotDocument = process ? detail.documents.find((document) => document.id === process.contractDocumentId) : null;
 
     const start = () => {
         try {
@@ -45,18 +46,19 @@ export function LeaseSignatureTab({ detail, notify }: Props) {
             {!process ? <Button type="button" onClick={start}>Avvia firma locale</Button> : (
                 <>
                     <div className="grid gap-2 md:grid-cols-3">
-                        <p>Stato<br /><b>{process.status}</b></p>
-                        <p>Snapshot contratto<br /><b>{process.contractDocumentId}</b></p>
+                        <p>Stato<br /><b>{process.status === 'completed' ? 'Completata' : 'In corso'}</b></p>
+                        <p>Snapshot contratto<br /><b>{snapshotDocument ? snapshotDocument.title || 'Snapshot contratto' : 'Snapshot non disponibile'}</b></p>
                         <p>Completata<br /><b>{process.completedAt ? new Date(process.completedAt).toLocaleString('it-IT') : '-'}</b></p>
                     </div>
                     <div className="divide-y rounded border">
                         {process.signers.map((item) => (
                             <div key={item.key} className="flex flex-wrap items-center justify-between gap-3 p-3">
-                                <span>{item.nameSnapshot} - {item.role}<br /><span className="text-xs text-gray-500">{item.status === 'signed' && item.signedAt ? formatDate(item.signedAt.slice(0, 10)) : 'Da firmare'}</span></span>
+                                <span>{item.nameSnapshot} - {item.role === 'landlord' ? 'Locatore' : item.role === 'tenant' ? 'Inquilino' : 'Garante'}<br /><span className="text-xs text-gray-500">{item.status === 'signed' ? `Firmato${item.signedAt ? ` — ${new Date(item.signedAt).toLocaleString('it-IT')}` : ''}` : 'Da firmare'}</span>{item.signatureDataUrl && <img src={item.signatureDataUrl} alt={`Firma di ${item.nameSnapshot}`} className="mt-2 max-h-16 max-w-48 rounded border bg-white object-contain p-1" />}</span>
                                 {item.status === 'pending' && <Button type="button" size="sm" onClick={() => setSigner(item)}>Firma</Button>}
                             </div>
                         ))}
                     </div>
+                    {process.status === 'completed' && <p className="rounded border border-green-200 bg-green-50 p-3 text-green-800">Tutti i firmatari hanno completato la firma locale.</p>}
                     <Button type="button" variant="secondary" onClick={() => setResetOpen(true)}>Annulla procedura</Button>
                 </>
             )}

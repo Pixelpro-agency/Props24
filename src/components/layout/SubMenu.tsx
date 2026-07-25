@@ -19,7 +19,7 @@ export function SubMenu({ items, isExpanded, onNavigate }: SubMenuProps) {
                     transition={{ duration: 0.2, ease: 'easeInOut' }}
                     className="overflow-hidden"
                 >
-                    <div className="py-1 ml-4 pl-2 border-l border-gray-200 mt-1 mb-2 space-y-0.5">
+                    <div className="mb-1 ml-3 mt-0.5 space-y-0 border-l border-gray-200 py-0.5 pl-2">
                         {items.map(child => (
                             <MenuItem
                                 key={child.id}

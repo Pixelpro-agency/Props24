@@ -2,6 +2,7 @@ import type { LeaseRecord, LocalDatabase, PaymentRecord } from './database.types
 import { classifyLease, todayIso } from './dataSelectors';
 import { generateId, getJsonDb, saveJsonDb } from './jsonDb';
 import { LeaseDepositError, LeaseNotFoundError, LeasePaymentNotFoundError, LeasePaymentOperationError, LeasePrepaidRentError } from './databaseErrors';
+import { billingPeriodStep, firstStandardPeriodEndDate } from '../landlord/leases/schema/leaseFormSchema';
 
 export interface LeasePaymentPeriod {
     startDate: string;
@@ -22,6 +23,10 @@ export function addDays(value: string, days: number): string {
     const date = parseDate(value);
     date.setUTCDate(date.getUTCDate() + days);
     return iso(date);
+}
+
+export function generationDateForPayment(dueDate: string, offsetDays: number): string {
+    return addDays(dueDate, offsetDays);
 }
 
 function lastDayOfMonth(year: number, monthIndex: number): number {
@@ -48,17 +53,22 @@ function addMonths(value: string, months: number): string {
 }
 
 function periodStep(lease: LeaseRecord): { days?: number; months?: number } {
-    if (lease.billingPeriod === 'weekly') return { days: 7 };
-    if (lease.billingPeriod === 'biweekly') return { days: 14 };
-    if (lease.billingPeriod === 'quarterly') return { months: 3 };
-    if (lease.billingPeriod === 'semiannual') return { months: 6 };
-    if (lease.billingPeriod === 'annual') return { months: 12 };
-    return { months: 1 };
+    return billingPeriodStep(lease.billingPeriod);
 }
 
-function nextPeriodStart(start: string, lease: LeaseRecord): string {
+function nextPeriodStart(start: string, lease: LeaseRecord, alignToReceiptPeriodDay: boolean): string {
     const step = periodStep(lease);
-    return step.days ? addDays(start, step.days) : addMonths(start, step.months || 1);
+    if (step.days) return addDays(start, step.days);
+    if (!alignToReceiptPeriodDay) return addMonths(start, step.months || 1);
+    const source = parseDate(start);
+    const target = new Date(Date.UTC(source.getUTCFullYear(), source.getUTCMonth() + (step.months || 1), 1));
+    return preferredDayInMonth(target.getUTCFullYear(), target.getUTCMonth(), lease.formData.LeaseReceiptPeriodDay);
+}
+
+function isValidIsoDate(value: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = parseDate(value);
+    return !Number.isNaN(date.getTime()) && iso(date) === value;
 }
 
 function scheduleHorizon(lease: LeaseRecord, referenceDate: string): string {
@@ -83,15 +93,19 @@ export function buildLeasePaymentPeriods(lease: LeaseRecord, referenceDate = tod
     const horizon = scheduleHorizon(lease, referenceDate);
     let cursor = lease.startDate;
     let index = 0;
+    let hasValidFirstBillPeriod = false;
 
-    if (lease.formData.LeaseFirstBill) {
-        const firstEnd = clampIsoDate(lease.formData.LeaseFirstBillEndDate, lease.startDate, horizon);
+    const firstEnd = lease.formData.LeaseFirstBillEndDate;
+    const standardEnd = firstStandardPeriodEndDate(lease.startDate, lease.billingPeriod);
+    if (lease.formData.LeaseFirstBill && isValidIsoDate(firstEnd) && firstEnd >= lease.startDate
+        && firstEnd <= horizon && Boolean(standardEnd) && firstEnd <= standardEnd) {
         periods.push({ startDate: lease.startDate, endDate: firstEnd, index: index++, isFirstCustomPeriod: true });
         cursor = addDays(firstEnd, 1);
+        hasValidFirstBillPeriod = true;
     }
 
     while (cursor <= horizon) {
-        const nextStart = nextPeriodStart(cursor, lease);
+        const nextStart = nextPeriodStart(cursor, lease, hasValidFirstBillPeriod);
         const endDate = clampIsoDate(addDays(nextStart, -1), cursor, horizon);
         periods.push({ startDate: cursor, endDate, index: index++, isFirstCustomPeriod: false });
         cursor = addDays(endDate, 1);
@@ -143,7 +157,10 @@ function makePayment(lease: LeaseRecord, period: LeasePaymentPeriod, referenceDa
 }
 
 export function buildLeasePaymentSchedule(lease: LeaseRecord, referenceDate = todayIso()): PaymentRecord[] {
-    return buildLeasePaymentPeriods(lease, referenceDate).map((period) => makePayment(lease, period, referenceDate));
+    const offsetDays = lease.formData.LeasePaymentCreateOffsetDays ?? 0;
+    return buildLeasePaymentPeriods(lease, referenceDate)
+        .map((period) => makePayment(lease, period, referenceDate))
+        .filter((payment) => generationDateForPayment(payment.dueDate, offsetDays) <= referenceDate);
 }
 
 export function isGeneratedRentPayment(payment: PaymentRecord): boolean {
@@ -181,9 +198,24 @@ export function ensureLeasePaymentSchedule(database: LocalDatabase, lease: Lease
     return { ...database, payments: [...database.payments, ...missing] };
 }
 
+function shouldEnsureLeasePaymentSchedule(lease: LeaseRecord, referenceDate: string): boolean {
+    if (lease.archived || lease.status !== 'attiva') return false;
+
+    const temporalStatus = classifyLease(lease, referenceDate);
+    if (temporalStatus === 'current' || temporalStatus === 'future') return true;
+    if (lease.formData.LeaseRinnovoTacito) return true;
+
+    const rawOffset = lease.formData.LeasePaymentCreateOffsetDays;
+    const offsetDays = Number.isFinite(rawOffset) ? rawOffset : 0;
+    if (offsetDays <= 0) return false;
+
+    const lastPossibleGenerationDate = generationDateForPayment(lease.endDate, offsetDays);
+    return referenceDate <= lastPossibleGenerationDate;
+}
+
 export function ensureAllLeasePaymentSchedules(database: LocalDatabase, referenceDate = todayIso()): LocalDatabase {
     return database.leases
-        .filter((lease) => !lease.archived && lease.status === 'attiva' && lease.formData.LeaseRinnovoTacito && ['current', 'future'].includes(classifyLease(lease, referenceDate)))
+        .filter((lease) => shouldEnsureLeasePaymentSchedule(lease, referenceDate))
         .reduce((next, lease) => ensureLeasePaymentSchedule(next, lease, referenceDate), database);
 }
 
@@ -325,11 +357,23 @@ export function markPaymentUnpaid(id: string): PaymentRecord {
 }
 
 export function ensureLeaseDepositPayment(database: LocalDatabase, lease: LeaseRecord, referenceDate = todayIso()): LocalDatabase {
-    if (lease.depositAmount <= 0) return database;
     const id = `payment-deposit-${lease.id}`;
-    const dueDate = lease.formData.LeaseDepositDate || lease.startDate;
     const existing = database.payments.find((payment) => payment.id === id);
-    const status = lease.formData.LeaseDepositType === 'versato' && dueDate <= referenceDate ? { status: 'paid' as const, paidDate: dueDate } : statusFor(dueDate, null, referenceDate);
+    const shouldCreate = lease.depositAmount > 0 && lease.formData.LeaseDepositType === 'trattenuto';
+    if (!shouldCreate) {
+        const payments = existing && existing.status !== 'paid'
+            ? database.payments.filter((payment) => payment.id !== id)
+            : database.payments;
+        const leases = database.leases.map((item) => item.id === lease.id
+            ? { ...item, financialState: { ...item.financialState, depositPaymentId: existing?.status === 'paid' ? id : null } }
+            : item);
+        return { ...database, leases, payments };
+    }
+    const requestedDate = lease.formData.LeaseDepositDate;
+    const dueDate = isValidIsoDate(requestedDate)
+        ? requestedDate
+        : lease.startDate;
+    const status = statusFor(dueDate, null, referenceDate);
     if (existing?.status === 'paid') {
         return { ...database, leases: database.leases.map((item) => item.id === lease.id ? { ...item, financialState: { ...item.financialState, depositPaymentId: id } } : item) };
     }
@@ -419,6 +463,21 @@ export function applyPrepaidRent(leaseId: string, paymentIds: string[], allocati
     return saveJsonDb({ ...db, leases: db.leases.map((item) => item.id === leaseId ? nextLease : item) }).leases.find((item) => item.id === leaseId) as LeaseRecord;
 }
 
+function isPrepaidAllocationPaymentCompatible(
+    lease: LeaseRecord,
+    allocation: LeaseRecord['financialState']['prepaidAllocations'][number],
+    payment: PaymentRecord | undefined,
+): payment is PaymentRecord {
+    return Boolean(payment)
+        && payment?.leaseId === lease.id
+        && payment.source === 'generated'
+        && (payment.category === 'rent' || payment.category === 'rent-first')
+        && payment.accountingRole === 'revenue'
+        && Number.isFinite(allocation.amount)
+        && Number.isFinite(payment.amount)
+        && Math.round(allocation.amount * 100) === Math.round(payment.amount * 100);
+}
+
 export function reconcilePrepaidAllocations(database: LocalDatabase, referenceDate = todayIso()): LocalDatabase {
     let payments = [...database.payments];
     const leases = database.leases.map((lease) => {
@@ -426,7 +485,7 @@ export function reconcilePrepaidAllocations(database: LocalDatabase, referenceDa
         const prepaidAllocations = lease.financialState.prepaidAllocations.map((allocation) => {
             if (allocation.appliedAt) return allocation;
             const payment = payments.find((item) => item.id === allocation.paymentId);
-            if (!payment || payment.dueDate > referenceDate) return allocation;
+            if (!isPrepaidAllocationPaymentCompatible(lease, allocation, payment) || payment.dueDate > referenceDate) return allocation;
             payments = payments.map((item) => item.id === payment.id ? { ...item, status: 'paid', paidDate: item.dueDate, receiptNumber: item.receiptNumber || nextReceiptNumber(payments, item.dueDate), updatedAt: new Date().toISOString() } : item);
             changed = true;
             return { ...allocation, appliedAt: referenceDate };

@@ -25,10 +25,17 @@ export interface EntityCount {
     archived: number;
 }
 
+export interface AnnualRentStats {
+    annualAmount: number;
+    monthlyAverage: number;
+    activeLeaseCount: number;
+}
+
 export interface DashboardStats {
     properties: EntityCount;
     tenants: EntityCount;
     leases: EntityCount;
+    annualRent: AnnualRentStats;
 }
 
 /* ── Revenue / Expenses ───────────────────────────────── */

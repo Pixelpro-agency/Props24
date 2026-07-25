@@ -1,4 +1,4 @@
-import type { LocalDatabase, PaymentRecord } from './database.types';
+import type { LocalDatabase } from './database.types';
 import { findTenantLeaseConflicts, normalizeFiscalCode, normalizePropertyIdentifier, normalizePropertyLocationKey } from './businessRules';
 import { isLeaseCurrentlyActive, isValidIsoDate, todayIso } from './dataSelectors';
 import { calculateLeasePeriodicAmount } from '../landlord/leases/schema/leaseFormSchema';
@@ -59,10 +59,6 @@ function checkAddressFields(
     if (values.postalCode !== undefined && !optionalString(values.postalCode)) issues.push(issue('error', 'POSTAL_CODE_NOT_STRING', collection, recordId, 'CAP non testuale.'));
     if (typeof values.postalCode === 'string' && values.postalCode.length > 20) issues.push(issue('error', 'POSTAL_CODE_TOO_LONG', collection, recordId, 'CAP troppo lungo.'));
     if (values.country !== undefined && !optionalString(values.country)) issues.push(issue('error', 'COUNTRY_NOT_STRING', collection, recordId, 'Paese non serializzabile come testo.'));
-}
-
-function isFuturePaid(payment: PaymentRecord, referenceDate: string): boolean {
-    return payment.status === 'paid' && (payment.dueDate > referenceDate || Boolean(payment.paidDate && payment.paidDate > referenceDate));
 }
 
 export function validateDatabaseRelations(database: LocalDatabase, referenceDate = todayIso()): DatabaseValidationIssue[] {
@@ -237,7 +233,11 @@ export function validateDatabaseRelations(database: LocalDatabase, referenceDate
         if (payment.amount < 0) issues.push(issue('error', 'NEGATIVE_AMOUNT', 'payments', payment.id, 'Importo negativo non valido.'));
         if (payment.status === 'paid' && !payment.paidDate) issues.push(issue('error', 'PAYMENT_PAID_WITHOUT_PAID_DATE', 'payments', payment.id, 'Pagamento paid senza paidDate.'));
         if (payment.status !== 'paid' && payment.paidDate) issues.push(issue('error', 'PAYMENT_UNPAID_WITH_PAID_DATE', 'payments', payment.id, 'Pagamento non paid con paidDate.'));
-        if (isFuturePaid(payment, referenceDate)) issues.push(issue('error', 'PAYMENT_PAID_DATE_IN_FUTURE', 'payments', payment.id, 'Pagamento con paidDate futura.'));
+        if (payment.status === 'paid' && payment.paidDate && payment.paidDate > referenceDate) {
+            issues.push(issue('error', 'PAYMENT_PAID_DATE_IN_FUTURE', 'payments', payment.id, 'Pagamento con paidDate futura.'));
+        } else if (payment.status === 'paid' && isGeneratedRentPayment(payment) && payment.dueDate > referenceDate) {
+            issues.push(issue('error', 'GENERATED_PAYMENT_PAID_BEFORE_DUE_DATE', 'payments', payment.id, 'Rata generata futura già segnata come pagata.'));
+        }
         if (lease) {
             if (payment.propertyId !== lease.propertyId) issues.push(issue('error', 'PAYMENT_PROPERTY_MISMATCH', 'payments', payment.id, 'Pagamento collegato alla proprieta sbagliata.'));
             if (payment.tenantId && !lease.tenantIds.includes(payment.tenantId)) issues.push(issue('error', 'PAYMENT_TENANT_MISMATCH', 'payments', payment.id, 'Tenant pagamento non appartenente alla locazione.'));

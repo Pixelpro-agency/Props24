@@ -9,6 +9,22 @@ import type {
 import { getJsonDb } from './jsonDb';
 import type { PaymentRecord } from './database.types';
 import { classifyTenantStatus, isLeaseCurrentlyActive, isPaymentOverdue, todayIso } from './dataSelectors';
+import type { LeaseBillingPeriod } from '../landlord/leases/schema/leaseFormSchema';
+
+const ANNUAL_RENT_MULTIPLIERS: Record<LeaseBillingPeriod, number> = {
+    weekly: 52,
+    biweekly: 26,
+    monthly: 12,
+    bimonthly: 6,
+    quarterly: 4,
+    fourmonthly: 3,
+    semiannual: 2,
+    annual: 1,
+};
+
+function roundCurrency(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+}
 
 function parseIsoDate(value: string): Date | null {
     const date = new Date(`${value}T00:00:00`);
@@ -54,6 +70,14 @@ function isOperationalExpense(payment: PaymentRecord, referenceDate = todayIso()
 
 export function getDashboardStats(): DashboardStats {
     const db = getJsonDb();
+    const activeLeases = db.leases.filter((lease) => isLeaseCurrentlyActive(lease));
+    const annualAmount = roundCurrency(
+        activeLeases.reduce((total, lease) => {
+            const rentAmount = Number.isFinite(lease.rentAmount) ? Math.max(0, lease.rentAmount) : 0;
+            return total + rentAmount * ANNUAL_RENT_MULTIPLIERS[lease.billingPeriod];
+        }, 0),
+    );
+
     return {
         properties: {
             active: db.properties.filter((property) => !property.archived).length,
@@ -66,9 +90,14 @@ export function getDashboardStats(): DashboardStats {
             archived: db.tenants.filter((tenant) => tenant.archived).length,
         },
         leases: {
-            active: db.leases.filter((lease) => isLeaseCurrentlyActive(lease)).length,
+            active: activeLeases.length,
             total: db.leases.length,
             archived: db.leases.filter((lease) => lease.archived).length,
+        },
+        annualRent: {
+            annualAmount,
+            monthlyAverage: roundCurrency(annualAmount / 12),
+            activeLeaseCount: activeLeases.length,
         },
     };
 }

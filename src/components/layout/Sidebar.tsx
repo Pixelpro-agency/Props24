@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { menuData } from '../../data/menu';
 import { MenuItem } from './MenuItem';
 import { SubMenu } from './SubMenu';
@@ -13,15 +14,12 @@ interface SidebarProps {
 }
 
 export function Sidebar({ onCloseMobile }: SidebarProps) {
-    const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+    const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
     const { expertMode, setExpertMode } = useExpertMode();
     const location = useLocation();
 
     const toggleExpand = (id: string) => {
-        setExpandedItems(prev => ({
-            ...prev,
-            [id]: !prev[id]
-        }));
+        setExpandedItemId(currentId => currentId === id ? null : id);
     };
 
     // Controlla se un item (o uno dei suoi figli) corrisponde al path attivo
@@ -54,22 +52,28 @@ export function Sidebar({ onCloseMobile }: SidebarProps) {
     }, [expertMode]);
 
     const handleNavigate = () => {
-        // Su mobile chiudi la sidebar dopo un click su una voce
+        setExpandedItemId(null);
         if (onCloseMobile) onCloseMobile();
     };
 
     return (
-        <aside className="w-64 h-full bg-[#f5f5f5] flex flex-col border-r border-gray-200">
-
-            {/* Header Logo */}
-            <div className="h-16 flex items-center px-4 border-b border-gray-200 shrink-0">
-                <div className="font-bold text-xl text-brand-blue tracking-tight">Props24</div>
+        <aside id="props24-sidebar" className="flex h-full w-60 flex-col border-r border-gray-200 bg-[#f5f5f5]">
+            <div className="flex h-11 shrink-0 items-center justify-between border-b border-gray-200 px-3 lg:hidden">
+                <span className="text-sm font-semibold text-gray-700">Menu</span>
+                <button
+                    type="button"
+                    aria-label="Chiudi menu principale"
+                    onClick={onCloseMobile}
+                    className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-6">
+            <div className="flex flex-1 flex-col gap-2 overflow-visible py-2">
                 {filteredMenuData.map((group, index) => (
-                    <div key={index} className="px-3">
-                        <h3 className="px-3 text-xs font-semibold text-gray-500 tracking-wider mb-2 uppercase">
+                    <div key={index} className="px-2">
+                        <h3 className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
                             {group.title}
                         </h3>
 
@@ -79,7 +83,7 @@ export function Sidebar({ onCloseMobile }: SidebarProps) {
                                     <MenuItem
                                         item={item}
                                         isActive={isItemActive(item)}
-                                        isExpanded={!!expandedItems[item.id]}
+                                        isExpanded={expandedItemId === item.id}
                                         onToggle={() => toggleExpand(item.id)}
                                         onNavigate={handleNavigate}
                                     />
@@ -88,7 +92,7 @@ export function Sidebar({ onCloseMobile }: SidebarProps) {
                                     {item.children && (
                                         <SubMenu
                                             items={item.children}
-                                            isExpanded={!!expandedItems[item.id]}
+                                            isExpanded={expandedItemId === item.id}
                                             onNavigate={handleNavigate}
                                         />
                                     )}
@@ -98,7 +102,7 @@ export function Sidebar({ onCloseMobile }: SidebarProps) {
 
                         {/* Divider tra sezioni */}
                         {index < filteredMenuData.length - 1 && (
-                            <div className="mt-6 border-b border-gray-200 mx-3" />
+                            <div className="mx-2 mt-2 border-b border-gray-200" />
                         )}
                     </div>
                 ))}

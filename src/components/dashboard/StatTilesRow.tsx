@@ -1,6 +1,7 @@
 import { Home, Users, Key } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { StatTile } from './StatTile';
+import { AnnualRentTile } from './AnnualRentTile';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
 
 const containerVariants = {
@@ -26,7 +27,7 @@ export function StatTilesRow() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
+            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8"
         >
             <motion.div variants={itemVariants}>
                 <StatTile
@@ -56,6 +57,10 @@ export function StatTilesRow() {
                     manageLink="/leases"
                     archiveLink="/leases/archive"
                 />
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+                <AnnualRentTile stats={stats.annualRent} />
             </motion.div>
         </motion.div>
     );

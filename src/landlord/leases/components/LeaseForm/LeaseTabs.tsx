@@ -16,6 +16,12 @@ const TABS: Tab[] = [
     { id: 'general', label: 'Informazioni Generali' },
     { id: 'tenants', label: 'Inquilini' },
     { id: 'guarantors', label: 'Garanti' },
+    { id: 'receipts', label: 'Ricevute' },
+    { id: 'settings', label: 'Altre impostazioni' },
+    { id: 'insurance', label: 'Assicurazione' },
+    { id: 'documents', label: 'Documenti' },
+    { id: 'contract', label: 'Contratto' },
+    { id: 'signature', label: 'Firma' },
 ];
 
 export const LeaseTabs: React.FC<LeaseTabsProps> = ({ children, activeTab, onTabChange }) => {
@@ -27,8 +33,10 @@ export const LeaseTabs: React.FC<LeaseTabsProps> = ({ children, activeTab, onTab
                     {TABS.map((tab) => (
                         <button type="button"
                             key={tab.id}
+                            id={`lease-tab-${tab.id}`}
                             role="tab"
                             aria-selected={activeTab === tab.id}
+                            aria-controls={`lease-panel-${tab.id}`}
                             onClick={() => onTabChange(tab.id)}
                             className={`
                 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors
@@ -50,7 +58,7 @@ export const LeaseTabs: React.FC<LeaseTabsProps> = ({ children, activeTab, onTab
             </div>
 
             {/* Tab Content */}
-            <div className="bg-white border border-t-0 border-gray-200 rounded-b shadow-sm p-6">
+            <div role="tabpanel" id={`lease-panel-${activeTab}`} aria-labelledby={`lease-tab-${activeTab}`} className="bg-white border border-t-0 border-gray-200 rounded-b shadow-sm p-6">
                 {children}
             </div>
         </div>

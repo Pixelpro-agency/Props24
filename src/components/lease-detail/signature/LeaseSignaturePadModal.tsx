@@ -28,7 +28,7 @@ export function LeaseSignaturePadModal({ isOpen, leaseId, signer, onClose, onSuc
             setLocalError('Inserisci la firma nel riquadro.');
             return;
         }
-        const dataUrl = pad.getTrimmedCanvas().toDataURL('image/png');
+        const dataUrl = pad.toDataURL('image/png');
         if (!dataUrl.startsWith('data:image/png;base64,')) {
             setLocalError('La firma deve essere un PNG.');
             return;

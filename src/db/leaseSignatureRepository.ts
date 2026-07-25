@@ -23,12 +23,15 @@ function signerName(db: ReturnType<typeof getJsonDb>, role: LeaseSignatureSigner
 }
 
 export function startLocalSignatureProcess(leaseId: string) {
+    const before = getJsonDb();
+    const beforeLease = before.leases.find((item) => item.id === leaseId);
+    if (!beforeLease) throw new LeaseNotFoundError();
+    if (beforeLease.archived || beforeLease.status === 'terminata') throw new LeaseSignatureError('La firma locale non può essere avviata per questa locazione.');
+    if (beforeLease.signatureProcess) throw new LeaseSignatureError('La procedura di firma locale è già attiva.');
     const snapshot = saveLeaseContractSnapshot(leaseId);
     const db = getJsonDb();
     const lease = db.leases.find((item) => item.id === leaseId);
     if (!lease) throw new LeaseNotFoundError();
-    if (lease.archived || lease.status === 'terminata') throw new LeaseSignatureError('La firma locale non può essere avviata per questa locazione.');
-    if (lease.signatureProcess) throw new LeaseSignatureError('La procedura di firma locale è già attiva.');
     const signers: LeaseSignatureSigner[] = [
         { key: 'landlord', role: 'landlord', entityId: null, nameSnapshot: signerName(db, 'landlord', null), status: 'pending', signedAt: null, signatureDataUrl: null },
         ...lease.tenantIds.map((id) => ({ key: `tenant-${id}`, role: 'tenant' as const, entityId: id, nameSnapshot: signerName(db, 'tenant', id), status: 'pending' as const, signedAt: null, signatureDataUrl: null })),

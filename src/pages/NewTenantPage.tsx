@@ -48,7 +48,7 @@ export function NewTenantPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-4rem)]">
+        <div className="flex min-h-full flex-col">
             <StatusToast
                 toast={submitError ? { variant: 'error', title: 'Errore', message: submitError } : null}
                 onClose={() => {
@@ -57,7 +57,7 @@ export function NewTenantPage() {
                 }}
             />
             <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
-                <div className="flex items-center justify-between max-w-7xl mx-auto">
+                <div className="flex items-center max-w-7xl mx-auto">
                     <div className="flex items-center gap-4">
                         <button
                             type="button"
@@ -70,22 +70,6 @@ export function NewTenantPage() {
                             <h1 className="text-2xl font-normal text-gray-800">Nuovo inquilino</h1>
                         </div>
                     </div>
-
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="submit"
-                            form="tenant-form"
-                            disabled={isSubmitting}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed text-white rounded-md text-sm font-medium transition-colors min-w-[100px] justify-center"
-                        >
-                            {isSubmitting ? 'Salvataggio...' : (
-                                <>
-                                    <Save className="w-4 h-4 ml-[-4px]" />
-                                    Salva
-                                </>
-                            )}
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -96,17 +80,40 @@ export function NewTenantPage() {
                 onSubmitError={(message) => setSubmitError(message)}
                 onDraftErrorClearReady={handleDraftErrorClearReady}
             >
-                <div className="flex-1 min-h-0 bg-gray-50/50 flex flex-col">
-                    <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
+                <div className="bg-gray-50/50">
+                    <div className="max-w-7xl mx-auto w-full">
                         <TenantFormTabs />
 
-                        <div className="flex-1 overflow-y-auto p-6 pb-32 relative">
+                        <div className="p-6">
                             <div className="bg-white border border-gray-200 rounded-lg shadow-sm min-h-[400px]">
                                 {activeTab === 'info1' && <Tab1General />}
                                 {activeTab === 'info2' && <Tab2Additional />}
                                 {activeTab === 'info3' && <Tab3Guarantors />}
                                 {activeTab === 'info5' && <Tab4Emergency />}
                                 {activeTab === 'info4' && <Tab5Documents />}
+                            </div>
+
+                            <div className="mt-8 flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate(-1)}
+                                    disabled={isSubmitting}
+                                    className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    Annulla
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="inline-flex min-w-[100px] items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {isSubmitting ? 'Salvataggio...' : (
+                                        <>
+                                            <Save className="w-4 h-4 ml-[-4px]" />
+                                            Salva
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>

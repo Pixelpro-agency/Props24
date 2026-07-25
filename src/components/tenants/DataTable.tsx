@@ -10,7 +10,12 @@ import {
     type VisibilityState,
     type RowSelectionState,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import {
+    AlertTriangle, Archive, ArrowDown, ArrowUp, ArrowUpDown, CalendarDays,
+    ChevronLeft, ChevronRight, Coins, KeyRound, Mail, MessageSquare,
+    MoreHorizontal, Pencil, Trash2, UserRound, WalletCards, type LucideIcon,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { TenantListItem } from '../../db/tenantRepository';
 import { TENANT_STATUS_CONFIG } from '../../db/tenantRepository';
@@ -27,6 +32,32 @@ interface DataTableProps {
 }
 
 const columnHelper = createColumnHelper<TenantListItem>();
+
+interface PendingActionProps {
+    icon: LucideIcon;
+    label: string;
+}
+
+function PendingAction({ icon: Icon, label }: PendingActionProps) {
+    return (
+        <MenuItem disabled>
+            <button
+                type="button"
+                disabled
+                title="Funzione non ancora implementata"
+                className="flex w-full cursor-not-allowed items-center gap-3 bg-yellow-50 px-3 py-2 text-left text-sm text-yellow-800 opacity-80"
+            >
+                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="flex-1">{label}</span>
+                <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            </button>
+        </MenuItem>
+    );
+}
+
+function MenuSeparator() {
+    return <div role="separator" className="my-1 border-t border-gray-200" />;
+}
 
 function formatBalance(value: number): string {
     if (value === 0) return '€ 0,00';
@@ -156,29 +187,35 @@ export function DataTable({
                 id: 'status',
                 header: 'Stato',
                 cell: (info) => {
+                    const tenant = info.row.original;
                     const cfg = TENANT_STATUS_CONFIG[info.getValue()];
-                    return (
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.color} ${cfg.textColor}`}>
-                            {cfg.label}
-                        </span>
-                    );
-                },
-                size: 100,
-            }),
-            columnHelper.display({
-                id: 'invitation',
-                header: 'Invito',
-                cell: ({ row }) => {
-                    const tenant = row.original;
                     const isSending = sendingInviteId === tenant.id;
-                    if (!tenant.invitationEmail) return <span className="text-sm text-gray-400">—</span>;
-                    if (tenant.invitationStatus === 'accepted') {
-                        return <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">ACCETTATO</span>;
-                    }
-                    if (tenant.invitationStatus === 'pending') {
-                        return (
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="inline-flex rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800">IN ATTESA</span>
+                    const hasInvitationEmail = Boolean(tenant.invitationEmail?.trim());
+                    return (
+                        <div className="flex min-w-[180px] flex-col items-start gap-2">
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.color} ${cfg.textColor}`}>
+                                {cfg.label}
+                            </span>
+                            {tenant.invitationStatus === 'accepted' ? (
+                                <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">INVITO ACCETTATO</span>
+                            ) : !hasInvitationEmail ? (
+                                <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">EMAIL MANCANTE</span>
+                            ) : tenant.invitationStatus === 'pending' ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800">IN ATTESA</span>
+                                    <button
+                                        type="button"
+                                        disabled={isSending}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            void onSendInvite?.(tenant.id);
+                                        }}
+                                        className="rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        {isSending ? 'INVIO...' : "MANDA DI NUOVO L'INVITO"}
+                                    </button>
+                                </div>
+                            ) : tenant.canSendInvitation ? (
                                 <button
                                     type="button"
                                     disabled={isSending}
@@ -186,28 +223,91 @@ export function DataTable({
                                         event.stopPropagation();
                                         void onSendInvite?.(tenant.id);
                                     }}
-                                    className="rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    {isSending ? 'INVIO...' : "MANDA DI NUOVO L'INVITO"}
+                                    {isSending ? 'INVIO...' : 'INVITA'}
                                 </button>
-                            </div>
-                        );
-                    }
-                    return (
-                        <button
-                            type="button"
-                            disabled={!tenant.canSendInvitation || isSending}
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                void onSendInvite?.(tenant.id);
-                            }}
-                            className="rounded-md bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {isSending ? 'INVIO...' : 'INVIA INVITO'}
-                        </button>
+                            ) : null}
+                        </div>
                     );
                 },
                 size: 220,
+            }),
+            columnHelper.display({
+                id: 'actions',
+                header: 'Azioni',
+                cell: ({ row }) => {
+                    const tenant = row.original;
+                    const isSending = sendingInviteId === tenant.id;
+                    const hasInvitationEmail = Boolean(tenant.invitationEmail?.trim());
+                    const inviteDisabled = !hasInvitationEmail || tenant.invitationStatus === 'accepted' || isSending;
+                    const inviteLabel = !hasInvitationEmail
+                        ? 'Email mancante'
+                        : tenant.invitationStatus === 'accepted'
+                            ? 'Invito accettato'
+                            : tenant.invitationStatus === 'pending'
+                                ? "Manda di nuovo l'invito"
+                                : 'Invita';
+                    return (
+                        <div className="flex justify-center">
+                            <Menu>
+                                <MenuButton
+                                    type="button"
+                                    aria-label={`Azioni per ${tenant.displayName}`}
+                                    onClick={(event) => event.stopPropagation()}
+                                    className="inline-flex items-center justify-center rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                >
+                                    <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+                                </MenuButton>
+                                <MenuItems
+                                    anchor="bottom end"
+                                    portal
+                                    className="z-[80] w-60 rounded-lg border border-gray-200 bg-white py-1 shadow-xl focus:outline-none [--anchor-gap:4px]"
+                                >
+                                    {/* TODO: collegare le azioni in giallo alle rispettive route,
+                                        modali e operazioni repository quando i relativi flussi saranno completi. */}
+                                    <PendingAction icon={Pencil} label="Modifica" />
+                                    <MenuItem>
+                                        <Link
+                                            to={`/tenants/${tenant.id}`}
+                                            className="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none data-focus:bg-gray-50"
+                                        >
+                                            <UserRound className="h-4 w-4" aria-hidden="true" />
+                                            Dati inquilino
+                                        </Link>
+                                    </MenuItem>
+                                    <MenuSeparator />
+                                    <MenuItem disabled={inviteDisabled}>
+                                        <button
+                                            type="button"
+                                            disabled={inviteDisabled}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                void onSendInvite?.(tenant.id);
+                                            }}
+                                            className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none disabled:cursor-not-allowed disabled:text-gray-400 data-focus:bg-gray-50"
+                                        >
+                                            <Mail className="h-4 w-4" aria-hidden="true" />
+                                            {isSending ? 'Invio...' : inviteLabel}
+                                        </button>
+                                    </MenuItem>
+                                    <PendingAction icon={MessageSquare} label="Invia un messaggio" />
+                                    <PendingAction icon={KeyRound} label="Crea un affitto" />
+                                    <MenuSeparator />
+                                    <PendingAction icon={CalendarDays} label="Appuntamento" />
+                                    <PendingAction icon={WalletCards} label="Saldo locatario" />
+                                    <PendingAction icon={Coins} label="Finanze" />
+                                    <MenuSeparator />
+                                    <PendingAction icon={Archive} label="Archivia" />
+                                    <PendingAction icon={Trash2} label="Elimina" />
+                                </MenuItems>
+                            </Menu>
+                        </div>
+                    );
+                },
+                size: 72,
+                enableSorting: false,
+                enableHiding: false,
             }),
         ],
         [onSendInvite, sendingInviteId],

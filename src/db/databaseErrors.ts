@@ -260,3 +260,10 @@ export function isQuotaExceededError(error: unknown): boolean {
     }
     return false;
 }
+
+export class LeaseInsuranceDocumentLinkError extends Error {
+    constructor(message = 'Il documento selezionato non appartiene a questa locazione.') {
+        super(message);
+        this.name = 'LeaseInsuranceDocumentLinkError';
+    }
+}

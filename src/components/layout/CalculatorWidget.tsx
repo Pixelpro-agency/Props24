@@ -42,10 +42,10 @@ export function CalculatorWidget() {
         <div className="relative border-t border-gray-200">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full h-12 flex items-center justify-center gap-2 text-slate-500 hover:text-brand-blue hover:bg-blue-50/50 transition-colors"
+                className="flex h-9 w-full items-center justify-center gap-2 text-slate-500 transition-colors hover:bg-blue-50/50 hover:text-brand-blue"
             >
-                <CalcIcon className="w-5 h-5" />
-                <span className="text-sm font-medium pr-2">Calcolatrice</span>
+                <CalcIcon className="h-4 w-4" />
+                <span className="pr-2 text-xs font-medium">Calcolatrice</span>
             </button>
 
             <AnimatePresence>

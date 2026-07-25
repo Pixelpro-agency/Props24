@@ -11,6 +11,7 @@ import {
     LeaseArchivedError,
     LeaseDeleteBlockedError,
     LeaseInvalidStatusTransitionError,
+    LeaseInsuranceDocumentLinkError,
     LeaseLockedBySignatureError,
     LeaseNotFoundError,
     LeasePaymentHistoryConflictError,
@@ -19,6 +20,16 @@ import {
     LeaseTenantNotFoundError,
     LeaseTypeNotFoundError,
 } from './databaseErrors';
+
+function assertInsuranceDocumentLinks(database: LocalDatabase, formData: LeaseFormData, leaseId?: string): void {
+    formData.LeaseInsuranceContracts.forEach((contract) => {
+        const documentId = contract.LeaseInsuranceDocumentId.trim();
+        if (!documentId) return;
+        const document = database.documents.find((item) => item.id === documentId);
+        if (!document) return;
+        if (document.ownerType !== 'lease' || document.ownerId !== leaseId) throw new LeaseInsuranceDocumentLinkError();
+    });
+}
 
 export type LeaseInput = LeaseFormData | Partial<LeaseFormData>;
 
@@ -152,6 +163,7 @@ export function createLease(input: LeaseInput): LeaseRecord {
     const parsed = leaseFormSchema.safeParse(formData);
     if (!parsed.success) throw parsed.error;
     assertFormAgainstDatabase(db, formData);
+    assertInsuranceDocumentLinks(db, formData);
 
     const timestamp = new Date().toISOString();
     const record = buildLeaseRecord(formData, generateId('lease'), timestamp);
@@ -187,10 +199,65 @@ function isGeneratedPaymentForLease(payment: LocalDatabase['payments'][number]):
     return payment.source === 'generated' || payment.id.startsWith('payment-rent-') || payment.id.startsWith('payment-rent-first-') || payment.id.startsWith('payment-lease-');
 }
 
+function pendingPrepaidAllocationIds(lease: LeaseRecord): Set<string> {
+    return new Set(
+        lease.financialState.prepaidAllocations
+            .filter((allocation) => !allocation.appliedAt)
+            .map((allocation) => allocation.paymentId),
+    );
+}
+
+function sameCurrencyAmount(left: number, right: number): boolean {
+    if (!Number.isFinite(left) || !Number.isFinite(right)) return false;
+    return Math.round(left * 100) === Math.round(right * 100);
+}
+
+function sameAllocatedPaymentProjection(
+    currentPayment: LocalDatabase['payments'][number],
+    nextPayment: LocalDatabase['payments'][number],
+): boolean {
+    return currentPayment.source === 'generated'
+        && nextPayment.source === 'generated'
+        && (currentPayment.category === 'rent' || currentPayment.category === 'rent-first')
+        && (nextPayment.category === 'rent' || nextPayment.category === 'rent-first')
+        && currentPayment.accountingRole === 'revenue'
+        && nextPayment.accountingRole === 'revenue'
+        && currentPayment.id === nextPayment.id
+        && currentPayment.leaseId === nextPayment.leaseId
+        && currentPayment.propertyId === nextPayment.propertyId
+        && currentPayment.tenantId === nextPayment.tenantId
+        && currentPayment.category === nextPayment.category
+        && currentPayment.dueDate === nextPayment.dueDate
+        && sameCurrencyAmount(currentPayment.amount, nextPayment.amount);
+}
+
+function assertPendingPrepaidAllocationsCompatible(
+    database: LocalDatabase,
+    currentLease: LeaseRecord,
+    nextLease: LeaseRecord,
+): void {
+    const pendingIds = pendingPrepaidAllocationIds(currentLease);
+    if (pendingIds.size === 0) return;
+
+    const currentPayments = new Map(database.payments.map((payment) => [payment.id, payment]));
+    const nextPayments = new Map(buildLeasePaymentSchedule(nextLease, todayIso()).map((payment) => [payment.id, payment]));
+    for (const paymentId of pendingIds) {
+        const currentPayment = currentPayments.get(paymentId);
+        const nextPayment = nextPayments.get(paymentId);
+        if (!currentPayment || !nextPayment || !sameAllocatedPaymentProjection(currentPayment, nextPayment)) {
+            throw new LeasePaymentHistoryConflictError(
+                'Non puoi modificare calendario, importi o parti della locazione perché esistono rate già coperte da affitto prepagato.',
+            );
+        }
+    }
+}
+
 function reconcileGeneratedPayments(db: LocalDatabase, oldLease: LeaseRecord, nextLease: LeaseRecord): LocalDatabase {
     const today = todayIso();
+    const pendingAllocatedPaymentIds = pendingPrepaidAllocationIds(oldLease);
     const protectedPayments = db.payments.filter((payment) => {
         if (payment.leaseId !== oldLease.id) return true;
+        if (pendingAllocatedPaymentIds.has(payment.id)) return true;
         if (!isGeneratedPaymentForLease(payment)) return true;
         if (payment.status === 'paid') return true;
         if (payment.dueDate < today) return true;
@@ -241,9 +308,28 @@ export function updateLease(id: string, input: LeaseInput): LeaseRecord {
     const parsed = leaseFormSchema.safeParse(formData);
     if (!parsed.success) throw parsed.error;
     assertFormAgainstDatabase(db, formData, id);
+    assertInsuranceDocumentLinks(db, formData, id);
+
+    const currentFormData = normalizeLeaseFormData(current.formData);
+    const paidDeposit = db.payments.some((payment) => payment.id === `payment-deposit-${id}` && payment.status === 'paid');
+    const currentDepositDate = currentFormData.LeaseDepositDate || currentFormData.LeaseStartDate;
+    const nextDepositDate = formData.LeaseDepositDate || formData.LeaseStartDate;
+    if (paidDeposit && (currentFormData.LeaseDeposit !== formData.LeaseDeposit
+        || currentFormData.LeaseDepositType !== formData.LeaseDepositType
+        || currentDepositDate !== nextDepositDate)) {
+        throw new LeasePaymentHistoryConflictError('Non puoi modificare importo, tipo o data di un deposito già incassato.');
+    }
+    if (formData.LeasePrepaidRent < current.financialState.prepaidAppliedAmount) {
+        throw new LeasePaymentHistoryConflictError("L'importo prepagato non può essere inferiore a quello già allocato.");
+    }
 
     const changingParties = current.propertyId !== formData.PropertyID
         || JSON.stringify([...current.tenantIds].sort()) !== JSON.stringify([...formData.LeaseTenantIds].sort());
+    if (changingParties && pendingPrepaidAllocationIds(current).size > 0) {
+        throw new LeasePaymentHistoryConflictError(
+            'Non puoi modificare calendario, importi o parti della locazione perché esistono rate già coperte da affitto prepagato.',
+        );
+    }
     if (changingParties && hasHistoricalOrManualPayments(db, id)) {
         throw new LeasePaymentHistoryConflictError('Non puoi cambiare proprietà o inquilini perché esistono pagamenti storici o manuali.');
     }
@@ -261,6 +347,7 @@ export function updateLease(id: string, input: LeaseInput): LeaseRecord {
         termination: current.termination,
         financialState: current.financialState,
     };
+    assertPendingPrepaidAllocationsCompatible(db, current, nextRecord);
     let nextDb: LocalDatabase = {
         ...db,
         leases: db.leases.map((lease) => lease.id === id ? nextRecord : lease),

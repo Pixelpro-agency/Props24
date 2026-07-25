@@ -2,9 +2,25 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Save } from 'lucide-react';
 import { updateLeaseNotes } from '../../db/leaseRepository';
+import type { LeaseBillingPeriod } from '../../landlord/leases/schema/leaseFormSchema';
 import type { LeaseDetail } from '../../types/leaseDetail';
 import { Button } from '../ui/Button';
 import { currency, errorMessage, type ToastHandler } from './shared';
+
+function billingPeriodLabel(value: LeaseBillingPeriod): string {
+    const labels: Record<LeaseBillingPeriod, string> = {
+        weekly: 'Settimanale',
+        biweekly: 'Ogni due settimane',
+        monthly: 'Mensile',
+        bimonthly: 'Bimestrale',
+        quarterly: 'Trimestrale',
+        fourmonthly: 'Quadrimestrale',
+        semiannual: 'Semestrale',
+        annual: 'Annuale',
+    };
+
+    return labels[value];
+}
 
 export function LeaseOverviewTab({ detail, notify }: { detail: LeaseDetail; notify: ToastHandler }) {
     const [editing, setEditing] = useState(false);
@@ -28,7 +44,7 @@ export function LeaseOverviewTab({ detail, notify }: { detail: LeaseDetail; noti
                     <div><dt className="text-gray-500">Identificativo</dt><dd>{lease.formData.LeaseIdentificativo || '-'}</dd></div>
                     <div><dt className="text-gray-500">Registrazione</dt><dd>{lease.formData.LeaseNumeroRegistrazione || '-'}</dd></div>
                     <div><dt className="text-gray-500">Tipo</dt><dd>{lease.leaseTypeLabel}</dd></div>
-                    <div><dt className="text-gray-500">PeriodicitÃ </dt><dd>{lease.billingPeriod}</dd></div>
+                    <div><dt className="text-gray-500">Periodicità</dt><dd>{billingPeriodLabel(lease.billingPeriod)}</dd></div>
                     <div><dt className="text-gray-500">Metodo</dt><dd>{lease.formData.LeasePaymentMethod || '-'}</dd></div>
                     <div><dt className="text-gray-500">Canone</dt><dd>{currency(lease.rentAmount)}</dd></div>
                     <div><dt className="text-gray-500">Spese</dt><dd>{currency(lease.utilitiesAmount)}</dd></div>

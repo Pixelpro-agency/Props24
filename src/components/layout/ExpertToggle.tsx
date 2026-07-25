@@ -8,11 +8,11 @@ interface ExpertToggleProps {
 
 export function ExpertToggle({ enabled, onChange }: ExpertToggleProps) {
     return (
-        <div className="px-4 py-3 border-t border-gray-200">
+        <div className="border-t border-gray-200 px-3 py-2">
             <Field as="div" className="flex items-center justify-between">
                 <Label as="span" className="flex flex-col" passive>
-                    <span className="text-sm font-medium text-slate-700">Modalità Esperto</span>
-                    <span className="text-[10px] text-gray-500">{enabled ? 'Attiva' : 'Disattiva'}</span>
+                    <span className="text-xs font-medium text-slate-700">Modalità Esperto</span>
+                    <span className="text-[9px] text-gray-500">{enabled ? 'Attiva' : 'Disattiva'}</span>
                 </Label>
 
                 <Switch

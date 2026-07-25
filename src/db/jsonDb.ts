@@ -314,7 +314,7 @@ function normalizePropertyRecord(input: unknown, fallbackId: string): PropertyRe
         archived: legacy.archived === true,
         formData: normalizePropertyFormData({
             ...defaultPropertyValues,
-            PropertyTitle: valueAsString(legacy.title) || 'UnitÃ  senza nome',
+            PropertyTitle: valueAsString(legacy.title) || 'Unità senza nome',
             PropertyTypeID: valueAsString(legacy.type).toLowerCase() || 'altro',
             ...address,
             PropertySize: valueAsNumberOrNull(legacy.surface),
@@ -522,7 +522,7 @@ function generateMigrationPayments(leases: LeaseRecord[], source: DatabaseSource
     const payments: PaymentRecord[] = [];
     for (const lease of leases) {
         if (lease.archived) continue;
-        let cursor = new Date(`${startMonth}-01T00:00:00Z`);
+        const cursor = new Date(`${startMonth}-01T00:00:00Z`);
         const end = new Date('2026-08-01T00:00:00Z');
         while (cursor <= end) {
             const ym = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -813,7 +813,9 @@ export function repairRecoverablePayments(database: LocalDatabase, referenceDate
         if (generated && outOfContract) continue;
 
         let next: PaymentRecord = { ...payment };
-        const futurePaid = next.status === 'paid' && (next.dueDate > referenceDate || Boolean(next.paidDate && next.paidDate > referenceDate));
+        const paidDateInFuture = next.status === 'paid' && Boolean(next.paidDate && next.paidDate > referenceDate);
+        const generatedPaidBeforeDueDate = next.status === 'paid' && generated && next.dueDate > referenceDate;
+        const futurePaid = paidDateInFuture || generatedPaidBeforeDueDate;
         if (futurePaid) {
             next = { ...next, status: 'pending', paidDate: null };
         } else if (next.status !== 'paid' && next.paidDate) {

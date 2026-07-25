@@ -46,8 +46,8 @@ function QuickActionsSkeleton() {
 
 function StatTilesSkeleton() {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+            {Array.from({ length: 4 }).map((_, i) => (
                 <div
                     key={i}
                     className="flex flex-col bg-[#f9f9f9] border border-[#e5e5e5] rounded-sm overflow-hidden"

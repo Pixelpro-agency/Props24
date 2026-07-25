@@ -1,7 +1,7 @@
 import { generateId, getJsonDb, saveJsonDb } from './jsonDb';
 import type { DocumentRecord } from './database.types';
 import type { StoredLocalFile } from '../components/property-form/schema';
-import { LeaseDocumentDuplicateError, LeaseDocumentNotFoundError, LeaseDocumentQuotaError, LeaseNotFoundError } from './databaseErrors';
+import { LeaseDocumentDuplicateError, LeaseDocumentNotFoundError, LeaseDocumentQuotaError, LeaseInsuranceDocumentLinkError, LeaseNotFoundError, LeaseSignatureError } from './databaseErrors';
 import { downloadDataUrl } from '../utils/html';
 
 const ALLOWED_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'text/plain', 'text/html', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
@@ -92,6 +92,17 @@ export function deleteLeaseDocument(id: string): boolean {
     const db = getJsonDb();
     const doc = db.documents.find((item) => item.id === id && item.ownerType === 'lease');
     if (!doc || !doc.ownerId) throw new LeaseDocumentNotFoundError();
+    const owner = db.leases.find((lease) => lease.id === doc.ownerId);
+    const isSignatureSnapshot = owner?.signatureProcess?.contractDocumentId === doc.id;
+    if (isSignatureSnapshot) {
+        throw new LeaseSignatureError(
+            'Il documento è utilizzato dalla procedura di firma locale. Annulla la procedura di firma prima di eliminarlo.',
+        );
+    }
+    const isLinkedToInsurance = owner?.formData.LeaseInsuranceContracts?.some((contract) => contract.LeaseInsuranceDocumentId === doc.id) === true;
+    if (isLinkedToInsurance) {
+        throw new LeaseInsuranceDocumentLinkError("Il documento è collegato a un'assicurazione. Scollegalo e salva la locazione prima di eliminarlo.");
+    }
     saveJsonDb({ ...db, leases: addActivity(db, doc.ownerId, 'Documento eliminato.'), documents: db.documents.filter((item) => item.id !== id) });
     return true;
 }

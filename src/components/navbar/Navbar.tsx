@@ -16,15 +16,17 @@ import { SearchBar } from './SearchBar';
 import { AlertsDropdown } from './AlertsDropdown';
 import { HelpMenu } from './HelpMenu';
 import { SettingsMenu } from './SettingsMenu';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Menu } from 'lucide-react';
 
 interface NavbarProps {
     expertMode: boolean;
+    onOpenMobileMenu: () => void;
+    isMobileMenuOpen: boolean;
     /** Whether a global action is loading */
     isLoading?: boolean;
 }
 
-export function Navbar({ expertMode, isLoading = false }: NavbarProps) {
+export function Navbar({ expertMode, onOpenMobileMenu, isMobileMenuOpen, isLoading = false }: NavbarProps) {
     const {
         openDropdown,
         toggleDropdown,
@@ -42,31 +44,47 @@ export function Navbar({ expertMode, isLoading = false }: NavbarProps) {
     } = useNavbar(expertMode);
 
     return (
-        <header className="hidden lg:flex h-12 shrink-0 items-center justify-between px-4 bg-white border-b border-gray-200 z-30">
+        <header className="z-30 flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-3 lg:h-12 lg:px-4">
 
             {/* ── Left side ── */}
-            <div className="flex items-center gap-1">
-                <AddMenu
-                    items={filteredAddItems}
-                    isOpen={openDropdown === 'add'}
-                    onToggle={() => toggleDropdown('add')}
-                    onClose={closeAllDropdowns}
-                />
+            <div className="flex items-center gap-2">
+                <button
+                    type="button"
+                    aria-label="Apri menu principale"
+                    aria-controls="props24-sidebar"
+                    aria-expanded={isMobileMenuOpen}
+                    onClick={onOpenMobileMenu}
+                    className="inline-flex items-center justify-center rounded-md p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 lg:hidden"
+                >
+                    <Menu className="h-5 w-5" aria-hidden="true" />
+                </button>
 
-                <div className="w-px h-5 bg-gray-200 mx-1" />
+                <span className="text-lg font-bold tracking-tight text-brand-blue lg:text-xl">Props24</span>
 
-                <AgendaWidget count={0} />
+                <div className="hidden h-5 w-px bg-gray-200 lg:block" />
 
-                {/* Loading spinner */}
-                {isLoading && (
-                    <div className="ml-3">
-                        <Loader2 className="w-4 h-4 text-brand-blue animate-spin" />
-                    </div>
-                )}
+                <div className="hidden items-center gap-1 lg:flex">
+                    <AddMenu
+                        items={filteredAddItems}
+                        isOpen={openDropdown === 'add'}
+                        onToggle={() => toggleDropdown('add')}
+                        onClose={closeAllDropdowns}
+                    />
+
+                    <div className="mx-1 h-5 w-px bg-gray-200" />
+
+                    <AgendaWidget count={0} />
+
+                    {isLoading && (
+                        <div className="ml-3">
+                            <Loader2 className="h-4 w-4 animate-spin text-brand-blue" />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* ── Right side ── */}
-            <div className="flex items-center gap-1">
+            <div className="hidden items-center gap-1 lg:flex">
                 <SearchBar
                     query={searchQuery}
                     onQueryChange={setSearchQuery}

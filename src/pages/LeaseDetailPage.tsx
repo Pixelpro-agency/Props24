@@ -86,19 +86,21 @@ export function LeaseDetailPage() {
                 </div>
             </div>
 
-            <div className="mb-4 flex flex-wrap gap-2 border-b border-gray-200">
+            <div className="mb-4 flex flex-wrap gap-2 border-b border-gray-200" role="tablist" aria-label="Sezioni della locazione">
                 {tabs.map(([key, label]) => (
-                    <button key={key} type="button" onClick={() => setTab(key)} className={`border-b-2 px-3 py-2 text-sm ${tab === key ? 'border-green-600 text-green-700' : 'border-transparent text-gray-500'}`}>{label}</button>
+                    <button key={key} id={`lease-detail-tab-${key}`} type="button" role="tab" aria-selected={tab === key} aria-controls={`lease-detail-panel-${key}`} onClick={() => setTab(key)} className={`border-b-2 px-3 py-2 text-sm ${tab === key ? 'border-green-600 text-green-700' : 'border-transparent text-gray-500'}`}>{label}</button>
                 ))}
             </div>
 
-            {tab === 'overview' && <LeaseOverviewTab detail={detail} notify={notify} />}
-            {tab === 'payments' && <LeasePaymentsTab detail={detail} notify={notify} />}
-            {tab === 'participants' && <LeaseParticipantsTab detail={detail} />}
-            {tab === 'documents' && <LeaseDocumentsTab detail={detail} notify={notify} />}
-            {tab === 'contract' && <LeaseContractTab detail={detail} notify={notify} />}
-            {tab === 'signature' && <LeaseSignatureTab detail={detail} notify={notify} />}
-            {tab === 'activity' && <LeaseActivityTab detail={detail} />}
+            <div id={`lease-detail-panel-${tab}`} role="tabpanel" aria-labelledby={`lease-detail-tab-${tab}`}>
+                {tab === 'overview' && <LeaseOverviewTab detail={detail} notify={notify} />}
+                {tab === 'payments' && <LeasePaymentsTab detail={detail} notify={notify} />}
+                {tab === 'participants' && <LeaseParticipantsTab detail={detail} />}
+                {tab === 'documents' && <LeaseDocumentsTab detail={detail} notify={notify} />}
+                {tab === 'contract' && <LeaseContractTab detail={detail} notify={notify} />}
+                {tab === 'signature' && <LeaseSignatureTab detail={detail} notify={notify} />}
+                {tab === 'activity' && <LeaseActivityTab detail={detail} />}
+            </div>
 
             <LeaseLifecycleModal isOpen={Boolean(lifecycleOperation)} operation={lifecycleOperation} lease={lease} title={title} onClose={() => setLifecycleOperation(null)} onSuccess={(message) => notify('success', message)} onError={(message) => notify('error', message)} />
             <LeaseEmailModal isOpen={emailOpen} leaseIds={[lease.id]} defaultSubject={`Locazione ${title}`} defaultBody={`Buongiorno,\n\n`} onClose={() => setEmailOpen(false)} onSuccess={(message) => notify('success', message)} onError={(message) => notify('error', message)} />

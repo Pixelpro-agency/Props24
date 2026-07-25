@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import {
+    AlertTriangle, Archive, ChevronDown, CircleStop, Coins, Copy, Download,
+    Eye, FileText, FolderOpen, MapPin, MessageSquare, MoreHorizontal, Pencil,
+    Plus, PlusCircle, Power, RotateCcw, Scale, ShieldCheck, Trash2,
+    TrendingUp, type LucideIcon,
+} from 'lucide-react';
 import { useLeasesDb } from '../hooks/useLeasesDb';
 import { LEASE_TYPES } from '../landlord/leases/data/leaseTypes';
 import { getJsonDb, subscribeJsonDb } from '../db/jsonDb';
@@ -11,22 +17,75 @@ import { LeaseBulkActionModal, type LeaseBulkOperation } from '../components/lea
 import { LeaseEmailModal } from '../components/lease-detail/LeaseEmailModal';
 import { LeaseCsvModal } from '../components/lease-detail/LeaseCsvModal';
 
-const statusLabels = {
-    current: 'In corso',
-    future: 'Futura',
-    historical: 'Terminata',
-    inactive: 'Inattiva',
-    archived: 'Archiviata',
-};
+const statusConfig = {
+    current: { label: 'ATTIVA', className: 'bg-green-600 text-white' },
+    future: { label: 'FUTURA', className: 'bg-blue-100 text-blue-800' },
+    historical: { label: 'TERMINATA', className: 'bg-gray-200 text-gray-700' },
+    inactive: { label: 'INATTIVA', className: 'bg-orange-100 text-orange-800' },
+    archived: { label: 'ARCHIVIATA', className: 'bg-gray-700 text-white' },
+} as const;
+
+interface PendingModelActionProps {
+    icon: LucideIcon;
+    label: string;
+}
+
+function PendingModelAction({ icon: Icon, label }: PendingModelActionProps) {
+    return (
+        <MenuItem disabled>
+            <button
+                type="button"
+                disabled
+                title="Funzione non ancora implementata"
+                className="flex w-full cursor-not-allowed items-center gap-3 bg-yellow-50 px-3 py-2 text-left text-sm text-yellow-800 opacity-80"
+            >
+                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="flex-1">{label}</span>
+                <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            </button>
+        </MenuItem>
+    );
+}
+
+interface PendingLeaseActionProps {
+    icon: LucideIcon;
+    label: string;
+}
+
+function PendingLeaseAction({ icon: Icon, label }: PendingLeaseActionProps) {
+    return (
+        <MenuItem disabled>
+            <button
+                type="button"
+                disabled
+                title="Funzione non ancora implementata"
+                className="flex w-full cursor-not-allowed items-center gap-3 bg-yellow-50 px-3 py-2 text-left text-sm text-yellow-800 opacity-80"
+            >
+                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="flex-1">{label}</span>
+                <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            </button>
+        </MenuItem>
+    );
+}
+
+function MenuSeparator() {
+    return <div role="separator" className="my-1 border-t border-gray-200" />;
+}
+
+const menuActionClass = 'flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none data-focus:bg-gray-50';
+const destructiveMenuActionClass = 'flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50 focus:bg-red-50 focus:outline-none data-focus:bg-red-50';
 
 function formatDate(value: string): string {
     if (!value) return '-';
-    const [year, month, day] = value.split('-');
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return value;
+    const [, year, month, day] = match;
     return `${day}/${month}/${year}`;
 }
 
 function currency(value: number): string {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
+    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(Number.isFinite(value) ? value : 0);
 }
 
 function activeProperties() {
@@ -93,7 +152,7 @@ export function LeasesPage() {
 
     useEffect(() => {
         const visibleIds = new Set(filteredLeases.map((lease) => lease.id));
-        setSelectedIds((current) => current.filter((id) => visibleIds.has(id)));
+        queueMicrotask(() => setSelectedIds((current) => current.filter((id) => visibleIds.has(id))));
     }, [filteredLeases]);
 
     const selectedLeases = filteredLeases.filter((lease) => selectedIds.includes(lease.id));
@@ -175,7 +234,7 @@ export function LeasesPage() {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                        <table className="min-w-[1380px] divide-y divide-gray-200 text-sm">
                             <thead className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                                 <tr>
                                     <th className="px-4 py-3">
@@ -193,15 +252,14 @@ export function LeasesPage() {
                                         />
                                     </th>
                                     <th className="px-4 py-3">Proprietà</th>
-                                    <th className="px-4 py-3">Indirizzo</th>
                                     <th className="px-4 py-3">Tipo</th>
                                     <th className="px-4 py-3">Inquilino</th>
-                                    <th className="px-4 py-3">Canone</th>
-                                    <th className="px-4 py-3">Spese</th>
-                                    <th className="px-4 py-3">Importo</th>
-                                    <th className="px-4 py-3">Inizio</th>
-                                    <th className="px-4 py-3">Fine</th>
+                                    <th className="px-4 py-3">Affitto</th>
+                                    <th className="px-4 py-3">Spese accessorie</th>
+                                    <th className="px-4 py-3">Deposito</th>
+                                    <th className="px-4 py-3">Durata</th>
                                     <th className="px-4 py-3">Stato</th>
+                                    <th className="px-4 py-3">Modelli</th>
                                     <th className="px-4 py-3">Azioni</th>
                                 </tr>
                             </thead>
@@ -220,36 +278,149 @@ export function LeasesPage() {
                                                 aria-label={`Seleziona locazione ${lease.identificativo || lease.id}`}
                                             />
                                         </td>
-                                        <td className="px-4 py-3 font-medium text-gray-900">
-                                            <Link to={`/properties/units/${lease.propertyId}`} className="text-blue-700 hover:underline">{lease.propertyTitle}</Link>
+                                        <td className="min-w-[280px] px-4 py-3">
+                                            <div className="text-sm font-medium text-blue-700">
+                                                <Link to={`/properties/units/${lease.propertyId}`} className="hover:underline">{lease.propertyTitle}</Link>
+                                                {lease.identificativo?.trim() && lease.identificativo.trim() !== (lease.propertyTitle || '').trim() && (
+                                                    <span className="ml-1 text-gray-700">{lease.identificativo.trim()}</span>
+                                                )}
+                                            </div>
+                                            <div className="mt-0.5 text-xs text-gray-600">{lease.leaseTypeLabel}</div>
+                                            <div className="mt-1 flex items-start gap-1 text-xs text-gray-500">
+                                                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                                <span>{lease.propertyAddress || 'Indirizzo non disponibile'}</span>
+                                            </div>
                                         </td>
-                                        <td className="px-4 py-3 text-gray-600">{lease.propertyAddress || '-'}</td>
-                                        <td className="px-4 py-3 text-gray-600">{lease.leaseTypeLabel}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-700">{lease.leaseTypeLabel}</td>
                                         <td className="px-4 py-3 text-gray-600">
                                             {lease.tenantIds[0] ? <Link to={`/tenants/${lease.tenantIds[0]}`} className="text-blue-700 hover:underline">{lease.tenantName}</Link> : lease.tenantName}
                                         </td>
-                                        <td className="px-4 py-3 text-gray-600">{currency(lease.rentHC)}</td>
-                                        <td className="px-4 py-3 text-gray-600">{currency(lease.maintenance)}</td>
-                                        <td className="px-4 py-3 font-medium text-gray-800">{currency(lease.periodicAmount)}</td>
-                                        <td className="px-4 py-3 text-gray-600">{formatDate(lease.startDate)}</td>
-                                        <td className="px-4 py-3 text-gray-600">{formatDate(lease.endDate)}</td>
-                                        <td className="px-4 py-3">
-                                            <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">{statusLabels[lease.temporalStatus]}</span>
+                                        <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-green-600">{currency(lease.rentHC)}</td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-green-600">{currency(lease.maintenance)}</td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-green-600">{currency(lease.securityDeposit)}</td>
+                                        <td className="min-w-[150px] px-4 py-3 text-sm leading-5 text-gray-600">
+                                            <span>{formatDate(lease.startDate)}</span>
+                                            <span className="mx-1">-</span>
+                                            <span>{formatDate(lease.endDate)}</span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div className="flex flex-wrap gap-2">
-                                                <Link to={`/leases/${lease.id}`} className="text-blue-700 hover:underline">Visualizza</Link>
-                                                {!lease.archived && lease.temporalStatus !== 'historical' && <Link to={`/leases/${lease.id}/edit`} className="text-blue-700 hover:underline">Modifica</Link>}
-                                                {!lease.archived && lease.temporalStatus === 'inactive' && <button type="button" onClick={() => setRowLifecycle({ operation: 'activate', leaseId: lease.id })} className="text-blue-700 hover:underline">Attiva</button>}
-                                                {!lease.archived && lease.temporalStatus !== 'historical' && lease.temporalStatus !== 'inactive' && <button type="button" onClick={() => setRowLifecycle({ operation: 'deactivate', leaseId: lease.id })} className="text-blue-700 hover:underline">Disattiva</button>}
-                                                {!lease.archived && lease.temporalStatus !== 'historical' && <button type="button" onClick={() => setRowLifecycle({ operation: 'terminate', leaseId: lease.id })} className="text-blue-700 hover:underline">Termina</button>}
-                                                {lease.archived
-                                                    ? <button type="button" onClick={() => setRowLifecycle({ operation: 'restore', leaseId: lease.id })} className="text-blue-700 hover:underline">Ripristina</button>
-                                                    : <button type="button" onClick={() => setRowLifecycle({ operation: 'archive', leaseId: lease.id })} className="text-blue-700 hover:underline">Archivia</button>}
-                                                <button type="button" onClick={() => setRowLifecycle({ operation: 'delete', leaseId: lease.id })} className="text-red-700 hover:underline">Elimina</button>
-                                                <button type="button" onClick={() => setEmailLeaseIds([lease.id])} className="text-blue-700 hover:underline">Email</button>
-                                                <button type="button" onClick={() => setCsvLeases([lease])} className="text-blue-700 hover:underline">CSV</button>
-                                            </div>
+                                            <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase ${statusConfig[lease.temporalStatus].className}`}>
+                                                {statusConfig[lease.temporalStatus].label}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <Menu>
+                                                <MenuButton
+                                                    type="button"
+                                                    aria-label={`Modelli per ${lease.identificativo || lease.propertyTitle || lease.id}`}
+                                                    className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                                >
+                                                    Modelli
+                                                    <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                                                </MenuButton>
+                                                <MenuItems
+                                                    anchor="bottom end"
+                                                    portal
+                                                    className="z-[80] w-72 rounded-lg border border-gray-200 bg-white py-1 shadow-xl focus:outline-none [--anchor-gap:4px]"
+                                                >
+                                                    {/* TODO: collegare i modelli della locazione alla generazione documenti,
+                                                        ai cataloghi e agli inventari quando i relativi flussi saranno operativi. */}
+                                                    <PendingModelAction icon={FileText} label="Modello di contratto precompilato" />
+                                                    <PendingModelAction icon={PlusCircle} label="Crea un catalogo" />
+                                                    <PendingModelAction icon={PlusCircle} label="Crea un inventario di inizio locazione" />
+                                                </MenuItems>
+                                            </Menu>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <Menu>
+                                                <MenuButton
+                                                    type="button"
+                                                    aria-label={`Azioni per ${lease.identificativo || lease.propertyTitle || lease.id}`}
+                                                    className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white p-1.5 text-gray-600 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                                >
+                                                    <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+                                                </MenuButton>
+                                                <MenuItems
+                                                    anchor="bottom end"
+                                                    portal
+                                                    className="z-[80] w-80 rounded-lg border border-gray-200 bg-white py-1 shadow-xl focus:outline-none [--anchor-gap:4px]"
+                                                >
+                                                    {/* TODO: collegare le azioni in giallo ai rispettivi flussi
+                                                        finanziari, documentali e amministrativi quando saranno disponibili. */}
+                                                    {!lease.archived && lease.temporalStatus !== 'historical' && (
+                                                        <MenuItem>
+                                                            <Link to={`/leases/${lease.id}/edit`} className={menuActionClass}>
+                                                                <Pencil className="h-4 w-4 shrink-0" aria-hidden="true" /> Modifica
+                                                            </Link>
+                                                        </MenuItem>
+                                                    )}
+                                                    <MenuItem>
+                                                        <Link to={`/leases/${lease.id}`} className={menuActionClass}>
+                                                            <Eye className="h-4 w-4 shrink-0" aria-hidden="true" /> Dettagli di locazione
+                                                        </Link>
+                                                    </MenuItem>
+                                                    <MenuItem>
+                                                        <button type="button" onClick={() => setEmailLeaseIds([lease.id])} className={menuActionClass}>
+                                                            <MessageSquare className="h-4 w-4 shrink-0" aria-hidden="true" /> Invia un messaggio
+                                                        </button>
+                                                    </MenuItem>
+                                                    <PendingLeaseAction icon={Copy} label="Crea una copia" />
+                                                    <MenuSeparator />
+                                                    <PendingLeaseAction icon={Coins} label="Finanze" />
+                                                    <PendingLeaseAction icon={Scale} label="Riconciliazione spese proprietario/inquilino" />
+                                                    <PendingLeaseAction icon={TrendingUp} label="Aggiornamento del canone" />
+                                                    {!lease.archived && lease.temporalStatus !== 'historical' && (
+                                                        <MenuItem>
+                                                            <button type="button" onClick={() => setRowLifecycle({ operation: 'terminate', leaseId: lease.id })} className={menuActionClass}>
+                                                                <CircleStop className="h-4 w-4 shrink-0" aria-hidden="true" /> Terminare la locazione
+                                                            </button>
+                                                        </MenuItem>
+                                                    )}
+                                                    <PendingLeaseAction icon={FolderOpen} label="Documenti" />
+                                                    {!lease.archived && lease.temporalStatus === 'inactive' && (
+                                                        <MenuItem>
+                                                            <button type="button" onClick={() => setRowLifecycle({ operation: 'activate', leaseId: lease.id })} className={menuActionClass}>
+                                                                <Power className="h-4 w-4 shrink-0" aria-hidden="true" /> Attiva
+                                                            </button>
+                                                        </MenuItem>
+                                                    )}
+                                                    {!lease.archived && lease.temporalStatus !== 'historical' && lease.temporalStatus !== 'inactive' && (
+                                                        <MenuItem>
+                                                            <button type="button" onClick={() => setRowLifecycle({ operation: 'deactivate', leaseId: lease.id })} className={menuActionClass}>
+                                                                <Power className="h-4 w-4 shrink-0" aria-hidden="true" /> Disattiva
+                                                            </button>
+                                                        </MenuItem>
+                                                    )}
+                                                    {lease.archived ? (
+                                                        <MenuItem>
+                                                            <button type="button" onClick={() => setRowLifecycle({ operation: 'restore', leaseId: lease.id })} className={menuActionClass}>
+                                                                <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" /> Ripristina
+                                                            </button>
+                                                        </MenuItem>
+                                                    ) : (
+                                                        <MenuItem>
+                                                            <button type="button" onClick={() => setRowLifecycle({ operation: 'archive', leaseId: lease.id })} className={menuActionClass}>
+                                                                <Archive className="h-4 w-4 shrink-0" aria-hidden="true" /> Archivia
+                                                            </button>
+                                                        </MenuItem>
+                                                    )}
+                                                    <PendingLeaseAction icon={RotateCcw} label="Ricrea i pagamenti" />
+                                                    <MenuSeparator />
+                                                    <PendingLeaseAction icon={ShieldCheck} label="Promemoria assicurazione locatario" />
+                                                    <PendingLeaseAction icon={FileText} label="Modelli" />
+                                                    <MenuItem>
+                                                        <button type="button" onClick={() => setCsvLeases([lease])} className={menuActionClass}>
+                                                            <Download className="h-4 w-4 shrink-0" aria-hidden="true" /> Esporta CSV
+                                                        </button>
+                                                    </MenuItem>
+                                                    <MenuSeparator />
+                                                    <MenuItem>
+                                                        <button type="button" onClick={() => setRowLifecycle({ operation: 'delete', leaseId: lease.id })} className={destructiveMenuActionClass}>
+                                                            <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" /> Elimina
+                                                        </button>
+                                                    </MenuItem>
+                                                </MenuItems>
+                                            </Menu>
                                         </td>
                                     </tr>
                                 ))}

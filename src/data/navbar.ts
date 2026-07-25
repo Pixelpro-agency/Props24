@@ -66,7 +66,6 @@ export const addMenuItems: NavbarMenuItem[] = [
         icon: Key,
         href: '/leases/new',
         dividerAfter: true,
-        isExpert: true,
     },
     {
         id: 'add-reservation',
