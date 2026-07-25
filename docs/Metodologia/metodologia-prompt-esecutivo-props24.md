@@ -156,27 +156,42 @@ Non costituiscono blocco:
 
 La Chat Esecutore deve svolgere esclusivamente la fase richiesta nel messaggio corrente.
 
-Non deve anticipare:
+### Operazioni sul branch task
 
-- staging;
-- commit;
-- push;
-- pull request;
-- merge;
-- collaudo;
-- aggiornamento della documentazione successiva;
+Dopo che la modifica è stata applicata e verificata, la Chat Esecutore deve fornire all’utente i comandi per:
 
-quando l’utente non ha ancora richiesto quella fase.
+- eliminare gli artefatti temporanei;
+- aggiungere allo staging soltanto i file autorizzati;
+- verificare la diff in staging;
+- creare il commit sul branch task;
+- eseguire il push del solo branch task;
+- recuperare il commit SHA finale;
+- produrre il report per la Chat Analisi.
 
-Se la fase corrente richiede soltanto:
+Il commit e il push del branch task appartengono alla fase ordinaria della Chat Esecutore.
 
-```txt
-creazione script → applicazione → diff
-```
+### Integrazione in main
 
-la Chat Esecutore deve fermarsi dopo avere consegnato lo script e i comandi di verifica.
+La Chat Esecutore non deve:
 
-Non deve aggiungere automaticamente comandi di push o merge.
+- fare push direttamente su `main`;
+- fornire anticipatamente comandi per aggiornare `main`;
+- fare merge;
+- fare squash;
+- fare cherry-pick su `main`;
+- cambiare il branch base;
+- dichiarare che il branch può essere integrato;
+- sostituirsi alla Chat Analisi nella revisione.
+
+Dopo il push del branch task, deve fermarsi.
+
+La Chat Analisi:
+
+1. legge branch e SHA su GitHub;
+2. confronta il branch task con `main`;
+3. verifica file, diff, scope e test;
+4. richiede eventuali correzioni sullo stesso branch;
+5. quando tutto è corretto, fornisce all’utente i comandi per integrare la modifica in `main`.
 
 ## 2.2 Standard per gli script di applicazione
 
@@ -237,11 +252,13 @@ Prima dello staging deve essere eliminato con:
 rm -f ./<nome-script>.py
 ```
 
-`fileModificati.md` non deve essere richiesto o generato automaticamente.
+La revisione ordinaria usa esclusivamente:
 
-Può essere richiesto soltanto quando il prompt approvato lo indica espressamente come artefatto temporaneo di revisione.
-
-Non deve essere incluso nel commit.
+```txt
+branch task remoto
+commit SHA
+diff GitHub tra main e branch task
+```
 
 ## 3. Prerequisiti prima di scrivere il prompt
 
@@ -458,34 +475,82 @@ Branch base: main
 Branch task: <tipo>/<id-descrizione>
 ```
 
-L’Esecutore deve consegnare all’utente questi comandi suggeriti:
+### Fase iniziale
+
+Per una nuova task, la Chat Esecutore deve fornire:
 
 ```bash
 git fetch origin
-git switch <branch-base>
+git switch main
 git pull --ff-only
 git status --short
 git switch -c <branch-task>
 ```
 
-Il prompt deve inoltre imporre all’Esecutore:
+Per una correzione sullo stesso branch deve invece fornire:
 
-- di spiegare come controllare il working tree iniziale;
-- di non cancellare o includere modifiche preesistenti;
-- di consegnare per ogni file una patch precisa o il file completo;
-- di proporre commit piccoli e descrittivi;
-- di suggerire il push del solo branch task;
-- di preparare titolo e descrizione della draft PR quando richiesta;
-- di attendere branch, SHA e PR comunicati dall’utente;
-- di non creare branch, commit, tag o pull request;
-- di non eseguire push, force push, rebase o merge;
-- di richiedere all’utente lo SHA finale dopo il push.
+```bash
+git fetch origin
+git switch <branch-task>
+git pull --ff-only
+git status --short
+git rev-parse HEAD
+```
 
-Il branch, i commit e la diff remota sostituiscono normalmente `fileModificati.md`. Non generarlo né committarlo salvo richiesta esplicita dell’Analista come fallback.
+La Chat Esecutore deve inoltre:
+
+- spiegare come controllare il working tree iniziale;
+- non cancellare o includere modifiche preesistenti;
+- consegnare per ogni file una patch precisa o il file completo;
+- proporre commit piccoli e descrittivi;
+- non creare branch, commit, tag o pull request;
+- non eseguire direttamente operazioni Git o GitHub;
+- non fare force push, rebase distruttivo o merge.
+
+### Dopo modifica e test positivi
+
+La Chat Esecutore deve fornire all’utente:
+
+```bash
+rm -f ./<script-temporaneo>.py
+
+git add <soli-file-autorizzati>
+
+git diff --cached --check
+git diff --cached --name-only
+git diff --cached
+
+git commit -m "<messaggio-descrittivo>"
+
+git push origin <branch-task>
+
+git rev-parse HEAD
+git status --short
+```
+
+Il push deve riguardare esclusivamente il branch task.
+
+È vietato fornire:
+
+```bash
+git push origin main
+```
+
+o qualsiasi comando equivalente che aggiorni `main`.
+
+Dopo il push del branch task, la Chat Esecutore deve richiedere lo SHA finale e lo stato del working tree, quindi produrre il report per la Chat Analisi.
 
 ## 12. Pull request aperta dall’utente
 
-Quando richiesta, l’Esecutore deve preparare per l’utente una PR draft contenente:
+La pull request non è obbligatoria nel flusso standard.
+
+La Chat Esecutore prepara titolo e descrizione di una draft PR soltanto quando:
+
+- il prompt lo richiede espressamente;
+- la Chat Analisi lo richiede dopo la revisione;
+- l’utente decide di usare una PR.
+
+Quando richiesta, la draft PR deve contenere:
 
 - ID e titolo della task;
 - obiettivo unico;
@@ -496,11 +561,13 @@ Quando richiesta, l’Esecutore deve preparare per l’utente una PR draft conte
 - indicazione che il collaudo non è ancora eseguito;
 - formula `DRAFT — non fare merge`.
 
+L’assenza di una PR non impedisce alla Chat Analisi di revisionare il branch remoto tramite SHA e confronto GitHub.
+
 L’utente apre o aggiorna la PR. La creazione della PR non equivale ad approvazione statica, collaudo o autorizzazione al merge.
 
 ## 13. Report finale dell’Esecutore
 
-Il risultato dell’Esecutore deve essere operativo e non discorsivo.
+Il risultato dell’Esecutore deve essere operativo, non discorsivo e basato soltanto su fatti osservabili.
 
 Non deve contenere:
 
@@ -509,30 +576,32 @@ Non deve contenere:
 - un piano prima dell’esecuzione;
 - alternative non richieste;
 - ripetizione integrale del prompt;
-- anticipazione della fase successiva.
+- anticipazione dell’integrazione in `main`;
+- dichiarazioni di approvazione.
 
-Il report finale già previsto deve essere mantenuto e basarsi soltanto su fatti osservabili.
-
-Il prompt deve richiedere:
+Dopo il push del branch task, il report deve contenere esclusivamente:
 
 1. repository;
 2. branch base;
-3. branch task;
-4. commit SHA: da fornire dall’utente dopo il push;
-5. pull request: da aprire dall’utente, se prevista;
+3. SHA attuale del branch base, quando verificato;
+4. branch task;
+5. commit SHA pubblicato sul branch task;
 6. file letti;
 7. file modificati;
 8. riepilogo delle modifiche;
 9. comandi eseguiti;
-10. esito dei test con exit code;
+10. test e controlli con exit code;
 11. tentativi utilizzati;
 12. warning;
 13. limiti e non verificato;
 14. stato del working tree;
-15. tutorial di applicazione, branch, commit e push consegnato;
-16. conferma che la chat non ha eseguito scritture GitHub o merge.
+15. conferma che il branch task è stato pubblicato;
+16. conferma che `main` non è stato modificato;
+17. conferma che non è stato eseguito alcun merge;
+18. pull request, soltanto se esistente;
+19. indicazione `Pronto per la revisione della Chat Analisi.`
 
-Il report non deve sostituire la diff e non deve incollare file completi già disponibili su GitHub.
+Il report non deve sostituire la diff GitHub e non deve chiedere di allegare nuovamente file già disponibili sul branch remoto.
 
 ## 14. Template del prompt esecutivo
 
@@ -554,7 +623,7 @@ Non chiedere conferme già contenute nel prompt.
 Svolgi internamente le verifiche necessarie e comunica soltanto artefatti, comandi, risultati, errori reali o blocchi oggettivi.
 
 Poni una domanda soltanto se un blocco tecnico reale impedisce l’esecuzione.
-Non anticipare fasi Git, push, PR, merge o collaudo non ancora richieste.
+Non anticipare l’integrazione in `main`, il merge o il collaudo non ancora richiesti.
 
 Quando non puoi modificare direttamente il checkout locale e la task richiede modifiche testuali, crea un solo script Python da salvare nella root del repository ed eseguire con:
 
@@ -624,17 +693,29 @@ Fai massimo 3 tentativi ragionati. Dopo il terzo tentativo fermati e riporta log
 Ogni tentativo deve partire dall’errore reale, formulare una causa plausibile, applicare la correzione minima autorizzata e rieseguire il test pertinente.
 Non modificare file fuori scope e non effettuare un quarto tentativo.
 
-## Commit, push e PR
+## Commit e push del branch task
 
 - Consegna all’utente file completi o patch precise e indica esattamente dove applicare ogni modifica.
 - Spiega come verificare localmente ogni modifica.
+- Dopo test e diff positivi, fornisci i comandi per eliminare gli artefatti temporanei.
+- Aggiungi allo staging soltanto i file autorizzati.
+- Verifica la diff in staging prima del commit.
 - Suggerisci un messaggio di commit descrittivo: `<tipo>(<area>): <descrizione>`.
-- Fornisci i comandi suggeriti per creare il branch, aggiungere soltanto i file della task, creare il commit e fare push.
-- Prepara titolo e descrizione di una draft PR verso `main` quando richiesta.
-- Inserisci nella descrizione proposta obiettivo, modifiche, test, limiti, elementi non modificati e `DRAFT — non fare merge`.
-- Non creare branch, commit, tag o pull request.
-- Non eseguire push, force push, rebase o merge.
-- Non generare `fileModificati.md`, salvo richiesta esplicita.
+- Fornisci i comandi per creare il commit sul branch task e fare push del solo branch task.
+- Richiedi il commit SHA pubblicato e lo stato del working tree.
+- Produci il report per la Chat Analisi.
+- Non creare direttamente branch, commit, tag o pull request.
+- Non eseguire direttamente push, force push, rebase o merge.
+- Non fornire comandi che aggiornino `main`.
+- Prepara titolo e descrizione di una draft PR soltanto quando richiesta.
+
+## Integrazione in main
+
+La Chat Esecutore non fornisce comandi per integrare il branch task in main.
+
+Dopo il push del branch task, la Chat Analisi revisiona branch, SHA e diff GitHub.
+
+Soltanto dopo l’approvazione, la Chat Analisi fornisce all’utente i comandi per integrare e pubblicare main.
 
 ## Risultato atteso
 
@@ -643,26 +724,29 @@ Non modificare file fuori scope e non effettuare un quarto tentativo.
 
 ## Report finale
 
-Non esporre ragionamenti, ricostruzioni della comprensione, piani, alternative non richieste o anticipazioni della fase successiva.
+Non esporre ragionamenti, ricostruzioni della comprensione, piani, alternative non richieste o anticipazioni dell’integrazione in `main`.
 Basa il report soltanto su fatti osservabili.
 
-Riporta esclusivamente:
+Dopo il push del branch task, riporta esclusivamente:
 1. repository;
 2. branch base;
-3. branch task;
-4. commit SHA: da fornire dall’utente;
-5. PR: da aprire dall’utente, se prevista;
+3. SHA attuale del branch base, quando verificato;
+4. branch task;
+5. commit SHA pubblicato sul branch task;
 6. file letti;
 7. file modificati;
 8. riepilogo;
 9. comandi;
-10. test ed exit code;
+10. test e controlli con exit code;
 11. tentativi;
 12. warning;
 13. limiti e non verificato;
 14. working tree;
-15. tutorial applicativo e Git consegnato;
-16. conferma di nessuna scrittura GitHub e nessun merge.
+15. branch task pubblicato: sì/no;
+16. `main` modificato: no;
+17. merge eseguito: no;
+18. pull request: soltanto se esistente;
+19. stato: `Pronto per la revisione della Chat Analisi.`
 ```
 
 ## 15. Checklist dell’Analista
@@ -682,20 +766,25 @@ Prima di consegnare il prompt:
 [ ] I comandi di test esistono realmente.
 [ ] Il collaudo browser è definito oppure dichiarato non necessario.
 [ ] La regola dei tre tentativi è presente.
-[ ] È richiesto il tutorial per applicazione, commit, push e draft PR.
 [ ] È vietata ogni scrittura Git o GitHub da parte della chat.
-[ ] Il report richiede branch, SHA, PR, test ed exit code.
-[ ] Non è richiesta la generazione ordinaria di fileModificati.md.
-[ ] Non sono inclusi segreti, cache, build, dump o dati generati.
-[ ] Nessuna decisione tecnica o di prodotto è lasciata implicitamente all’Esecutore.
 [ ] Il prompt ordina l’avvio immediato dell’esecuzione.
 [ ] Il prompt vieta piani, riepiloghi e ragionamenti esposti.
 [ ] Le domande sono ammesse soltanto per blocchi tecnici reali.
 [ ] Il percorso dello script è unico e non ambiguo.
 [ ] Lo script deve essere salvato nella root del repository.
 [ ] Il comando usa python ./<nome-script>.py.
-[ ] Non vengono anticipate fasi Git o GitHub non ancora richieste.
 [ ] Gli artefatti temporanei sono esclusi dal commit.
+[ ] Il prompt richiede il push del solo branch task.
+[ ] Il prompt vieta il push diretto su main.
+[ ] Il prompt vieta all’Esecutore di fornire anticipatamente i comandi di integrazione in main.
+[ ] Il report finale contiene branch task e SHA remoto.
+[ ] La revisione usa la diff GitHub tra main e branch task.
+[ ] Repomix non è richiesto.
+[ ] fileModificati.md non è richiesto né generato.
+[ ] La PR è facoltativa salvo richiesta esplicita.
+[ ] I comandi per integrare in main spettano alla Chat Analisi dopo l’approvazione.
+[ ] Non sono inclusi segreti, cache, build, dump o dati generati.
+[ ] Nessuna decisione tecnica o di prodotto è lasciata implicitamente all’Esecutore.
 ```
 
 ## 16. Regola conclusiva
@@ -707,3 +796,9 @@ Se per eseguirlo l’Esecutore deve scegliere requisiti, scoprire autonomamente 
 > Un prompt esecutivo non deve obbligare l’utente a guidare nuovamente l’Esecutore su percorso dei file, formato dell’artefatto, ordine dei comandi o fase corrente. Queste scelte operative devono essere già determinate dal prompt e applicate senza discussione.
 
 > L’Esecutore può ragionare quanto necessario per lavorare correttamente, ma non deve trasferire all’utente il proprio processo di ragionamento. Deve trasferire soltanto il risultato operativo e le evidenze richieste.
+
+> Il completamento della fase della Chat Esecutore coincide con il push verificato del branch task e la consegna del relativo SHA. Non coincide con l’integrazione in main.
+
+> Il branch task remoto e la relativa diff GitHub sono la fonte della revisione. Repomix, copie aggregate dei file e fileModificati.md non devono sostituire branch, commit e diff.
+
+> La Chat Analisi è l’unico ruolo che, dopo avere approvato la modifica, può fornire all’utente i comandi per integrare il branch task in main.
