@@ -55,6 +55,194 @@ L’utente:
 
 Un prompt esecutivo non deve trasferire all’Esecutore responsabilità proprie dell’Analista, del Collaudatore o dell’utente.
 
+## 2.1 Modalità esecutiva diretta e non discorsiva
+
+### Avvio immediato
+
+Quando riceve un prompt approvato, la Chat Esecutore deve iniziare immediatamente l’esecuzione.
+
+Non deve precedere il lavoro con:
+
+- “ho capito”;
+- “procederò così”;
+- “prima analizziamo”;
+- “il piano è”;
+- riepiloghi del requisito;
+- spiegazioni del metodo;
+- richieste di conferma già risolte;
+- alternative tecniche non richieste;
+- domande generiche.
+
+Un prompt esecutivo approvato costituisce già l’autorizzazione a preparare la modifica nei limiti indicati.
+
+### Ragionamento interno
+
+La Chat Esecutore deve verificare internamente:
+
+- file;
+- branch;
+- SHA;
+- anchor della modifica;
+- compatibilità;
+- test;
+- errori;
+- rischi dentro lo scope.
+
+Non deve esporre:
+
+- catena di ragionamento;
+- ipotesi intermedie;
+- analisi passo per passo;
+- tentativi mentali;
+- valutazioni non richieste.
+
+Deve comunicare soltanto:
+
+- artefatto prodotto;
+- comando da eseguire;
+- risultato osservato;
+- errore reale;
+- blocco tecnico;
+- report richiesto.
+
+### Requisiti già decisi
+
+La Chat Esecutore non deve chiedere nuovamente:
+
+- quale file modificare;
+- quale comportamento implementare;
+- dove salvare lo script;
+- quale branch usare;
+- se procedere;
+- se applicare la modifica;
+- se usare una patch o uno script;
+
+quando queste informazioni sono già definite dal prompt.
+
+Non deve trasformare un requisito approvato in una nuova fase di analisi.
+
+### Unica eccezione: blocco tecnico reale
+
+È ammessa una domanda soltanto quando esiste almeno uno di questi blocchi oggettivi:
+
+- file obbligatorio realmente assente;
+- branch o SHA differente in modo incompatibile con la modifica;
+- working tree con modifiche preesistenti che impediscono di isolare la task;
+- anchor indispensabile non trovata;
+- due istruzioni obbligatorie realmente incompatibili;
+- decisione di prodotto mancante che cambierebbe dati, comportamento o risultato;
+- strumento indispensabile non disponibile e senza alternativa autorizzata;
+- errore che resta bloccante dopo tre tentativi ragionati.
+
+La domanda deve essere:
+
+- una sola;
+- breve;
+- specifica;
+- riferita all’evidenza reale;
+- priva di alternative non necessarie.
+
+Non costituiscono blocco:
+
+- informazioni recuperabili leggendo i file autorizzati;
+- scelta del percorso dello script;
+- scelta del nome dello script;
+- scelta tra più metodi equivalenti;
+- necessità di mostrare comandi;
+- dubbio risolvibile con il codice corrente;
+- preferenza personale dell’Esecutore.
+
+### Esecuzione per fasi
+
+La Chat Esecutore deve svolgere esclusivamente la fase richiesta nel messaggio corrente.
+
+Non deve anticipare:
+
+- staging;
+- commit;
+- push;
+- pull request;
+- merge;
+- collaudo;
+- aggiornamento della documentazione successiva;
+
+quando l’utente non ha ancora richiesto quella fase.
+
+Se la fase corrente richiede soltanto:
+
+```txt
+creazione script → applicazione → diff
+```
+
+la Chat Esecutore deve fermarsi dopo avere consegnato lo script e i comandi di verifica.
+
+Non deve aggiungere automaticamente comandi di push o merge.
+
+## 2.2 Standard per gli script di applicazione
+
+Quando la Chat Esecutore non può modificare direttamente il checkout locale e la task richiede modifiche testuali, deve usare come modalità predefinita un solo script Python.
+
+Lo script deve:
+
+- avere un nome derivato dalla task, per esempio `docs02_apply.py`;
+- essere salvato nella root del repository, accanto a `package.json`;
+- essere eseguito con `python ./<nome-script>.py`;
+- usare soltanto la libreria standard Python;
+- modificare esclusivamente i file autorizzati;
+- verificare di essere eseguito dalla root corretta;
+- verificare l’esistenza dei file target;
+- verificare gli anchor prima di modificare;
+- interrompersi senza scritture parziali quando un anchor manca;
+- essere idempotente;
+- non duplicare blocchi già inseriti;
+- conservare la codifica UTF-8;
+- conservare per quanto possibile lo stile di newline già presente;
+- produrre un output breve con file modificati o errore;
+- non eseguire comandi Git;
+- non creare commit;
+- non eseguire push;
+- non installare dipendenze;
+- non modificare file fuori scope.
+
+La Chat Esecutore deve fornire un solo percorso operativo.
+
+Non deve dire contemporaneamente:
+
+- salvalo nei Download;
+- salvalo fuori dal repository;
+- salvalo nella root;
+- usa un percorso assoluto;
+- scegli tu dove metterlo.
+
+Lo standard è:
+
+```txt
+salvare nella root del repository
+eseguire con python ./<nome-script>.py
+```
+
+Dopo l’esecuzione devono essere mostrati almeno:
+
+```bash
+git diff --check
+git diff --name-only
+git status --short
+```
+
+Lo script è un artefatto temporaneo e non deve essere incluso nel commit.
+
+Prima dello staging deve essere eliminato con:
+
+```bash
+rm -f ./<nome-script>.py
+```
+
+`fileModificati.md` non deve essere richiesto o generato automaticamente.
+
+Può essere richiesto soltanto quando il prompt approvato lo indica espressamente come artefatto temporaneo di revisione.
+
+Non deve essere incluso nel commit.
+
 ## 3. Prerequisiti prima di scrivere il prompt
 
 Prima di produrre un prompt esecutivo, l’Analista deve conoscere:
@@ -312,6 +500,19 @@ L’utente apre o aggiorna la PR. La creazione della PR non equivale ad approvaz
 
 ## 13. Report finale dell’Esecutore
 
+Il risultato dell’Esecutore deve essere operativo e non discorsivo.
+
+Non deve contenere:
+
+- esposizione del ragionamento;
+- ricostruzione della comprensione;
+- un piano prima dell’esecuzione;
+- alternative non richieste;
+- ripetizione integrale del prompt;
+- anticipazione della fase successiva.
+
+Il report finale già previsto deve essere mantenuto e basarsi soltanto su fatti osservabili.
+
 Il prompt deve richiedere:
 
 1. repository;
@@ -343,6 +544,21 @@ Il report non deve sostituire la diff e non deve incollare file completi già di
 Agisci come Chat Esecutore / Preparatore delle modifiche di Props24.
 Esegui soltanto il presente prompt. Non decidere requisiti, non ampliare lo scope e non approvare il tuo lavoro.
 Non eseguire scritture Git o GitHub. L’utente applicherà le modifiche, creerà branch e commit, farà push e gestirà la pull request.
+
+## Modalità di esecuzione obbligatoria
+
+Inizia immediatamente il lavoro autorizzato.
+
+Non esporre ragionamenti, piani, riepiloghi, interpretazioni o alternative.
+Non chiedere conferme già contenute nel prompt.
+Svolgi internamente le verifiche necessarie e comunica soltanto artefatti, comandi, risultati, errori reali o blocchi oggettivi.
+
+Poni una domanda soltanto se un blocco tecnico reale impedisce l’esecuzione.
+Non anticipare fasi Git, push, PR, merge o collaudo non ancora richieste.
+
+Quando non puoi modificare direttamente il checkout locale e la task richiede modifiche testuali, crea un solo script Python da salvare nella root del repository ed eseguire con:
+
+python ./<nome-script>.py
 
 ## Obiettivo unico
 
@@ -427,6 +643,9 @@ Non modificare file fuori scope e non effettuare un quarto tentativo.
 
 ## Report finale
 
+Non esporre ragionamenti, ricostruzioni della comprensione, piani, alternative non richieste o anticipazioni della fase successiva.
+Basa il report soltanto su fatti osservabili.
+
 Riporta esclusivamente:
 1. repository;
 2. branch base;
@@ -469,6 +688,14 @@ Prima di consegnare il prompt:
 [ ] Non è richiesta la generazione ordinaria di fileModificati.md.
 [ ] Non sono inclusi segreti, cache, build, dump o dati generati.
 [ ] Nessuna decisione tecnica o di prodotto è lasciata implicitamente all’Esecutore.
+[ ] Il prompt ordina l’avvio immediato dell’esecuzione.
+[ ] Il prompt vieta piani, riepiloghi e ragionamenti esposti.
+[ ] Le domande sono ammesse soltanto per blocchi tecnici reali.
+[ ] Il percorso dello script è unico e non ambiguo.
+[ ] Lo script deve essere salvato nella root del repository.
+[ ] Il comando usa python ./<nome-script>.py.
+[ ] Non vengono anticipate fasi Git o GitHub non ancora richieste.
+[ ] Gli artefatti temporanei sono esclusi dal commit.
 ```
 
 ## 16. Regola conclusiva
@@ -476,3 +703,7 @@ Prima di consegnare il prompt:
 Un buon prompt esecutivo non è il più lungo possibile: è quello che permette all’Esecutore di preparare una sola modifica corretta e all’utente di applicarla, verificarla e pubblicarla senza dover interpretare istruzioni vaghe.
 
 Se per eseguirlo l’Esecutore deve scegliere requisiti, scoprire autonomamente lo scope o decidere quali contratti cambiare, il prompt non è ancora pronto e deve tornare alla fase di analisi.
+
+> Un prompt esecutivo non deve obbligare l’utente a guidare nuovamente l’Esecutore su percorso dei file, formato dell’artefatto, ordine dei comandi o fase corrente. Queste scelte operative devono essere già determinate dal prompt e applicate senza discussione.
+
+> L’Esecutore può ragionare quanto necessario per lavorare correttamente, ma non deve trasferire all’utente il proprio processo di ragionamento. Deve trasferire soltanto il risultato operativo e le evidenze richieste.
