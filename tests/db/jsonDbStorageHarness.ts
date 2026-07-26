@@ -3,9 +3,14 @@ export type StorageWrite = Readonly<{
   value: string;
 }>;
 
+export type StorageOperation =
+  | Readonly<{ type: 'set'; key: string; value: string }>
+  | Readonly<{ type: 'remove'; key: string }>;
+
 export class MemoryStorage implements Storage {
   readonly setItemCalls: StorageWrite[] = [];
   readonly removeItemCalls: string[] = [];
+  readonly operations: StorageOperation[] = [];
 
   private readonly values = new Map<string, string>();
 
@@ -33,11 +38,13 @@ export class MemoryStorage implements Storage {
 
   removeItem(key: string): void {
     this.removeItemCalls.push(key);
+    this.operations.push({ type: 'remove', key });
     this.values.delete(key);
   }
 
   setItem(key: string, value: string): void {
     this.setItemCalls.push({ key, value });
+    this.operations.push({ type: 'set', key, value });
     this.values.set(key, value);
   }
 
