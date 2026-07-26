@@ -8,8 +8,8 @@ import {
   createPaymentHistoryDatabase,
 } from './paymentHistoryFixtures';
 
-describe('repairRecoverablePayments current baseline before D2C', () => {
-  it('documents the current baseline where addebito reconstructs paidDate', () => {
+describe('repairRecoverablePayments', () => {
+  it('demotes paid without paidDate even when the lease method is addebito', () => {
     const lease = createLeaseFixture({
       formData: { LeasePaymentMethod: 'addebito' },
     });
@@ -32,12 +32,12 @@ describe('repairRecoverablePayments current baseline before D2C', () => {
     );
 
     expect(repaired.payments[0]).toMatchObject({
-      status: 'paid',
-      paidDate: '2026-05-05',
+      status: 'late',
+      paidDate: null,
     });
   });
 
-  it('documents the current baseline where non-addebito paid without date becomes late', () => {
+  it('demotes paid without paidDate for a non-addebito lease method', () => {
     const lease = createLeaseFixture({
       formData: { LeasePaymentMethod: 'bonifico' },
     });
@@ -197,6 +197,12 @@ describe('repairRecoverablePayments current baseline before D2C', () => {
     );
 
     expect(database).toEqual(original);
+    expect(firstRepair.payments.find((payment) => (
+      payment.id === 'payment-rent-first-paid-without-date'
+    ))).toMatchObject({
+      status: 'late',
+      paidDate: null,
+    });
     expect(secondRepair).toEqual(firstRepair);
   });
 });

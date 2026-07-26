@@ -243,7 +243,6 @@ describe('account-scoped payment loading', () => {
     const rawDatabase = createRawDatabase();
     const rawPayment = findHistoricalPayment(rawDatabase);
     const id = rawPayment.id;
-    const dueDate = rawPayment.dueDate;
     rawPayment.status = 'paid';
     rawPayment.paidDate = null;
     const rawLease = rawDatabase.leases.find((lease) => lease.id === rawPayment.leaseId);
@@ -259,9 +258,8 @@ describe('account-scoped payment loading', () => {
     const persisted = JSON.parse(storage.getItem(ACCOUNT_KEY) ?? '') as RawDatabase;
     const persistedPayment = paymentById(persisted as unknown as LocalDatabase, id);
 
-    expect(loaded.status).toBe('paid');
-    expect(loaded.paidDate).toBe(dueDate);
-    expect(persistedPayment.paidDate).toBeNull();
+    expect(loaded).toMatchObject({ status: 'late', paidDate: null });
+    expect(persistedPayment).toMatchObject({ status: 'paid', paidDate: null });
     expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(0);
   });
 
@@ -281,23 +279,23 @@ describe('account-scoped payment loading', () => {
     const storage = arrangeStorage(rawDatabase);
 
     const { jsonDb, database } = await loadAccountDatabase();
-    expect(paymentById(database, id).paidDate).toBe(dueDate);
+    expect(paymentById(database, id)).toMatchObject({ status: 'late', paidDate: null });
     expect(paymentById(
       JSON.parse(storage.getItem(ACCOUNT_KEY) ?? '') as LocalDatabase,
       id,
-    ).paidDate).toBeNull();
+    )).toMatchObject({ status: 'paid', paidDate: null });
 
     const saved = jsonDb.saveJsonDb(database);
     const persisted = JSON.parse(storage.getItem(ACCOUNT_KEY) ?? '') as LocalDatabase;
 
     expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(1);
     expect(paymentById(persisted, id)).toMatchObject({
-      status: 'paid',
-      paidDate: dueDate,
+      status: 'late',
+      paidDate: null,
     });
     expect(paymentById(saved, id)).toMatchObject({
-      status: 'paid',
-      paidDate: dueDate,
+      status: 'late',
+      paidDate: null,
     });
     expect(persisted.payments.filter((payment) => (
       payment.leaseId === rawPayment.leaseId

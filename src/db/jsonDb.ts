@@ -831,11 +831,7 @@ export function repairRecoverablePayments(database: LocalDatabase, referenceDate
         } else if (next.status !== 'paid' && next.paidDate) {
             next = { ...next, paidDate: null };
         } else if (next.status === 'paid' && !next.paidDate) {
-            if (lease?.formData.LeasePaymentMethod === 'addebito' && next.dueDate <= referenceDate) {
-                next = { ...next, paidDate: next.dueDate };
-            } else {
-                next = { ...next, status: next.dueDate < referenceDate ? 'late' : 'pending', paidDate: null };
-            }
+            next = { ...next, status: next.dueDate < referenceDate ? 'late' : 'pending', paidDate: null };
         }
         if (next.type === 'income' && next.status !== 'paid') {
             next = { ...next, status: next.dueDate < referenceDate ? 'late' : 'pending', paidDate: null };
