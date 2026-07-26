@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA esaminato: cfc6220a5ae8c62325478f81bbdbb914d886176a
+SHA esaminato: c50e12c67c54786059a688670911d63e5f374ddf
 ```
 
 Il piano è aggiornato sulla base delle decisioni prodotto consolidate. Il codice applicativo non è stato riesaminato integralmente a questo SHA.
@@ -137,7 +137,7 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 Ordine immediato:
 
-1. stati dei pagamenti senza incasso automatico e conferma manuale del pagamento completo;
+1. conferma manuale del pagamento completo, seguita da repair e migrazione conservativi;
 2. contratto repository compatibile con Supabase/PostgreSQL;
 3. repository condiviso delle bozze manuali;
 4. guard condiviso;
@@ -671,21 +671,58 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 
 ## TASK D2 — Addebito senza incasso automatico
 
-**Obiettivo:**
+**Stato:** semantica iniziale delle rate generate corretta; conferma manuale, storico esistente, repair, migrazione e collaudo ancora aperti.
 
-- il metodo non determina l’incasso;
-- scaduta non pagata → `late`;
-- futura non pagata → `pending`;
-- `paid` solo dopo azione esplicita;
-- conferma manuale con metodo, data, importo completo e nota opzionale;
+### D2A — Stato iniziale delle rate generate completato
+
+- il metodo contrattuale non determina più l’incasso;
+- rata scaduta non pagata → `late`;
+- rata odierna non pagata → `pending`;
+- rata futura non pagata → `pending`;
+- nessuna `paidDate` automatica;
+- nessuna ricevuta automatica durante la generazione;
+- stessa regola per rata ordinaria e prima rata personalizzata;
+- copertura automatica dei cinque metodi canonici;
+- test con date fisse e senza persistenza.
+
+### D2B — Conferma manuale completa
+
+Restano aperti:
+
+- `paid` soltanto dopo azione esplicita;
+- metodo effettivo obbligatorio;
+- data del pagamento obbligatoria e non futura;
+- importo confermato obbligatorio;
+- importo uguale al totale della rata;
+- nota facoltativa;
 - nessun pagamento parziale nella prima fase;
-- nessun `paidDate` o ricevuta automatica;
-- repair/migrazione coerenti;
-- dashboard non gonfiata.
+- mutazione atomica;
+- attività della locazione;
+- integrazione UI e collaudo browser.
+
+### D2C — Storico, repair e migrazione
+
+Restano aperti:
+
+- rimozione della ricostruzione automatica di `paidDate` basata sul solo addebito;
+- fallback conservativo per stato mancante o sconosciuto;
+- nessuna invenzione di incassi durante la migrazione;
+- tutela degli incassi storici reali;
+- idempotenza;
+- fixture di migrazione e repair;
+- verifica dell’impatto su dashboard, saldi e grafici.
+
+D2C deve essere implementata soltanto dopo avere introdotto test deterministici sullo storico e una strategia conservativa per i record esistenti.
+
+### D2D — Eccezioni ancora da decidere
+
+- semantica dell’affitto prepagato ancora da validare;
+- politica di conservazione o annullamento del numero ricevuta quando un pagamento torna non pagato;
+- queste decisioni non devono bloccare D2B, purché D2B non modifichi prepagato o annullamento ricevute.
 
 Pagamenti parziali e documenti di pagamento sono futuri. Riferimento: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
-**Casi:**
+**Casi finali:**
 
 - bonifico, contanti, assegno, carta e addebito;
 - scaduta, odierna e futura;
@@ -1152,9 +1189,9 @@ Aree residue:
 - operazioni atomiche;
 - bozze manuali;
 - guard condiviso;
-- stati dei pagamenti;
+- repair, migrazione e transizioni storiche dei pagamenti;
+- conferma manuale completa, annullamento, deposito, prepagato, ricevute e consumer finanziari;
 - storico append-only e override motivato;
-- pagamento completo confermato manualmente;
 - funzioni future gialle e realmente disabilitate.
 
 Vincoli:
