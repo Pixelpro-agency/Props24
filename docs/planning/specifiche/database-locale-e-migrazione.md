@@ -108,6 +108,59 @@ Supabase non viene implementato in questa task.
 
 I dati locali attuali sono di test e Desktop può crearli, modificarli o eliminarli durante QA autorizzato. Prima dei dati reali serve un gate di produzione; i prompt futuri devono distinguere test e produzione. Sviluppo e collaudo non devono modificare o cancellare dati di produzione.
 
+## 12. Pagamenti legacy, repair e migrazione locale
+
+### Normalizzazione conservativa
+
+Soltanto `paid`, `pending` e `late` sono status riconosciuti. Uno status assente o sconosciuto non costituisce prova dell'incasso e viene normalizzato conservativamente come non pagato. `paidDate` non viene derivata dal metodo contrattuale, incluso l'addebito.
+
+I record incoerenti vengono ricondotti a `late` o `pending` secondo scadenza e data di riferimento, senza inventare `paidDate`, `confirmation` o `receiptNumber`.
+
+### Preservazione e ricostruzione
+
+Le collezioni di pagamenti non vuote vengono preservate e normalizzate. Nessuna euristica sulla forma degli ID o su singole anomalie può eliminarle o sostituirle integralmente.
+
+Le cronologie legacy vuote vengono ricostruite mediante il calendario contrattuale esistente. Le rate generate ricostruite sono esclusivamente `late` o `pending`, non sono `paid` e non producono spese sintetiche.
+
+### Deduplicazione delle rate generate
+
+Le rate generate duplicate usano la chiave:
+
+```text
+leaseId + category + dueDate
+```
+
+La selezione segue, nell'ordine, l'evidenza disponibile:
+
+```text
+confirmation coerente
+paid con paidDate
+non pagato
+updatedAt
+ID stabile
+```
+
+I pagamenti manuali non vengono deduplicati.
+
+### Persistenza del repair
+
+Il caricamento di un database account segue il flusso:
+
+```text
+lettura
+→ normalizzazione e repair
+→ confronto con il valore memorizzato
+→ scrittura soltanto se differente
+→ rilettura e verifica
+→ cache
+```
+
+L'idempotenza deriva dai dati memorizzati, senza marker separati e senza aggiornamenti artificiali di `meta.updatedAt`: la seconda inizializzazione non riscrive un database già canonico. Durante una migrazione le sorgenti legacy non vengono rimosse prima della scrittura e verifica del database account. In caso di errore resta invariato il fallback in memoria.
+
+### Consumer finanziari
+
+Le metriche di cassa richiedono `status: paid` e una `paidDate` valida. `accountingRole` separa `revenue`, `expense` e `deposit`: lo scaduto considera soltanto `revenue`, mentre i movimenti `deposit` non entrano nei KPI generali di ricavo e spesa.
+
 ## Collegamenti
 
 - [Fase locale prioritaria](./fase-locale-prioritaria.md)

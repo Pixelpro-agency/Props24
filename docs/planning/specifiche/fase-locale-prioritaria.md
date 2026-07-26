@@ -87,6 +87,28 @@ La prima versione gestisce soltanto pagamenti completi. Un pagamento diventa `pa
 
 Nessun metodo implica automaticamente l'incasso. L'importo deve coincidere con l'intero residuo; i pagamenti parziali non sono accettati silenziosamente. Non vengono prodotti automaticamente ricevute o documenti e nessun pagamento è ufficiale senza conferma.
 
+### Prova dell'incasso
+
+Nessun metodo contrattuale, incluso l'addebito, implica da solo l'incasso. Lo stato `paid` richiede una conferma esplicita completa; i consumer di cassa richiedono inoltre una `paidDate` valida. Un record `paid` senza `paidDate` viene trattato conservativamente come non pagato.
+
+Il solo metodo di pagamento non autorizza a ricostruire `paidDate`, `confirmation`, `receiptNumber`, ricevute o altre prove dell'incasso.
+
+### Storico, repair e migrazione
+
+Gli status assenti o sconosciuti non diventano automaticamente `paid`. Le cronologie legacy non vuote vengono preservate e normalizzate: una singola anomalia o la forma degli ID non autorizza la sostituzione dell'intera cronologia.
+
+Una cronologia legacy vuota produce soltanto rate contrattuali eleggibili `late` o `pending`. Migrazione e repair non inventano incassi, spese, `paidDate`, `confirmation` o `receiptNumber`.
+
+Il repair viene persistito, riletto e verificato soltanto quando modifica realmente il database account. La procedura è idempotente: una seconda inizializzazione del valore già riparato non produce un'altra scrittura.
+
+### Saldi e metriche
+
+Le metriche di cassa includono ricavi soltanto con `accountingRole: revenue`, `status: paid` e `paidDate` valida, e spese operative soltanto con `accountingRole: expense`, `status: paid` e `paidDate` valida.
+
+Lo scaduto riguarda esclusivamente ricavi `late` oppure ricavi `pending` con `dueDate` arrivata alla data di riferimento. I movimenti con `accountingRole: deposit` sono isolati dalle metriche generali di ricavo e spesa.
+
+La semantica completa di deposito, restituzione e prepagato resta una decisione separata di D2D.
+
 Sono attività future: pagamenti parziali, crediti, debiti, compensazioni, allegati probatori, richieste di ricevuta, scontrini, documenti ufficiali e generazione automatica di ricevute o fatture.
 
 ## 7. Funzioni documentali future

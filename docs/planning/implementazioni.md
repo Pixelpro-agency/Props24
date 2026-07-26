@@ -24,12 +24,10 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA esaminato: de9aec98d63146aeea9e191ae6f53df77ddf161b
+SHA esaminato: cdf84db977d34da43a05e2e992d1978b9ea4e69c
 ```
 
-Il piano è aggiornato sulla base delle decisioni prodotto consolidate. Il codice applicativo non è stato riesaminato integralmente a questo SHA.
-
-Prima di trasformare una voce in prompt esecutivo, verificarla nuovamente sul codice corrente.
+La chiusura tecnica di D2C è stata verificata sul codice corrente. Il resto del codice applicativo non è stato riesaminato integralmente a questo SHA; le altre task devono essere riverificate prima di diventare prompt esecutivi.
 
 ## Mappa dei documenti
 
@@ -137,14 +135,13 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 Ordine immediato:
 
-1. storico, repair e migrazione conservativi dei pagamenti;
-2. contratto repository compatibile con Supabase/PostgreSQL;
-3. repository condiviso delle bozze manuali;
-4. guard condiviso;
-5. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
-6. repository e form Nuovo edificio;
-7. lista, lifecycle e collaudo edifici;
-8. completamento e collaudo dei quattro CRUD.
+1. contratto repository compatibile con Supabase/PostgreSQL;
+2. repository condiviso delle bozze manuali;
+3. guard condiviso;
+4. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
+5. repository e form Nuovo edificio;
+6. lista, lifecycle e collaudo edifici;
+7. completamento e collaudo dei quattro CRUD.
 
 Classificazione complessiva:
 
@@ -671,7 +668,7 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 
 ## TASK D2 — Addebito senza incasso automatico
 
-**Stato:** D2A e D2B completate; storico, repair e migrazione di D2C e decisioni residue di D2D ancora aperti.
+**Stato:** D2A, D2B e D2C completate; decisioni residue di D2D ancora aperte.
 
 ### D2A — Stato iniziale delle rate generate completato
 
@@ -706,21 +703,19 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 - il collaudo browser ha verificato persistenza reale dopo reload, creazione, conferma, ritorno a non pagato, modifica ed eliminazione;
 - durante il collaudo finale non sono stati rilevati fallback in memoria né ricevute automatiche.
 
-### D2C — Storico, repair e migrazione
+### D2C — Storico, repair e migrazione completati
 
-Restano aperti:
-
-- rimozione della ricostruzione automatica di `paidDate` basata sul solo addebito;
-- fallback conservativo per stato mancante o sconosciuto;
-- nessuna invenzione di incassi durante migrazione o repair;
-- tutela degli incassi storici reali;
-- idempotenza;
-- fixture di migrazione e repair;
-- verifica dell’impatto su dashboard, saldi e grafici.
-
-D2C deve essere implementata soltanto dopo avere introdotto test deterministici sullo storico e una strategia conservativa per i record esistenti.
-
-D2C è la prossima task tecnica del Blocco D.
+- gli status mancanti o sconosciuti vengono normalizzati conservativamente come non pagati e ricondotti a `late` o `pending` secondo la scadenza;
+- il metodo contrattuale, incluso l’addebito, non ricostruisce `paidDate`;
+- gli incassi storici realmente supportati da `paidDate` e, quando presente, da una `confirmation` coerente vengono tutelati;
+- le rate generate duplicate per `leaseId + category + dueDate` vengono selezionate in base all’evidenza, mentre i pagamenti manuali non vengono deduplicati;
+- le cronologie legacy non vuote vengono preservate e normalizzate senza sostituzioni integrali basate sulla forma degli ID o su singole anomalie;
+- le cronologie legacy vuote vengono ricostruite conservativamente con sole rate contrattuali eleggibili `late` o `pending`;
+- migrazione e repair non inventano incassi, spese, `paidDate`, `confirmation` o `receiptNumber`;
+- il repair di un database account viene persistito immediatamente soltanto quando modifica il valore memorizzato, poi riletto e verificato; una seconda inizializzazione non riscrive il database;
+- consumer finanziari e saldi usano una semantica condivisa: la cassa richiede `paid` e `paidDate`, lo scaduto considera soltanto ricavi arrivati alla scadenza;
+- i movimenti con `accountingRole: deposit` restano esclusi dai consumer generali di ricavo e spesa;
+- sullo SHA documentato la copertura comprende 31 test D2C e 112 test complessivi, senza fallimenti o test saltati.
 
 ### D2D — Eccezioni ancora da decidere
 
@@ -742,13 +737,11 @@ Pagamenti parziali e documenti di pagamento sono futuri. Riferimento: [Specifica
 - ritorno a non pagato, modifica successiva e pulizia del record QA;
 - blocco della rata generata futura coperto dai test repository; fixture browser non disponibile nel collaudo finale.
 
-**Casi ancora dipendenti da D2C, D2D o D3:**
+**Casi ancora dipendenti da D2D o D3:**
 
-- storico, migrazione e repair;
 - rinnovo;
-- politica ricevute e trattamento della conferma precedente;
+- politica ricevute e trattamento della `confirmation` precedente;
 - semantica del prepagato;
-- dashboard, saldi e grafici;
 - regressione complessiva della locazione.
 
 ## TASK D3 — Regressione locazione mirata
