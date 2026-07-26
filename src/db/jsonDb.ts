@@ -584,22 +584,6 @@ function generateMigrationPayments(leases: LeaseRecord[], source: DatabaseSource
     return payments;
 }
 
-function looksLikeUnreliableLegacyPayments(payments: PaymentRecord[], leases: LeaseRecord[]): boolean {
-    if (payments.length === 0) return true;
-    const current = todayIso();
-    const syntheticGeneratorIds = payments.length > 12 && payments.every((payment) => (
-        /^payment-lease-[^-]+-\d{4}-\d{2}$/.test(payment.id)
-        || /^payment-migrated-\d{3}$/.test(payment.id)
-        || /^payment-migrated-expense-\d{3}$/.test(payment.id)
-    ));
-    return payments.some((payment) => {
-        const lease = payment.leaseId ? leases.find((item) => item.id === payment.leaseId) : null;
-        return (lease && (payment.dueDate < lease.startDate || payment.dueDate > lease.endDate))
-            || (payment.status === 'paid' && payment.dueDate > current && !payment.paidDate)
-            || (lease && payment.tenantId === null && lease.tenantIds.length > 0);
-    }) && syntheticGeneratorIds;
-}
-
 function migrateFromUnknown(source: unknown, migrationSource: DatabaseSource): LocalDatabase {
     const sourceObject = asObject(source);
     if (asObject(sourceObject.meta).schemaVersion === 3) return normalizeV3Database(sourceObject, true);
@@ -673,9 +657,9 @@ function migrateFromUnknown(source: unknown, migrationSource: DatabaseSource): L
     const migratedPayments = Array.isArray(sourceObject.payments) && sourceObject.payments.length > 0
         ? sourceObject.payments.map((item, index) => normalizePaymentRecord(item, `payment-migrated-${index + 1}`))
         : [];
-    db.payments = looksLikeUnreliableLegacyPayments(migratedPayments, db.leases)
-        ? generateMigrationPayments(db.leases, migrationSource)
-        : migratedPayments;
+    db.payments = migratedPayments.length > 0
+        ? migratedPayments
+        : generateMigrationPayments(db.leases, migrationSource);
     db.settings = clone(asObject(sourceObject.settings));
     db.userProfile = clone(asObject(sourceObject.userProfile));
     db.meta.updatedAt = nowIso();

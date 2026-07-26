@@ -114,7 +114,7 @@ function sharedStorage(database: RawLegacyDatabase): MemoryStorage {
   return new MemoryStorage({ [SHARED_KEY]: JSON.stringify(database) });
 }
 
-describe('legacy payment migration baseline before D2C', () => {
+describe('legacy payment migration', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-15T12:00:00.000Z'));
@@ -126,7 +126,7 @@ describe('legacy payment migration baseline before D2C', () => {
     vi.resetModules();
   });
 
-  it('preserves legacy payments not classified as unreliable', async () => {
+  it('preserves a nonempty legacy payment collection', async () => {
     const raw = createLegacyDatabase();
     raw.payments = [manualPayment(raw, 'legacy-payment-preserved')];
     const original = structuredClone(raw);
@@ -144,7 +144,7 @@ describe('legacy payment migration baseline before D2C', () => {
     expect(raw).toEqual(original);
   });
 
-  it('documents current synthetic paid income and expenses for an empty collection', async () => {
+  it('documents the remaining synthetic paid migration for an empty collection', async () => {
     const raw = createLegacyDatabase();
     raw.payments = [];
 
@@ -164,27 +164,32 @@ describe('legacy payment migration baseline before D2C', () => {
     expect(paidExpense?.paidDate).toBeTruthy();
   });
 
-  it('documents that one anomaly replaces all thirteen synthetic-shaped records', async () => {
+  it('preserves all nonempty synthetic-shaped legacy records despite one anomaly', async () => {
     const raw = createLegacyDatabase();
     const originals = syntheticCollection(raw);
+    raw.payments = originals;
+    const original = structuredClone(raw);
+
+    const { database } = await migrate(sharedStorage(raw));
+    const ids = new Set(database.payments.map((item) => item.id));
+
+    originals.forEach((item) => expect(ids.has(String(item.id))).toBe(true));
+    expect(database.payments.some((item) => /^payment-migrated-\d{3}$/.test(item.id))).toBe(false);
+    expect(database.payments.some((item) => item.id.startsWith('payment-migrated-expense-'))).toBe(false);
+    expect(raw).toEqual(original);
+  });
+
+  it('preserves a nonempty collection independently from legacy ID shape', async () => {
+    const raw = createLegacyDatabase();
+    const originals = syntheticCollection(raw, true);
     raw.payments = originals;
 
     const { database } = await migrate(sharedStorage(raw));
     const ids = new Set(database.payments.map((item) => item.id));
 
-    originals.forEach((item) => expect(ids.has(String(item.id))).toBe(false));
-    expect(database.payments.some((item) => /^payment-migrated-\d{3}$/.test(item.id))).toBe(true);
-    expect(database.payments.some((item) => item.id.startsWith('payment-migrated-expense-'))).toBe(true);
-  });
-
-  it('documents that one non-synthetic ID prevents integral replacement', async () => {
-    const raw = createLegacyDatabase();
-    raw.payments = syntheticCollection(raw, true);
-
-    const { database } = await migrate(sharedStorage(raw));
-
     expect(paymentById(database, 'legacy-custom-guard')).toBeDefined();
-    expect(database.payments.some((item) => item.id.startsWith('payment-lease-legacy'))).toBe(true);
+    originals.forEach((item) => expect(ids.has(String(item.id))).toBe(true));
+    expect(database.payments.some((item) => /^payment-migrated-\d{3}$/.test(item.id))).toBe(false);
     expect(database.payments.some((item) => item.id.startsWith('payment-migrated-expense-'))).toBe(false);
   });
 
