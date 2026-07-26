@@ -21,6 +21,7 @@ import { LocalStorageQuotaError, isQuotaExceededError } from './databaseErrors';
 import { leaseTypeLabel } from '../landlord/leases/data/leaseTypes';
 import { normalizeLeaseFormData } from '../landlord/leases/schema/leaseFormSchema';
 import { ensureAllLeasePaymentSchedules, isGeneratedRentPayment } from './paymentRepository';
+import { normalizePaymentConfirmationRecord } from './paymentConfirmation';
 
 export const LOCAL_DB_KEY = 'props24.localDb';
 const OLD_DB_KEY_V3 = 'rentila.localDb.v3';
@@ -547,6 +548,7 @@ function generateMigrationPayments(leases: LeaseRecord[], source: DatabaseSource
                     accountingRole: 'revenue',
                     notes: '',
                     receiptNumber: null,
+                    confirmation: null,
                     createdAt: `${ym}-01T00:00:00.000Z`,
                     updatedAt: `${ym}-01T00:00:00.000Z`,
                 });
@@ -574,6 +576,7 @@ function generateMigrationPayments(leases: LeaseRecord[], source: DatabaseSource
             accountingRole: 'expense',
             notes: '',
             receiptNumber: null,
+            confirmation: null,
             createdAt: `${dueDate}T00:00:00.000Z`,
             updatedAt: `${dueDate}T00:00:00.000Z`,
         });
@@ -741,6 +744,7 @@ function normalizePaymentRecord(input: unknown, fallbackId: string): PaymentReco
         accountingRole,
         notes: valueAsString(source.notes),
         receiptNumber: valueAsString(source.receiptNumber) || null,
+        confirmation: normalizePaymentConfirmationRecord(source.confirmation),
         createdAt: valueAsString(source.createdAt) || nowIso(),
         updatedAt: valueAsString(source.updatedAt) || nowIso(),
     };

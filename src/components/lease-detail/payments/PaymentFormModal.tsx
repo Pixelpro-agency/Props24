@@ -21,8 +21,6 @@ export function PaymentFormModal({ isOpen, leaseId, payment, onClose, onSuccess,
     const [dueDate, setDueDate] = useState(todayIso());
     const [description, setDescription] = useState('');
     const [notes, setNotes] = useState('');
-    const [paid, setPaid] = useState(false);
-    const [paidDate, setPaidDate] = useState(todayIso());
     const [saving, setSaving] = useState(false);
     const [localError, setLocalError] = useState('');
 
@@ -34,8 +32,6 @@ export function PaymentFormModal({ isOpen, leaseId, payment, onClose, onSuccess,
         setDueDate(payment?.dueDate || todayIso());
         setDescription(payment?.description || '');
         setNotes(payment?.notes || '');
-        setPaid(payment?.status === 'paid');
-        setPaidDate(payment?.paidDate || todayIso());
         setLocalError('');
     }, [isOpen, payment]);
 
@@ -57,13 +53,9 @@ export function PaymentFormModal({ isOpen, leaseId, payment, onClose, onSuccess,
             setLocalError('Usa la sezione deposito per questa categoria.');
             return;
         }
-        if (paid && (!paidDate || paidDate > todayIso())) {
-            setLocalError('Inserisci una data pagamento non futura.');
-            return;
-        }
         setSaving(true);
         try {
-            const input = { type, category, amount: numericAmount, dueDate, description: description.trim(), notes, paidDate: paid ? paidDate : null };
+            const input = { type, category, amount: numericAmount, dueDate, description: description.trim(), notes };
             if (payment) updateManualPayment(payment.id, input);
             else createManualPayment({ leaseId, ...input });
             onSuccess(payment ? 'Movimento manuale aggiornato.' : 'Movimento manuale salvato.');
@@ -91,8 +83,7 @@ export function PaymentFormModal({ isOpen, leaseId, payment, onClose, onSuccess,
                 <label className="grid gap-1"><span>Scadenza</span><input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="rounded border px-3 py-2" /></label>
                 <label className="grid gap-1 md:col-span-2"><span>Descrizione</span><input value={description} onChange={(e) => setDescription(e.target.value)} className="rounded border px-3 py-2" /></label>
                 <label className="grid gap-1 md:col-span-2"><span>Note</span><textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-20 rounded border px-3 py-2" /></label>
-                <label className="flex items-center gap-2"><input type="checkbox" checked={paid} onChange={(e) => setPaid(e.target.checked)} /> Pagato</label>
-                {paid && <label className="grid gap-1"><span>Data pagamento</span><input type="date" value={paidDate} max={todayIso()} onChange={(e) => setPaidDate(e.target.value)} className="rounded border px-3 py-2" /></label>}
+                <p className="text-gray-600 md:col-span-2">Dopo il salvataggio, l’incasso completo si conferma dalla tabella dei pagamenti.</p>
                 {localError && <p className="rounded border border-red-200 bg-red-50 p-3 text-red-700 md:col-span-2">{localError}</p>}
             </div>
         </Modal>

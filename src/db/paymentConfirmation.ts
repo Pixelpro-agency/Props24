@@ -26,6 +26,32 @@ export interface ValidatedPaymentConfirmation {
     note: string;
 }
 
+export interface PaymentConfirmationRecord
+    extends ValidatedPaymentConfirmation {
+    confirmedAt: string;
+}
+
+export function normalizePaymentConfirmationRecord(
+    value: unknown,
+): PaymentConfirmationRecord | null {
+    if (typeof value !== 'object' || value === null) return null;
+    const source = value as Record<string, unknown>;
+    if (!PAYMENT_CONFIRMATION_METHODS.includes(source.method as PaymentConfirmationMethod)) return null;
+    if (typeof source.paidDate !== 'string' || !isValidIsoDate(source.paidDate)) return null;
+    if (typeof source.amount !== 'number' || !Number.isFinite(source.amount) || source.amount <= 0) return null;
+    if (typeof source.confirmedAt !== 'string'
+        || source.confirmedAt.trim() === ''
+        || Number.isNaN(Date.parse(source.confirmedAt))) return null;
+
+    return {
+        method: source.method as PaymentConfirmationMethod,
+        paidDate: source.paidDate,
+        amount: Math.round(source.amount * 100) / 100,
+        note: typeof source.note === 'string' ? source.note.trim() : '',
+        confirmedAt: source.confirmedAt,
+    };
+}
+
 export function validatePaymentConfirmation(
     input: PaymentConfirmationInput,
     expectedAmount: number,

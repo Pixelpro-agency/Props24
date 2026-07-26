@@ -1,6 +1,7 @@
 import type { PropertyFormData, StoredLocalFile } from '../components/property-form/schema';
 import type { EmergencyContact, Guarantor, TenantDocument, TenantInvitation } from '../types/tenant';
 import type { LeaseBillingPeriod, LeaseDraftSnapshot, LeaseFormData } from '../landlord/leases/schema/leaseFormSchema';
+import type { PaymentConfirmationRecord } from './paymentConfirmation';
 
 export type DatabaseSource = 'seed' | 'migration-v1' | 'migration-v2';
 
@@ -209,6 +210,7 @@ export interface PaymentRecord {
     accountingRole: 'revenue' | 'expense' | 'deposit';
     notes: string;
     receiptNumber: string | null;
+    confirmation: PaymentConfirmationRecord | null;
     createdAt: string;
     updatedAt: string;
 }

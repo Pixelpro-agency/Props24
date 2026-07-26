@@ -120,7 +120,7 @@ export function LeasePaymentsTab({ detail, notify }: Props) {
                                     <div className="flex flex-wrap gap-2">
                                         {payment.status !== 'paid' && <button type="button" className="text-blue-700" onClick={() => setStatusModal({ mode: 'paid', payment })}>Segna pagato</button>}
                                         {payment.status === 'paid' && <button type="button" className="text-blue-700" onClick={() => setStatusModal({ mode: 'unpaid', payment })}>Non pagato</button>}
-                                        {payment.source === 'manual' && <button type="button" className="text-blue-700" onClick={() => setFormPayment(payment)}>Modifica</button>}
+                                        {payment.source === 'manual' && payment.status !== 'paid' && <button type="button" className="text-blue-700" onClick={() => setFormPayment(payment)}>Modifica</button>}
                                         {payment.source === 'manual' && payment.status !== 'paid' && <button type="button" className="text-red-700" onClick={() => setDeletePayment(payment)}>Elimina</button>}
                                         {payment.accountingRole === 'revenue' && payment.status === 'paid' && payment.receiptNumber && <button type="button" className="text-blue-700" onClick={() => setReceiptPayment(payment)}>Ricevuta</button>}
                                     </div>

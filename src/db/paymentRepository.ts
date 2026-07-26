@@ -2,6 +2,8 @@ import type { LeaseRecord, LocalDatabase, PaymentRecord } from './database.types
 import { classifyLease, todayIso } from './dataSelectors';
 import { generateId, getJsonDb, saveJsonDb } from './jsonDb';
 import { LeaseDepositError, LeaseNotFoundError, LeasePaymentNotFoundError, LeasePaymentOperationError, LeasePrepaidRentError } from './databaseErrors';
+import type { PaymentConfirmationInput } from './paymentConfirmation';
+import { validatePaymentConfirmation } from './paymentConfirmation';
 import { billingPeriodStep, firstStandardPeriodEndDate } from '../landlord/leases/schema/leaseFormSchema';
 
 export interface LeasePaymentPeriod {
@@ -150,6 +152,7 @@ function makePayment(lease: LeaseRecord, period: LeasePaymentPeriod, referenceDa
         accountingRole: 'revenue',
         notes: '',
         receiptNumber: null,
+        confirmation: null,
         createdAt: timestamp,
         updatedAt: timestamp,
     };
@@ -262,7 +265,6 @@ export interface ManualPaymentInput {
     dueDate: string;
     description: string;
     notes: string;
-    paidDate: string | null;
 }
 
 export function createManualPayment(input: ManualPaymentInput): PaymentRecord {
@@ -271,10 +273,9 @@ export function createManualPayment(input: ManualPaymentInput): PaymentRecord {
     if (!lease) throw new LeaseNotFoundError();
     if (input.amount <= 0) throw new LeasePaymentOperationError('Inserisci un importo maggiore di zero.');
     assertIso(input.dueDate);
-    if (input.paidDate) assertIso(input.paidDate);
     if (input.category === 'deposit' || input.category === 'deposit_return') throw new LeasePaymentOperationError('Usa la sezione deposito per questa categoria.');
     const now = new Date().toISOString();
-    const paid = statusFor(input.dueDate, input.paidDate);
+    const paid = statusFor(input.dueDate, null);
     const record: PaymentRecord = {
         id: generateId('payment-manual'),
         propertyId: lease.propertyId,
@@ -290,7 +291,8 @@ export function createManualPayment(input: ManualPaymentInput): PaymentRecord {
         source: 'manual',
         accountingRole: input.type === 'expense' ? 'expense' : 'revenue',
         notes: input.notes,
-        receiptNumber: paid.status === 'paid' && input.type === 'income' ? nextReceiptNumber(db.payments, input.paidDate as string) : null,
+        receiptNumber: null,
+        confirmation: null,
         createdAt: now,
         updatedAt: now,
     };
@@ -303,9 +305,10 @@ export function updateManualPayment(id: string, input: Omit<ManualPaymentInput, 
     const payment = db.payments.find((item) => item.id === id);
     if (!payment) throw new LeasePaymentNotFoundError();
     if (payment.source !== 'manual') throw new LeasePaymentOperationError('Puoi modificare solo pagamenti manuali.');
+    if (payment.status === 'paid') throw new LeasePaymentOperationError('Riporta il pagamento a non pagato prima di modificarlo.');
     if (input.amount <= 0) throw new LeasePaymentOperationError('Inserisci un importo maggiore di zero.');
     if (input.category === 'deposit' || input.category === 'deposit_return') throw new LeasePaymentOperationError('Categoria non consentita per un pagamento manuale.');
-    const paid = statusFor(input.dueDate, input.paidDate);
+    const paid = statusFor(input.dueDate, null);
     const next: PaymentRecord = {
         ...payment,
         type: input.type,
@@ -317,7 +320,8 @@ export function updateManualPayment(id: string, input: Omit<ManualPaymentInput, 
         description: input.description,
         notes: input.notes,
         accountingRole: input.type === 'expense' ? 'expense' : 'revenue',
-        receiptNumber: paid.status === 'paid' && input.type === 'income' ? payment.receiptNumber || nextReceiptNumber(db.payments, input.paidDate as string) : payment.receiptNumber,
+        receiptNumber: payment.receiptNumber,
+        confirmation: null,
         updatedAt: new Date().toISOString(),
     };
     const leases = db.leases.map((lease) => lease.id === payment.leaseId ? addActivity(lease, 'Pagamento manuale aggiornato.') : lease);
@@ -334,15 +338,18 @@ export function deleteManualPayment(id: string): boolean {
     return true;
 }
 
-export function markPaymentPaid(id: string, paidDate: string): PaymentRecord {
-    assertIso(paidDate);
-    if (paidDate > todayIso()) throw new LeasePaymentOperationError('La data pagamento non può essere futura.');
+export function confirmPaymentPaid(id: string, input: PaymentConfirmationInput): PaymentRecord {
+    const referenceDate = todayIso();
+    const confirmedAt = new Date().toISOString();
     const db = getJsonDb();
     const payment = db.payments.find((item) => item.id === id);
     if (!payment) throw new LeasePaymentNotFoundError();
-    if (payment.source === 'generated' && payment.dueDate > todayIso()) throw new LeasePaymentOperationError('Una rata futura non può essere incassata.');
-    const next = { ...payment, status: 'paid' as const, paidDate, receiptNumber: payment.receiptNumber || (payment.accountingRole === 'revenue' ? nextReceiptNumber(db.payments, paidDate) : null), updatedAt: new Date().toISOString() };
-    const leases = db.leases.map((lease) => lease.id === payment.leaseId ? addActivity(lease, 'Pagamento segnato come pagato.') : lease);
+    if (payment.status === 'paid') throw new LeasePaymentOperationError('Il pagamento risulta già pagato.');
+    if (payment.source === 'generated' && payment.dueDate > referenceDate) throw new LeasePaymentOperationError('Una rata futura non può essere incassata.');
+    const validated = validatePaymentConfirmation(input, payment.amount, referenceDate);
+    const confirmation = { ...validated, confirmedAt };
+    const next = { ...payment, status: 'paid' as const, paidDate: validated.paidDate, confirmation, updatedAt: confirmedAt };
+    const leases = db.leases.map((lease) => lease.id === payment.leaseId ? addActivity(lease, 'Pagamento completo confermato manualmente.') : lease);
     return saveJsonDb({ ...db, leases, payments: db.payments.map((item) => item.id === id ? next : item) }).payments.find((item) => item.id === id) as PaymentRecord;
 }
 
@@ -393,6 +400,7 @@ export function ensureLeaseDepositPayment(database: LocalDatabase, lease: LeaseR
         accountingRole: 'deposit',
         notes: '',
         receiptNumber: null,
+        confirmation: null,
         createdAt: existing?.createdAt || now,
         updatedAt: now,
     };
@@ -428,6 +436,7 @@ export function registerDepositReturn(leaseId: string, date: string): PaymentRec
         accountingRole: 'deposit',
         notes: '',
         receiptNumber: null,
+        confirmation: null,
         createdAt: now,
         updatedAt: now,
     };

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { LeasePaymentOperationError } from '../../src/db/databaseErrors';
 import {
   PAYMENT_CONFIRMATION_METHODS,
+  normalizePaymentConfirmationRecord,
   validatePaymentConfirmation,
 } from '../../src/db/paymentConfirmation';
 
@@ -131,5 +132,51 @@ describe('validatePaymentConfirmation', () => {
     validatePaymentConfirmation(input, EXPECTED_AMOUNT, REFERENCE_DATE);
 
     expect(input).toEqual(original);
+  });
+});
+
+describe('normalizePaymentConfirmationRecord', () => {
+  const storedRecord = {
+    method: 'bonifico',
+    paidDate: '2026-06-15',
+    amount: 1100.005,
+    note: '  Incasso verificato  ',
+    confirmedAt: '2026-06-15T12:00:00.000Z',
+  };
+
+  it('normalizes a complete stored record without mutating it', () => {
+    const original = { ...storedRecord };
+
+    expect(normalizePaymentConfirmationRecord(storedRecord)).toEqual({
+      ...storedRecord,
+      amount: 1100.01,
+      note: 'Incasso verificato',
+    });
+    expect(storedRecord).toEqual(original);
+  });
+
+  it.each([null, undefined, 'record', 12])('rejects the non-object value %j', (value) => {
+    expect(normalizePaymentConfirmationRecord(value)).toBeNull();
+  });
+
+  it('rejects an unknown method and an invalid paid date', () => {
+    expect(normalizePaymentConfirmationRecord({ ...storedRecord, method: 'cash' })).toBeNull();
+    expect(normalizePaymentConfirmationRecord({ ...storedRecord, paidDate: '2026-02-30' })).toBeNull();
+  });
+
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'rejects the invalid stored amount %s',
+    (amount) => {
+      expect(normalizePaymentConfirmationRecord({ ...storedRecord, amount })).toBeNull();
+    },
+  );
+
+  it.each(['', 'not-a-timestamp'])('rejects the invalid confirmation timestamp %j', (confirmedAt) => {
+    expect(normalizePaymentConfirmationRecord({ ...storedRecord, confirmedAt })).toBeNull();
+  });
+
+  it('normalizes a missing or non-textual note to an empty string', () => {
+    expect(normalizePaymentConfirmationRecord({ ...storedRecord, note: undefined })?.note).toBe('');
+    expect(normalizePaymentConfirmationRecord({ ...storedRecord, note: 42 })?.note).toBe('');
   });
 });
