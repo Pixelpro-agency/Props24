@@ -82,8 +82,7 @@ function periodAmount(lease: LeaseRecord): number {
     return Number((lease.formData.LeaseMonthlyAmount || lease.rentAmount + lease.utilitiesAmount).toFixed(2));
 }
 
-function paymentStatus(dueDate: string, method: string, referenceDate: string): Pick<PaymentRecord, 'status' | 'paidDate'> {
-    if (method === 'addebito' && dueDate <= referenceDate) return { status: 'paid', paidDate: dueDate };
+function generatedPaymentStatus(dueDate: string, referenceDate: string): Pick<PaymentRecord, 'status' | 'paidDate'> {
     if (dueDate < referenceDate) return { status: 'late', paidDate: null };
     return { status: 'pending', paidDate: null };
 }
@@ -132,7 +131,7 @@ function makePayment(lease: LeaseRecord, period: LeasePaymentPeriod, referenceDa
     const amount = period.isFirstCustomPeriod
         ? Number((lease.formData.LeaseFirstBillAmount + lease.formData.LeaseFirstBillCharges).toFixed(2))
         : periodAmount(lease);
-    const status = paymentStatus(dueDate, lease.formData.LeasePaymentMethod, referenceDate);
+    const status = generatedPaymentStatus(dueDate, referenceDate);
     const timestamp = new Date().toISOString();
 
     return {
