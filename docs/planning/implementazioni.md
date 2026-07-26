@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA esaminato: c50e12c67c54786059a688670911d63e5f374ddf
+SHA esaminato: de9aec98d63146aeea9e191ae6f53df77ddf161b
 ```
 
 Il piano è aggiornato sulla base delle decisioni prodotto consolidate. Il codice applicativo non è stato riesaminato integralmente a questo SHA.
@@ -137,7 +137,7 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 Ordine immediato:
 
-1. conferma manuale del pagamento completo, seguita da repair e migrazione conservativi;
+1. storico, repair e migrazione conservativi dei pagamenti;
 2. contratto repository compatibile con Supabase/PostgreSQL;
 3. repository condiviso delle bozze manuali;
 4. guard condiviso;
@@ -671,7 +671,7 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 
 ## TASK D2 — Addebito senza incasso automatico
 
-**Stato:** semantica iniziale delle rate generate corretta; conferma manuale, storico esistente, repair, migrazione e collaudo ancora aperti.
+**Stato:** D2A e D2B completate; storico, repair e migrazione di D2C e decisioni residue di D2D ancora aperti.
 
 ### D2A — Stato iniziale delle rate generate completato
 
@@ -685,20 +685,26 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 - copertura automatica dei cinque metodi canonici;
 - test con date fisse e senza persistenza.
 
-### D2B — Conferma manuale completa
+### D2B — Conferma manuale completa completata
 
-Restano aperti:
-
-- `paid` soltanto dopo azione esplicita;
-- metodo effettivo obbligatorio;
-- data del pagamento obbligatoria e non futura;
-- importo confermato obbligatorio;
-- importo uguale al totale della rata;
-- nota facoltativa;
-- nessun pagamento parziale nella prima fase;
-- mutazione atomica;
-- attività della locazione;
-- integrazione UI e collaudo browser.
+- `paid` è raggiungibile dall’interfaccia soltanto mediante conferma esplicita completa;
+- i metodi canonici sono bonifico, contanti, assegno, carta e addebito;
+- il metodo effettivo è obbligatorio;
+- la data è obbligatoria, ISO valida e non futura;
+- l’importo è obbligatorio, finito, positivo e uguale al totale del pagamento con confronto ai centesimi;
+- nessun pagamento parziale è ammesso nella prima fase;
+- la nota è facoltativa e normalizzata;
+- la conferma persiste metodo, data, importo, nota e `confirmedAt`;
+- `PaymentRecord.confirmation` resta nullable per i record storici;
+- il record `confirmation` viene normalizzato in modo conservativo al reload;
+- pagamento e attività della locazione sono mutati atomicamente con una sola scrittura del database sul successo;
+- una validazione fallita non produce scritture;
+- nessuna ricevuta o numerazione viene generata automaticamente;
+- i pagamenti manuali vengono creati soltanto `pending` o `late`;
+- il form manuale non contiene più checkbox `Pagato` né campo `Data pagamento`;
+- un pagamento manuale già pagato non è modificabile;
+- il collaudo browser ha verificato persistenza reale dopo reload, creazione, conferma, ritorno a non pagato, modifica ed eliminazione;
+- durante il collaudo finale non sono stati rilevati fallback in memoria né ricevute automatiche.
 
 ### D2C — Storico, repair e migrazione
 
@@ -706,7 +712,7 @@ Restano aperti:
 
 - rimozione della ricostruzione automatica di `paidDate` basata sul solo addebito;
 - fallback conservativo per stato mancante o sconosciuto;
-- nessuna invenzione di incassi durante la migrazione;
+- nessuna invenzione di incassi durante migrazione o repair;
 - tutela degli incassi storici reali;
 - idempotenza;
 - fixture di migrazione e repair;
@@ -714,22 +720,36 @@ Restano aperti:
 
 D2C deve essere implementata soltanto dopo avere introdotto test deterministici sullo storico e una strategia conservativa per i record esistenti.
 
+D2C è la prossima task tecnica del Blocco D.
+
 ### D2D — Eccezioni ancora da decidere
 
 - semantica dell’affitto prepagato ancora da validare;
 - politica di conservazione o annullamento del numero ricevuta quando un pagamento torna non pagato;
+- eventuale conservazione, annullamento o invalidazione della `confirmation` precedente dopo il ritorno a non pagato;
 - queste decisioni non devono bloccare D2B, purché D2B non modifichi prepagato o annullamento ricevute.
 
 Pagamenti parziali e documenti di pagamento sono futuri. Riferimento: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
-**Casi finali:**
+**Copertura D2B confermata:**
 
-- bonifico, contanti, assegno, carta e addebito;
-- scaduta, odierna e futura;
+- cinque metodi canonici: bonifico, contanti, assegno, carta e addebito;
+- pagamento manuale scaduto, odierno e futuro creato non pagato;
+- metodo obbligatorio e data non futura;
+- importo completo con rifiuto di importi parziali o superiori;
+- reload dopo la conferma e persistenza del record `confirmation`;
+- nessuna ricevuta automatica;
+- ritorno a non pagato, modifica successiva e pulizia del record QA;
+- blocco della rata generata futura coperto dai test repository; fixture browser non disponibile nel collaudo finale.
+
+**Casi ancora dipendenti da D2C, D2D o D3:**
+
+- storico, migrazione e repair;
 - rinnovo;
-- reload;
-- ricevute;
-- dashboard.
+- politica ricevute e trattamento della conferma precedente;
+- semantica del prepagato;
+- dashboard, saldi e grafici;
+- regressione complessiva della locazione.
 
 ## TASK D3 — Regressione locazione mirata
 
@@ -1180,6 +1200,27 @@ Il progetto usa Vitest come runner TypeScript, con:
 
 La baseline non conclude la task J1. I test devono essere estesi tramite task dedicate e separate.
 
+La copertura corrente include:
+
+- calcolo sicuro della data finale;
+- stato iniziale delle rate generate;
+- contratto puro della conferma completa;
+- normalizzazione del record `confirmation`;
+- flusso repository della conferma completa;
+- atomicità e assenza di salvataggi sugli errori;
+- cinque metodi canonici;
+- pagamenti manuali creati non pagati;
+- blocco della modifica di un pagamento manuale già pagato;
+- esclusione delle locazioni archiviate dal controllo di sovrapposizione.
+
+Snapshot verificato della suite:
+
+```text
+81 test passati
+0 test falliti
+0 test saltati
+```
+
 Aree residue:
 
 - repository e business rule non ancora coperte;
@@ -1190,7 +1231,7 @@ Aree residue:
 - bozze manuali;
 - guard condiviso;
 - repair, migrazione e transizioni storiche dei pagamenti;
-- conferma manuale completa, annullamento, deposito, prepagato, ricevute e consumer finanziari;
+- annullamento e politica ricevute, deposito, prepagato e consumer finanziari;
 - storico append-only e override motivato;
 - funzioni future gialle e realmente disabilitate.
 
