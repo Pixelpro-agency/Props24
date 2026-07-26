@@ -516,74 +516,6 @@ function normalizeBuildingRecord(input: unknown, fallbackId: string): BuildingRe
     };
 }
 
-function generateMigrationPayments(leases: LeaseRecord[], source: DatabaseSource): PaymentRecord[] {
-    const current = todayIso();
-    const startMonth = source === 'migration-v1' ? '2025-08' : '2025-09';
-    let counter = 1;
-    const payments: PaymentRecord[] = [];
-    for (const lease of leases) {
-        if (lease.archived) continue;
-        const cursor = new Date(`${startMonth}-01T00:00:00Z`);
-        const end = new Date('2026-08-01T00:00:00Z');
-        while (cursor <= end) {
-            const ym = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, '0')}`;
-            const dueDate = `${ym}-05`;
-            if (dueDate >= lease.startDate && dueDate <= lease.endDate) {
-                const late = counter % 17 === 0;
-                const pending = dueDate > current;
-                const paid = !late && !pending;
-                payments.push({
-                    id: `payment-migrated-${String(counter).padStart(3, '0')}`,
-                    propertyId: lease.propertyId,
-                    leaseId: lease.id,
-                    tenantId: lease.tenantIds[0] || null,
-                    type: 'income',
-                    category: 'rent',
-                    amount: lease.rentAmount + lease.utilitiesAmount,
-                    dueDate,
-                    paidDate: paid ? dueDate : null,
-                    status: paid ? 'paid' : pending ? 'pending' : 'late',
-                    description: `Canone ${ym}`,
-                    source: 'generated',
-                    accountingRole: 'revenue',
-                    notes: '',
-                    receiptNumber: null,
-                    confirmation: null,
-                    createdAt: `${ym}-01T00:00:00.000Z`,
-                    updatedAt: `${ym}-01T00:00:00.000Z`,
-                });
-                counter += 1;
-            }
-            cursor.setUTCMonth(cursor.getUTCMonth() + 1);
-        }
-    }
-    const expenseProperties = Array.from(new Set(leases.map((lease) => lease.propertyId))).slice(0, 6);
-    expenseProperties.forEach((propertyId, index) => {
-        const dueDate = `2026-${String(index + 1).padStart(2, '0')}-18`;
-        payments.push({
-            id: `payment-migrated-expense-${String(index + 1).padStart(3, '0')}`,
-            propertyId,
-            leaseId: null,
-            tenantId: null,
-            type: 'expense',
-            category: index % 2 === 0 ? 'maintenance' : 'insurance',
-            amount: 150 + index * 75,
-            dueDate,
-            paidDate: dueDate,
-            status: 'paid',
-            description: index % 2 === 0 ? 'Spesa manutenzione migrata' : 'Spesa assicurazione migrata',
-            source: 'manual',
-            accountingRole: 'expense',
-            notes: '',
-            receiptNumber: null,
-            confirmation: null,
-            createdAt: `${dueDate}T00:00:00.000Z`,
-            updatedAt: `${dueDate}T00:00:00.000Z`,
-        });
-    });
-    return payments;
-}
-
 function migrateFromUnknown(source: unknown, migrationSource: DatabaseSource): LocalDatabase {
     const sourceObject = asObject(source);
     if (asObject(sourceObject.meta).schemaVersion === 3) return normalizeV3Database(sourceObject, true);
@@ -657,9 +589,7 @@ function migrateFromUnknown(source: unknown, migrationSource: DatabaseSource): L
     const migratedPayments = Array.isArray(sourceObject.payments) && sourceObject.payments.length > 0
         ? sourceObject.payments.map((item, index) => normalizePaymentRecord(item, `payment-migrated-${index + 1}`))
         : [];
-    db.payments = migratedPayments.length > 0
-        ? migratedPayments
-        : generateMigrationPayments(db.leases, migrationSource);
+    db.payments = migratedPayments;
     db.settings = clone(asObject(sourceObject.settings));
     db.userProfile = clone(asObject(sourceObject.userProfile));
     db.meta.updatedAt = nowIso();

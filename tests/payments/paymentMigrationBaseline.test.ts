@@ -144,24 +144,33 @@ describe('legacy payment migration', () => {
     expect(raw).toEqual(original);
   });
 
-  it('documents the remaining synthetic paid migration for an empty collection', async () => {
+  it('reconstructs an empty legacy payment history with unpaid contractual schedules', async () => {
     const raw = createLegacyDatabase();
     raw.payments = [];
+    const original = structuredClone(raw);
 
     const { database } = await migrate(sharedStorage(raw));
-    const paidRent = database.payments.find((item) => (
-      item.id.startsWith('payment-migrated-')
-      && !item.id.startsWith('payment-migrated-expense-')
-      && item.status === 'paid'
-    ));
-    const paidExpense = database.payments.find((item) => (
-      item.id.startsWith('payment-migrated-expense-') && item.status === 'paid'
-    ));
-
-    expect(paidRent).toMatchObject({ confirmation: null, receiptNumber: null });
-    expect(paidRent?.paidDate).toBeTruthy();
-    expect(paidExpense).toMatchObject({ confirmation: null, receiptNumber: null });
-    expect(paidExpense?.paidDate).toBeTruthy();
+    expect(database.payments.length).toBeGreaterThan(0);
+    database.payments.forEach((payment) => {
+      expect(payment.type).toBe('income');
+      expect(['rent', 'rent-first']).toContain(payment.category);
+      expect(payment.source).toBe('generated');
+      expect(['late', 'pending']).toContain(payment.status);
+      expect(payment.paidDate).toBeNull();
+      expect(payment.confirmation).toBeNull();
+      expect(payment.receiptNumber).toBeNull();
+      expect(payment.leaseId).not.toBeNull();
+      expect(payment.propertyId).not.toBe('');
+      expect(payment.id).toMatch(/^payment-(rent|rent-first)-/);
+      const lease = database.leases.find((candidate) => candidate.id === payment.leaseId);
+      expect(lease).toBeDefined();
+      expect(payment.propertyId).toBe(lease?.propertyId);
+      expect(payment.dueDate >= (lease?.startDate ?? '')).toBe(true);
+    });
+    expect(database.payments.some((payment) => payment.status === 'paid')).toBe(false);
+    expect(database.payments.some((payment) => payment.id.startsWith('payment-migrated-'))).toBe(false);
+    expect(database.payments.some((payment) => payment.id.startsWith('payment-migrated-expense-'))).toBe(false);
+    expect(raw).toEqual(original);
   });
 
   it('preserves all nonempty synthetic-shaped legacy records despite one anomaly', async () => {
