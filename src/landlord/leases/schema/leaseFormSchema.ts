@@ -408,6 +408,32 @@ function toIsoUtc(date: Date): string {
     return date.toISOString().slice(0, 10);
 }
 
+export function calculateLeaseEndDate(
+    startDate: string,
+    durationMonths: number | null | undefined,
+): string {
+    const start = parseIsoUtc(startDate);
+    if (!start || typeof durationMonths !== 'number' || !Number.isInteger(durationMonths) || durationMonths <= 0) return '';
+
+    const targetMonthStart = new Date(Date.UTC(
+        start.getUTCFullYear(),
+        start.getUTCMonth() + durationMonths,
+        1,
+    ));
+    const targetYear = targetMonthStart.getUTCFullYear();
+    const targetMonth = targetMonthStart.getUTCMonth();
+    const lastTargetDay = lastUtcDayOfMonth(targetYear, targetMonth);
+    const startDay = start.getUTCDate();
+
+    if (startDay > lastTargetDay) {
+        return toIsoUtc(new Date(Date.UTC(targetYear, targetMonth, lastTargetDay)));
+    }
+
+    const end = new Date(Date.UTC(targetYear, targetMonth, startDay));
+    end.setUTCDate(end.getUTCDate() - 1);
+    return toIsoUtc(end);
+}
+
 function addUtcDays(value: string, days: number): string {
     const date = parseIsoUtc(value);
     if (!date) return '';

@@ -15,6 +15,7 @@ import { getDraft, getJsonDb, setDraft, subscribeJsonDb } from '../../../../db/j
 import type { ContactRecord, PropertyRecord, TenantRecord } from '../../../../db/database.types';
 import { StatusToast, type StatusToastState } from '../../../../components/ui/StatusToast';
 import {
+    calculateLeaseEndDate,
     calculateLeasePeriodicAmount,
     calculateFirstBillProrata,
     defaultLeaseValues,
@@ -336,6 +337,7 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
                 LeaseTenantIds: (draft.formData.LeaseTenantIds || []).filter((id: string) => snapshot.tenants.some((tenant: TenantRecord) => tenant.id === id)),
                 LeaseGarantIds: (draft.formData.LeaseGarantIds || []).filter((id: string) => snapshot.contacts.some((contact: ContactRecord) => contact.id === id)),
             });
+            endDateEditedRef.current = Boolean(next.LeaseEndDate);
             reset(next);
             setActiveTab(nextActiveTab);
             lastSavedSignatureRef.current = buildLeaseDraftSignature(next, nextActiveTab);
@@ -385,13 +387,13 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
     };
 
     useEffect(() => {
+        if (isEditMode) return;
         const selectedType = getLeaseTypeById(values.LeaseType);
         if (!selectedType || !selectedType.durationMonths || !values.LeaseStartDate || endDateEditedRef.current) return;
-        const start = new Date(`${values.LeaseStartDate}T00:00:00Z`);
-        start.setUTCMonth(start.getUTCMonth() + selectedType.durationMonths);
-        start.setUTCDate(start.getUTCDate() - 1);
-        setValue('LeaseEndDate', start.toISOString().slice(0, 10), { shouldDirty: true });
-    }, [setValue, values.LeaseEndDate, values.LeaseStartDate, values.LeaseType]);
+        const nextEndDate = calculateLeaseEndDate(values.LeaseStartDate, selectedType.durationMonths);
+        if (!nextEndDate || nextEndDate === getValues('LeaseEndDate')) return;
+        setValue('LeaseEndDate', nextEndDate, { shouldDirty: true, shouldValidate: true });
+    }, [getValues, isEditMode, setValue, values.LeaseStartDate, values.LeaseType]);
 
     useEffect(() => {
         if (isEditMode) return undefined;
@@ -442,11 +444,12 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
         if (selectedType && !renewEditedRef.current) {
             setValue('LeaseRinnovoTacito', selectedType.autoRenewDefault, { shouldDirty: true });
         }
-        if (selectedType?.durationMonths && values.LeaseStartDate && !endDateEditedRef.current) {
-            const start = new Date(`${values.LeaseStartDate}T00:00:00Z`);
-            start.setUTCMonth(start.getUTCMonth() + selectedType.durationMonths);
-            start.setUTCDate(start.getUTCDate() - 1);
-            setValue('LeaseEndDate', start.toISOString().slice(0, 10), { shouldDirty: true, shouldValidate: true });
+        const startDate = getValues('LeaseStartDate');
+        if (selectedType?.durationMonths && startDate && !endDateEditedRef.current) {
+            const nextEndDate = calculateLeaseEndDate(startDate, selectedType.durationMonths);
+            if (nextEndDate && nextEndDate !== getValues('LeaseEndDate')) {
+                setValue('LeaseEndDate', nextEndDate, { shouldDirty: true, shouldValidate: true });
+            }
         }
     };
 
