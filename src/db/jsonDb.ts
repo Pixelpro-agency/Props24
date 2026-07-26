@@ -1012,6 +1012,14 @@ function existingAccountDatabase(key: string): LocalDatabase | null {
     try {
         const database = parseStoredDb(raw);
         assertDatabaseIntegrity(database);
+
+        const storedCanonical = JSON.stringify(JSON.parse(raw) as unknown);
+        const repairedCanonical = JSON.stringify(database);
+
+        if (repairedCanonical !== storedCanonical) {
+            return persistInitializedDatabase(database, false);
+        }
+
         return database;
     } catch (error) {
         console.warn('[local-db] database account non utilizzabile', {

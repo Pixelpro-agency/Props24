@@ -239,7 +239,7 @@ describe('account-scoped payment loading', () => {
     });
   });
 
-  it('documents that load repair does not immediately rewrite the account key', async () => {
+  it('persists an account-scoped load repair immediately and exactly once', async () => {
     const rawDatabase = createRawDatabase();
     const rawPayment = findHistoricalPayment(rawDatabase);
     const id = rawPayment.id;
@@ -251,19 +251,26 @@ describe('account-scoped payment loading', () => {
       ...rawLease.formData,
       LeasePaymentMethod: 'addebito',
     };
+    const original = structuredClone(rawDatabase);
     const storage = arrangeStorage(rawDatabase);
 
     const { database } = await loadAccountDatabase();
     const loaded = paymentById(database, id);
-    const persisted = JSON.parse(storage.getItem(ACCOUNT_KEY) ?? '') as RawDatabase;
-    const persistedPayment = paymentById(persisted as unknown as LocalDatabase, id);
+    const persisted = JSON.parse(storage.getItem(ACCOUNT_KEY) ?? '') as LocalDatabase;
+    const persistedPayment = paymentById(persisted, id);
 
     expect(loaded).toMatchObject({ status: 'late', paidDate: null });
-    expect(persistedPayment).toMatchObject({ status: 'paid', paidDate: null });
-    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(0);
+    expect(persistedPayment).toMatchObject({ status: 'late', paidDate: null });
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(1);
+    expect(persisted.payments.filter((payment) => (
+      payment.leaseId === rawPayment.leaseId
+      && payment.category === rawPayment.category
+      && payment.dueDate === rawPayment.dueDate
+    ))).toHaveLength(1);
+    expect(rawDatabase).toEqual(original);
   });
 
-  it('documents current deferred repair persistence through a later saveJsonDb', async () => {
+  it('does not rewrite an already repaired account on a second initialization', async () => {
     const rawDatabase = createRawDatabase();
     const rawPayment = findHistoricalPayment(rawDatabase);
     const id = rawPayment.id;
@@ -278,22 +285,28 @@ describe('account-scoped payment loading', () => {
     };
     const storage = arrangeStorage(rawDatabase);
 
-    const { jsonDb, database } = await loadAccountDatabase();
-    expect(paymentById(database, id)).toMatchObject({ status: 'late', paidDate: null });
-    expect(paymentById(
-      JSON.parse(storage.getItem(ACCOUNT_KEY) ?? '') as LocalDatabase,
-      id,
-    )).toMatchObject({ status: 'paid', paidDate: null });
+    const firstLoad = await loadAccountDatabase();
+    const firstDatabase = firstLoad.database;
+    expect(paymentById(firstDatabase, id)).toMatchObject({ status: 'late', paidDate: null });
 
-    const saved = jsonDb.saveJsonDb(database);
     const persisted = JSON.parse(storage.getItem(ACCOUNT_KEY) ?? '') as LocalDatabase;
-
+    expect(paymentById(persisted, id)).toMatchObject({ status: 'late', paidDate: null });
     expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(1);
-    expect(paymentById(persisted, id)).toMatchObject({
-      status: 'late',
-      paidDate: null,
-    });
-    expect(paymentById(saved, id)).toMatchObject({
+
+    const persistedAfterFirstLoad = storage.getItem(ACCOUNT_KEY);
+    const firstSnapshot = structuredClone(firstDatabase);
+
+    uninstallJsonDbWindow();
+    installJsonDbWindow(storage);
+
+    const secondJsonDb = await loadFreshJsonDb();
+    secondJsonDb.setActiveDatabaseAccount(ACCOUNT_ID);
+    const secondDatabase = secondJsonDb.getJsonDb();
+
+    expect(secondDatabase).toEqual(firstSnapshot);
+    expect(storage.getItem(ACCOUNT_KEY)).toBe(persistedAfterFirstLoad);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(1);
+    expect(paymentById(secondDatabase, id)).toMatchObject({
       status: 'late',
       paidDate: null,
     });
