@@ -2,7 +2,7 @@ import { generateId, getJsonDb, saveJsonDb } from './jsonDb';
 import type { LeaseRecord, LocalDatabase, TenantRecord } from './database.types';
 import type { LeaseDetail } from '../types/leaseDetail';
 import { assertNoTenantLeaseConflicts, findTenantLeaseConflicts } from './businessRules';
-import { classifyLease, todayIso } from './dataSelectors';
+import { classifyLease, isPaymentOverdue, todayIso } from './dataSelectors';
 import { assertGeneratedLeasePaymentSchedule, buildLeasePaymentSchedule, ensureLeaseDepositPayment } from './paymentRepository';
 import { getLeaseTypeById, leaseTypeLabel, normalizeLeaseTypeId } from '../landlord/leases/data/leaseTypes';
 import { leaseFormSchema, normalizeLeaseFormData, type LeaseFormData } from '../landlord/leases/schema/leaseFormSchema';
@@ -550,7 +550,10 @@ export function leaseRecordToListItem(lease: LeaseRecord, database = getJsonDb()
         maintenance: lease.utilitiesAmount,
         securityDeposit: lease.depositAmount,
         balance: database.payments
-            .filter((payment) => payment.leaseId === lease.id && payment.status === 'late')
+            .filter((payment) => (
+                payment.leaseId === lease.id
+                && isPaymentOverdue(payment)
+            ))
             .reduce((sum, payment) => sum - payment.amount, 0),
         startDate: lease.startDate,
         endDate: lease.endDate,
