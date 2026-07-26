@@ -24,12 +24,19 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA esaminato: 07d52ea49960cd164dff335603f5b0f2572b4fab
+SHA esaminato: 7ea92bcd5513da7787f8f8b975efc88b4056ca15
 ```
 
-Lo stato tecnico del piano deriva dallo snapshot precedente. Il commit `07d52ea49960cd164dff335603f5b0f2572b4fab` è stato verificato come riorganizzazione esclusivamente documentale; il codice applicativo non è stato riesaminato integralmente a questo nuovo SHA.
+Il piano è aggiornato sulla base delle decisioni prodotto consolidate. Il codice applicativo non è stato riesaminato integralmente a questo SHA.
 
 Prima di trasformare una voce in prompt esecutivo, verificarla nuovamente sul codice corrente.
+
+## Mappa dei documenti
+
+- [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md)
+- [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md)
+- [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md)
+- [Decisioni da validare](./decisioni-da-validare.md)
 
 ## 2. Regole operative
 
@@ -81,50 +88,26 @@ Non:
 
 ### 3.1 Nuovo edificio
 
-Prima del form definitivo servono i file del progetto di riferimento:
-
-- pagina o componente Nuovo edificio;
-- schede e componenti collegati;
-- schema o tipi;
-- screenshot, se il codice non chiarisce il layout;
-- pagina dettaglio/modifica, se esiste;
-- comportamento delle azioni della lista.
-
-Decisioni richieste:
-
-1. campi definitivi dell’edificio;
-2. campi obbligatori;
-3. regola di unicità;
-4. possibilità di più edifici allo stesso indirizzo;
-5. associazione di unità esistenti;
-6. creazione edificio dal form unità;
-7. dettaglio e modifica;
-8. archivio, ripristino ed eliminazione;
-9. documenti dell’edificio;
-10. quote o criteri di ripartizione;
-11. destinazione dopo il salvataggio.
+La specifica consolidata è disponibile in [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md). Le sole decisioni residue — unicità dell'identificativo, indirizzi coincidenti, routing, creazione unità dal form, lifecycle e regole professionali sui millesimi — sono nel registro [Decisioni da validare](./decisioni-da-validare.md).
 
 ### 3.2 Duplicati delle unità
 
-Confermare:
-
-- identificatore univoco dell’unità;
-- ruolo di piano, interno e numero;
-- comportamento delle unità senza edificio;
-- trattamento di due edifici differenti allo stesso indirizzo.
+Ogni unità usa un UUID interno. Il controllo primario usa una chiave catastale normalizzata account-scoped; quando non è disponibile usa un fingerprint operativo secondario, con regole distinte per unità associate o meno a un edificio. La specifica è in [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md); gli edge case professionali restano in [Decisioni da validare](./decisioni-da-validare.md).
 
 ### 3.3 Campi unità ancora senza valori
 
-Confermare i valori di:
+Restano da validare soltanto i cataloghi professionali di:
 
 - tipo di locazione dell’unità;
 - periodicità di pagamento;
 - classe energetica;
 - eventuali valori legacy da normalizzare.
 
+Riferimento: [Decisioni da validare](./decisioni-da-validare.md).
+
 ### 3.4 Duplicati anagrafici
 
-Confermare:
+La strategia resta aperta e deve essere validata in [Decisioni da validare](./decisioni-da-validare.md), includendo:
 
 - codice fiscale obbligatorio o facoltativo per persona;
 - partita IVA obbligatoria o facoltativa per società;
@@ -134,45 +117,36 @@ Confermare:
 
 ### 3.5 Modifiche non salvate
 
-Definire:
-
-- route e form coperti;
-- conferma su navigazione interna;
-- browser back;
-- refresh e chiusura scheda;
-- logout;
-- cambio scheda interna;
-- azioni `Resta`, `Abbandona`, `Salva bozza`;
-- comportamento dopo submit riuscito o fallito;
-- stato dirty di una bozza ripristinata.
+La decisione è consolidata in [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md): bozza manuale separata, nessun autosalvataggio, stato dirty, modale applicativa `Resta`/`Abbandona`/`Salva bozza`, ripresa o eliminazione della bozza e `beforeunload` nativo per refresh e chiusura.
 
 ### 3.6 Funzioni future, route e servizi esterni
 
-Per ogni gruppo decidere:
-
-- implementare ora;
-- mantenere visibile ma realmente disabilitato;
-- nascondere;
-- rimuovere;
-- rinviare con indicazione esplicita.
-
-Non trasformare automaticamente tutte le voci di menu in task di sviluppo.
+Le funzioni non disponibili restano visibili quando utili, gialle, realmente disabilitate, non cliccabili e accompagnate da spiegazione. Non usano route fittizie o falsi successi. La convenzione è definita nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
 ### 3.7 Backend e produzione
 
-Prima delle task backend definire:
+La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md). Restano da definire in task future:
 
-- provider e modello dati remoto;
 - autenticazione e autorizzazione;
 - storage documentale;
 - invio email;
-- notifiche programmate;
-- eventuale fatturazione elettronica;
-- strategia di migrazione dal database locale.
+- servizi documentali;
+- deployment.
 
 ## 4. Ordine operativo
 
-Ordine consigliato:
+Ordine immediato:
+
+1. audit del database locale e delle bozze attuali;
+2. contratto repository compatibile con Supabase/PostgreSQL;
+3. repository condiviso delle bozze manuali;
+4. guard condiviso;
+5. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
+6. repository e form Nuovo edificio;
+7. lista, lifecycle e collaudo edifici;
+8. completamento e collaudo dei quattro CRUD.
+
+Classificazione complessiva:
 
 1. Blocco A — Edifici;
 2. Blocco B — Unità;
@@ -195,7 +169,9 @@ Non eseguire in parallelo task che modificano gli stessi repository, form o cont
 
 ## TASK A0 — Specifica Nuovo edificio
 
-**Stato:** bloccata dai materiali e dalle decisioni della sezione 3.1.
+**Stato:** prerequisito documentale soddisfatto.
+
+**Riferimento:** [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md).
 
 **Output:**
 
@@ -213,7 +189,7 @@ Non modificare codice.
 
 ## TASK A1 — Repository edifici
 
-**Dipendenza:** A0.
+**Dipendenza:** specifica consolidata A0.
 
 **Obiettivo:**
 
@@ -247,7 +223,7 @@ Non modificare codice.
 
 ## TASK A2 — Form Nuovo edificio
 
-**Dipendenze:** A0, A1.
+**Dipendenze:** specifica consolidata A0, A1.
 
 **Obiettivo:**
 
@@ -255,7 +231,10 @@ Non modificare codice.
 - React Hook Form e schema Zod;
 - errori sul campo e focus prioritario;
 - input numerici sicuri;
-- draft account-scoped con debounce;
+- bozza manuale account-scoped e separata;
+- nessuna scrittura automatica;
+- guard condiviso delle modifiche non salvate;
+- cinque schede attive e tre visibili, gialle e disabilitate;
 - gestione quota;
 - submit singolo;
 - toast singolo;
@@ -374,7 +353,7 @@ Verificare:
 
 ## TASK B2 — Duplicati unità
 
-**Dipendenza:** decisioni 3.2.
+**Dipendenza:** regola di unicità in [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md).
 
 **Obiettivo:**
 
@@ -394,7 +373,7 @@ Verificare:
 
 ## TASK B3 — Campi placeholder
 
-**Dipendenza:** decisioni 3.3.
+**Dipendenza:** cataloghi professionali in [Decisioni da validare](./decisioni-da-validare.md).
 
 **Obiettivo:**
 
@@ -428,13 +407,13 @@ Verificare:
 
 **Obiettivo:**
 
-- debounce;
-- evitare scritture identiche;
-- cleanup timer;
+- salvataggio manuale;
+- bozza separata dal record definitivo;
+- nessuna scrittura automatica;
 - gestione quota visibile;
 - nessuna perdita degli allegati;
 - cancellazione soltanto dopo submit riuscito;
-- compatibilità con il guard modifiche non salvate.
+- guard condiviso delle modifiche non salvate.
 
 ## TASK B6 — Modifica e lifecycle unità
 
@@ -451,15 +430,15 @@ Verificare:
 
 ## TASK B7 — Import ed export unità
 
-**Stato:** richiede decisione prodotto.
+**Stato:** rinviata.
 
 **Obiettivo:**
 
-- implementare realmente oppure disabilitare/nascondere;
-- eliminare il submit con soli `console.log`;
-- non mostrare successo senza record creati;
-- definire formato, validazione, errori di riga e rollback;
-- definire contenuto e formato export.
+- Importa ed Esporta restano visibili;
+- stile giallo;
+- controlli realmente disabilitati;
+- nessuna route o successo simulato;
+- implementazione futura con formato, validazione, errori e rollback definiti da task dedicata.
 
 ## TASK B8 — Analisi catastale futura
 
@@ -496,6 +475,8 @@ Verificare:
 
 # BLOCCO C — Inquilini e contatti
 
+Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale e il guard descritti nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
+
 ## TASK C1 — Garanti e rubrica
 
 **Obiettivo:**
@@ -519,7 +500,7 @@ Verificare:
 
 ## TASK C3 — Duplicati anagrafici
 
-**Dipendenza:** decisioni 3.4.
+**Dipendenza:** decisioni anagrafiche in [Decisioni da validare](./decisioni-da-validare.md).
 
 **Obiettivo:**
 
@@ -568,6 +549,8 @@ Elementi:
 - opzioni statiche nei modali.
 
 Per ciascuno: implementare, collegare, disabilitare o rimuovere.
+
+Import/export e azioni non operative rispettano la convenzione gialla e disabilitata.
 
 ## TASK C7 — Inviti email
 
@@ -641,6 +624,12 @@ Verificare:
 - stesso helper in effetto e cambio tipo;
 - non sovrascrivere data manuale;
 - preservare edit e draft.
+- override manuale esplicito con motivo obbligatorio;
+- catalogo minimo `Decesso`, `Sequestro o provvedimento dell'autorità`, `Sfratto`, `Altro`;
+- spiegazione obbligatoria per `Altro`;
+- storico append-only con before/after, autore e timestamp.
+
+Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md) e [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md).
 
 **Casi obbligatori:**
 
@@ -668,9 +657,13 @@ Verificare inoltre:
 - scaduta non pagata → `late`;
 - futura non pagata → `pending`;
 - `paid` solo dopo azione esplicita;
+- conferma manuale con metodo, data, importo completo e nota opzionale;
+- nessun pagamento parziale nella prima fase;
 - nessun `paidDate` o ricevuta automatica;
 - repair/migrazione coerenti;
 - dashboard non gonfiata.
+
+Pagamenti parziali e documenti di pagamento sono futuri. Riferimento: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
 **Casi:**
 
@@ -697,6 +690,8 @@ Verificare:
 ---
 
 # BLOCCO E — Preferenze account-scoped
+
+Le preferenze devono usare il contratto repository e l'isolamento descritti in [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md), senza trasformare questo blocco in un redesign delle preferenze.
 
 ## TASK E1 — Visibilità colonne nel database
 
@@ -741,9 +736,9 @@ Verificare:
 
 ## TASK F0 — Specifica
 
-**Dipendenza:** decisioni 3.5.
+**Stato:** specifica condivisa disponibile in [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
-Produrre una matrice per:
+La matrice approvata copre, per ogni form:
 
 - nuova/modifica unità;
 - nuovo/modifica edificio;
@@ -752,25 +747,25 @@ Produrre una matrice per:
 
 Scenari:
 
-- dirty;
-- draft;
-- submit;
-- annulla;
-- route;
-- back;
-- refresh;
-- logout;
-- cambio scheda;
-- errore di salvataggio.
+- form vuoto;
+- form dirty;
+- bozza esistente;
+- bozza ripristinata;
+- `Resta`;
+- `Abbandona`;
+- `Salva bozza`;
+- submit riuscito;
+- submit fallito;
+- apertura con `Riprendi bozza`, `Elimina e ricomincia`, `Annulla`.
 
 ## TASK F1 — Guard condiviso
 
 **Obiettivo:**
 
 - soluzione riusabile con React Router 7;
-- navigazione interna;
-- `beforeunload`;
-- resta, abbandona e bozza secondo decisione;
+- modale applicativa per la navigazione interna;
+- avviso nativo `beforeunload` per refresh e chiusura;
+- `Resta`, `Abbandona` e bozza manuale secondo specifica;
 - stato submitting;
 - nessun doppio modal;
 - focus e accessibilità;
@@ -778,7 +773,7 @@ Scenari:
 
 ## TASK F2 — Integrazioni
 
-Separare per form:
+Mantenere task separate per form:
 
 1. unità;
 2. inquilino;
@@ -905,8 +900,9 @@ Non creare pagine vuote per far risultare la route esistente.
 
 Per ogni funzione rinviata:
 
-- controllo realmente disabilitato oppure rimosso;
-- stile uniforme;
+- controllo visibile quando utile;
+- stile giallo uniforme;
+- controllo realmente disabilitato;
 - tooltip o testo chiaro;
 - `disabled`/`aria-disabled`;
 - nessun click;
@@ -915,20 +911,13 @@ Per ogni funzione rinviata:
 
 ## TASK G8 — Feedback
 
-I FeedbackBox di edifici, proprietà e inquilini simulano chiamate.
-
-Decidere:
-
-- servizio reale;
-- memorizzazione locale esplicita;
-- rimozione;
-- disabilitazione.
-
-Non fingere invio riuscito.
+I FeedbackBox restano visibili, gialli e disabilitati, senza falso invio. Import ed export seguono la stessa convenzione. Riferimento: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
 ---
 
 # BLOCCO H — Sicurezza, backend e storage
+
+Riferimenti: [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md) e [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md). Password e codici, foto, documenti, OCR, PDF, scraping e firme sono funzioni future dipendenti da backend e storage sicuro.
 
 ## TASK H1 — Autenticazione di produzione
 
@@ -987,6 +976,8 @@ Dipendenze:
 # BLOCCO I — Automazioni locazione e servizi documentali
 
 Queste task derivano da commenti espliciti nel codice. Non unirle al fix D1/D2.
+
+Sono attività future dipendenti dal backend: PDF, OCR, scraping, firme, email, automazioni e generazione documentale. Vedere [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md) e [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
 ## TASK I1 — Indici ISTAT aggiornabili
 
@@ -1126,6 +1117,11 @@ Definire una task dedicata per:
 
 - scegliere runner e convenzioni;
 - testare repository e business rules;
+- testare bozze manuali e guard condiviso;
+- testare storico append-only e override motivato;
+- testare pagamento completo confermato manualmente;
+- verificare funzioni future gialle e disabilitate;
+- non mutare dati di produzione;
 - date locazione;
 - stati pagamenti;
 - migrazioni;
@@ -1228,8 +1224,13 @@ Verificare edificio, unità, inquilino e locazione:
 - mutazioni atomiche;
 - errori di dominio;
 - round-trip;
-- draft;
+- bozze manuali;
+- storico append-only;
+- override data finale motivato;
+- pagamento completo confermato;
+- funzioni future gialle e disabilitate;
 - isolamento account;
+- nessuna mutazione di dati di produzione;
 - nessun pagamento falso;
 - nessuna preferenza globale parallela;
 - nessun `console.log` come implementazione.
@@ -1334,26 +1335,48 @@ Non deve continuare a descrivere come futuro ciò che è già presente.
 
 Il ciclo delle implementazioni può essere chiuso soltanto quando:
 
-- edifici operativi;
-- unità collegate agli edifici;
-- duplicati corretti;
-- campi visibili persistiti;
-- ID stabili;
-- inquilini e contatti canonici;
-- date locazione corrette;
-- nessun incasso automatico falso;
-- preferenze isolate per account;
-- modifiche non salvate gestite;
-- azioni attive realmente operative;
-- funzioni future chiaramente disabilitate;
-- mock runtime rimossi dai flussi approvati;
+### 1. Correttezza dei quattro domini
+
+- i quattro form prioritari sono funzionanti;
+- gli edifici sono operativi;
+- le unità sono collegate agli edifici;
+- i duplicati sono gestiti correttamente;
+- gli ID persistiti sono stabili;
+- inquilini e contatti usano modelli canonici;
+- le date delle locazioni sono corrette.
+
+### 2. Persistenza e isolamento
+
+- tutti i campi nello scope effettuano round-trip;
+- le preferenze sono isolate per account;
+- i dati locali sono migrabili tramite repository.
+
+### 3. Bozze e navigazione
+
+- le bozze manuali funzionano;
+- il guard delle modifiche non salvate funziona;
+
+### 4. Locazioni e pagamenti
+
+- lo storico locazioni è persistito e append-only;
+- i pagamenti completi sono confermati manualmente;
+- nessun metodo di pagamento produce un incasso automatico falso.
+
+### 5. Funzioni attive e future
+
+- le azioni attive sono realmente operative;
+- le funzioni future sono visibili ma gialle e disabilitate;
+- i mock runtime sono rimossi dai flussi approvati.
+
+### 6. Gate tecnici e documentali
+
 - build positiva;
 - lint mirato positivo;
 - audit statico completato;
 - collaudo browser completato;
 - documentazione tecnica separata e aggiornata.
 
-Le task backend e i servizi esterni non bloccano necessariamente la chiusura della fase locale, purché:
+Supabase resta una fase successiva e non blocca il collaudo locale. Le task backend e i servizi esterni non bloccano la chiusura della fase locale, purché:
 
 - siano classificati esplicitamente;
 - i controlli non operativi siano disabilitati;
