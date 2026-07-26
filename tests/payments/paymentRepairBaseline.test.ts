@@ -130,7 +130,7 @@ describe('repairRecoverablePayments', () => {
       .toEqual(['payment-manual-outside']);
   });
 
-  it('documents the current paid-first duplicate preference to revisit in D2C', () => {
+  it('preserves an evidence-backed historical paid record over a newer unpaid duplicate', () => {
     const paid = createPaymentFixture({
       id: 'payment-rent-duplicate-paid',
       status: 'paid',
@@ -153,7 +153,91 @@ describe('repairRecoverablePayments', () => {
     expect(repaired.payments[0]).toMatchObject({
       id: 'payment-rent-duplicate-paid',
       status: 'paid',
+      paidDate: '2026-05-05',
     });
+  });
+
+  it('preserves a coherent confirmation over a newer unconfirmed paid duplicate', () => {
+    const confirmed = createPaymentFixture({
+      id: 'payment-rent-confirmed',
+      status: 'paid',
+      paidDate: '2026-05-05',
+      confirmation: {
+        method: 'bonifico',
+        paidDate: '2026-05-05',
+        amount: 1_100,
+        note: 'Confermato',
+        confirmedAt: '2026-05-06T10:00:00.000Z',
+      },
+      updatedAt: '2026-05-06T10:00:00.000Z',
+    });
+    const unconfirmed = createPaymentFixture({
+      id: 'payment-rent-unconfirmed-newer',
+      status: 'paid',
+      paidDate: '2026-05-05',
+      confirmation: null,
+      updatedAt: '2026-06-01T10:00:00.000Z',
+    });
+
+    const repaired = repairRecoverablePayments(
+      createPaymentHistoryDatabase([unconfirmed, confirmed]),
+      PAYMENT_REPAIR_REFERENCE_DATE,
+    );
+
+    expect(repaired.payments[0]).toMatchObject({
+      id: 'payment-rent-confirmed',
+      confirmation: confirmed.confirmation,
+    });
+  });
+
+  it('gives no evidence priority to paid without paidDate after repair', () => {
+    const unverifiedPaid = createPaymentFixture({
+      id: 'payment-rent-unverified-paid',
+      status: 'paid',
+      paidDate: null,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    const currentUnpaid = createPaymentFixture({
+      id: 'payment-rent-current-unpaid',
+      status: 'pending',
+      paidDate: null,
+      updatedAt: '2026-06-01T00:00:00.000Z',
+    });
+
+    const repaired = repairRecoverablePayments(
+      createPaymentHistoryDatabase([unverifiedPaid, currentUnpaid]),
+      PAYMENT_REPAIR_REFERENCE_DATE,
+    );
+
+    expect(repaired.payments[0]).toMatchObject({
+      id: 'payment-rent-current-unpaid',
+      status: 'late',
+      paidDate: null,
+    });
+  });
+
+  it('uses stable code-unit ID ordering for an order-independent final tie', () => {
+    const uppercase = createPaymentFixture({
+      id: 'payment-rent-A',
+      updatedAt: '2026-06-01T00:00:00.000Z',
+    });
+    const lowercase = createPaymentFixture({
+      id: 'payment-rent-a',
+      updatedAt: '2026-06-01T00:00:00.000Z',
+    });
+
+    const first = repairRecoverablePayments(
+      createPaymentHistoryDatabase([uppercase, lowercase]),
+      PAYMENT_REPAIR_REFERENCE_DATE,
+    );
+    const second = repairRecoverablePayments(
+      createPaymentHistoryDatabase([lowercase, uppercase]),
+      PAYMENT_REPAIR_REFERENCE_DATE,
+    );
+
+    expect(first.payments).toHaveLength(1);
+    expect(first.payments[0].id).toBe('payment-rent-A');
+    expect(second.payments).toEqual(first.payments);
   });
 
   it('does not mutate its input and is idempotent for the current baseline', () => {

@@ -806,9 +806,33 @@ function repairRecoverableDatabase(database: LocalDatabase): LocalDatabase {
     );
 }
 
-function generatedDedupScore(payment: PaymentRecord): string {
-    const statusScore = payment.status === 'paid' ? '2' : payment.status === 'late' ? '1' : '0';
-    return `${statusScore}|${payment.updatedAt || ''}|${payment.id}`;
+function hasConsistentPaymentConfirmation(payment: PaymentRecord): boolean {
+    return payment.status === 'paid'
+        && Boolean(payment.paidDate)
+        && Boolean(payment.confirmation)
+        && payment.confirmation?.paidDate === payment.paidDate
+        && Math.round(payment.confirmation.amount * 100) === Math.round(payment.amount * 100);
+}
+
+function generatedPaymentEvidenceRank(payment: PaymentRecord): number {
+    if (hasConsistentPaymentConfirmation(payment)) return 2;
+    if (payment.status === 'paid' && payment.paidDate) return 1;
+    return 0;
+}
+
+function timestampValue(value: string): number {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : Number.NEGATIVE_INFINITY;
+}
+
+function shouldReplaceGeneratedDuplicate(existing: PaymentRecord, candidate: PaymentRecord): boolean {
+    const existingRank = generatedPaymentEvidenceRank(existing);
+    const candidateRank = generatedPaymentEvidenceRank(candidate);
+    if (candidateRank !== existingRank) return candidateRank > existingRank;
+    const existingTimestamp = timestampValue(existing.updatedAt);
+    const candidateTimestamp = timestampValue(candidate.updatedAt);
+    if (candidateTimestamp !== existingTimestamp) return candidateTimestamp > existingTimestamp;
+    return candidate.id < existing.id;
 }
 
 export function repairRecoverablePayments(database: LocalDatabase, referenceDate = todayIso()): LocalDatabase {
@@ -844,7 +868,7 @@ export function repairRecoverablePayments(database: LocalDatabase, referenceDate
 
         const key = `${next.leaseId}|${next.category}|${next.dueDate}`;
         const existing = dedupedGenerated.get(key);
-        if (!existing || generatedDedupScore(next) > generatedDedupScore(existing)) {
+        if (!existing || shouldReplaceGeneratedDuplicate(existing, next)) {
             dedupedGenerated.set(key, next);
         }
     }
