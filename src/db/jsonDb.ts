@@ -714,6 +714,12 @@ function legacyDetailToFormData(detail: unknown): Partial<PropertyFormData> {
     });
 }
 
+function normalizePaymentStatus(value: unknown): PaymentRecord['status'] {
+    return value === 'paid' || value === 'pending' || value === 'late'
+        ? value
+        : 'pending';
+}
+
 function normalizePaymentRecord(input: unknown, fallbackId: string): PaymentRecord {
     const source = asObject(input);
     const paidDate = normalizeIsoDate(source.paidDate);
@@ -738,7 +744,7 @@ function normalizePaymentRecord(input: unknown, fallbackId: string): PaymentReco
         amount: valueAsNumber(source.amount),
         dueDate: normalizeIsoDate(source.dueDate),
         paidDate: paidDate || null,
-        status: source.status === 'pending' || source.status === 'late' ? source.status : 'paid',
+        status: normalizePaymentStatus(source.status),
         description: valueAsString(source.description),
         source: paymentSource,
         accountingRole,
