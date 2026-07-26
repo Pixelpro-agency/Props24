@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA esaminato: d132844840a894fbe153a8445fdb854bcc5fdd09
+SHA esaminato: cfc6220a5ae8c62325478f81bbdbb914d886176a
 ```
 
 Il piano è aggiornato sulla base delle decisioni prodotto consolidate. Il codice applicativo non è stato riesaminato integralmente a questo SHA.
@@ -137,15 +137,14 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 Ordine immediato:
 
-1. calcolo sicuro e testabile della data finale delle locazioni;
-2. stati dei pagamenti senza incasso automatico e conferma manuale del pagamento completo;
-3. contratto repository compatibile con Supabase/PostgreSQL;
-4. repository condiviso delle bozze manuali;
-5. guard condiviso;
-6. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
-7. repository e form Nuovo edificio;
-8. lista, lifecycle e collaudo edifici;
-9. completamento e collaudo dei quattro CRUD.
+1. stati dei pagamenti senza incasso automatico e conferma manuale del pagamento completo;
+2. contratto repository compatibile con Supabase/PostgreSQL;
+3. repository condiviso delle bozze manuali;
+4. guard condiviso;
+5. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
+6. repository e form Nuovo edificio;
+7. lista, lifecycle e collaudo edifici;
+8. completamento e collaudo dei quattro CRUD.
 
 Classificazione complessiva:
 
@@ -617,22 +616,22 @@ Verificare:
 
 ## TASK D1 — Data finale sicura
 
-**Obiettivo:**
+**Stato:** calcolo automatico completato; override motivato e storico ancora da implementare.
+
+### D1A — Calcolo automatico completato
 
 - helper unico e testabile;
-- somma mesi con clamp;
-- regola inclusiva coerente;
-- stesso helper in effetto e cambio tipo;
-- non sovrascrivere data manuale;
-- preservare edit e draft.
-- override manuale esplicito con motivo obbligatorio;
-- catalogo minimo `Decesso`, `Sequestro o provvedimento dell'autorità`, `Sfratto`, `Altro`;
-- spiegazione obbligatoria per `Altro`;
-- storico append-only con before/after, autore e timestamp.
+- somma mesi con clamp e regola inclusiva;
+- stesso helper nell'effetto automatico e nel cambio tipo;
+- protezione della data modificata manualmente;
+- preservazione della data in edit;
+- protezione della data già presente nella bozza ripristinata;
+- test automatici sui casi limite;
+- verifica manuale dei flussi principali.
 
 Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md) e [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md).
 
-**Casi obbligatori:**
+**Casi automatici coperti:**
 
 ```txt
 2026-01-01 + 1 mese → 2026-01-31
@@ -649,6 +648,26 @@ Verificare inoltre:
 - cambio data iniziale;
 - cambio tipo;
 - edit con data presente.
+
+### D1B — Override motivato e storico
+
+- override manuale esplicito;
+- motivo obbligatorio;
+- catalogo minimo:
+  - `Decesso`;
+  - `Sequestro o provvedimento dell'autorità`;
+  - `Sfratto`;
+  - `Altro`;
+- spiegazione obbligatoria per `Altro`;
+- storico append-only;
+- valore precedente e successivo;
+- campi modificati;
+- autore;
+- timestamp.
+
+D1B deve essere implementata con una task separata e non deve essere accorpata a D2.
+
+Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md) e [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md).
 
 ## TASK D2 — Addebito senza incasso automatico
 
@@ -1133,7 +1152,6 @@ Aree residue:
 - operazioni atomiche;
 - bozze manuali;
 - guard condiviso;
-- date delle locazioni;
 - stati dei pagamenti;
 - storico append-only e override motivato;
 - pagamento completo confermato manualmente;
