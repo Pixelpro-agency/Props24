@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA esaminato: 7ea92bcd5513da7787f8f8b975efc88b4056ca15
+SHA esaminato: d132844840a894fbe153a8445fdb854bcc5fdd09
 ```
 
 Il piano è aggiornato sulla base delle decisioni prodotto consolidate. Il codice applicativo non è stato riesaminato integralmente a questo SHA.
@@ -137,14 +137,15 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 Ordine immediato:
 
-1. audit del database locale e delle bozze attuali;
-2. contratto repository compatibile con Supabase/PostgreSQL;
-3. repository condiviso delle bozze manuali;
-4. guard condiviso;
-5. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
-6. repository e form Nuovo edificio;
-7. lista, lifecycle e collaudo edifici;
-8. completamento e collaudo dei quattro CRUD.
+1. calcolo sicuro e testabile della data finale delle locazioni;
+2. stati dei pagamenti senza incasso automatico e conferma manuale del pagamento completo;
+3. contratto repository compatibile con Supabase/PostgreSQL;
+4. repository condiviso delle bozze manuali;
+5. guard condiviso;
+6. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
+7. repository e form Nuovo edificio;
+8. lista, lifecycle e collaudo edifici;
+9. completamento e collaudo dei quattro CRUD.
 
 Classificazione complessiva:
 
@@ -1111,26 +1112,39 @@ Non aggiungere soltanto un’opzione allo schema o alla select senza implementar
 
 ## TASK J1 — Test automatizzati
 
-`package.json` non espone attualmente uno script di test.
+**Stato:** infrastruttura iniziale disponibile.
 
-Definire una task dedicata per:
+Il progetto usa Vitest come runner TypeScript, con:
 
-- scegliere runner e convenzioni;
-- testare repository e business rules;
-- testare bozze manuali e guard condiviso;
-- testare storico append-only e override motivato;
-- testare pagamento completo confermato manualmente;
-- verificare funzioni future gialle e disabilitate;
-- non mutare dati di produzione;
-- date locazione;
-- stati pagamenti;
-- migrazioni;
+- script `test` e `test:run` in `package.json`;
+- configurazione Node in `vitest.config.ts`;
+- ricerca limitata a `tests/**/*.test.ts`;
+- suite baseline in `tests/db/databaseBaseline.test.ts`;
+- copertura iniziale delle business rule pure per identificativi, chiavi di localizzazione, codici fiscali e sovrapposizione delle date.
+
+La baseline non conclude la task J1. I test devono essere estesi tramite task dedicate e separate.
+
+Aree residue:
+
+- repository e business rule non ancora coperte;
+- migrazioni e repair;
 - isolamento account;
 - duplicati;
 - operazioni atomiche;
-- guard modifiche non salvate.
+- bozze manuali;
+- guard condiviso;
+- date delle locazioni;
+- stati dei pagamenti;
+- storico append-only e override motivato;
+- pagamento completo confermato manualmente;
+- funzioni future gialle e realmente disabilitate.
 
-Non ricreare vecchi smoke test e non introdurre una suite dentro una task funzionale.
+Vincoli:
+
+- i test non devono mutare dati di produzione;
+- non ricreare vecchi smoke test;
+- non introdurre una suite ampia come effetto collaterale di una task funzionale;
+- ogni task funzionale deve aggiungere o aggiornare soltanto i test mirati al proprio perimetro.
 
 ## TASK J2 — Baseline lint
 
