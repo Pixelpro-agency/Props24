@@ -215,12 +215,14 @@ export function validateDatabaseRelations(database: LocalDatabase, referenceDate
         }
         if (isValidIsoDate(lease.startDate) && isValidIsoDate(lease.endDate)) {
             if (lease.endDate < lease.startDate) issues.push(issue('error', 'INVALID_DATE_RANGE', 'leases', lease.id, 'Fine locazione precedente all inizio.'));
-            lease.tenantIds.forEach((tenantId) => {
-                const conflicts = findTenantLeaseConflicts(database, tenantId, lease.propertyId, lease.startDate, lease.endDate, lease.id);
-                if (conflicts.length > 0) {
-                    issues.push(issue('error', 'TENANT_LEASE_DATE_OVERLAP', 'leases', lease.id, `Locazione sovrapposta per inquilino ${tenantId}.`));
-                }
-            });
+            if (!lease.archived) {
+                lease.tenantIds.forEach((tenantId) => {
+                    const conflicts = findTenantLeaseConflicts(database, tenantId, lease.propertyId, lease.startDate, lease.endDate, lease.id);
+                    if (conflicts.length > 0) {
+                        issues.push(issue('error', 'TENANT_LEASE_DATE_OVERLAP', 'leases', lease.id, `Locazione sovrapposta per inquilino ${tenantId}.`));
+                    }
+                });
+            }
         }
     });
 
