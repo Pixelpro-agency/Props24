@@ -28,16 +28,16 @@ import {
 } from '../../schema/leaseFormSchema';
 import { TenantLeaseConflictError } from '../../../../db/databaseErrors';
 import { ISTAT_INDEX_OPTIONS } from '../../data/istatIndexOptions';
+import { useContactList } from '../../../../contacts/useContactList';
 
 const inputClass = 'w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#337ab7] focus:outline-none focus:ring-2 focus:ring-[#337ab7]/30';
 const errorClass = 'mt-1 text-xs text-red-600';
 
-function activeDbSnapshot() {
+function activeLeaseDataSnapshot() {
     const db = getJsonDb();
     return {
         properties: db.properties.filter((property) => !property.archived),
         tenants: db.tenants.filter((tenant) => !tenant.archived),
-        contacts: db.contacts,
     };
 }
 
@@ -247,11 +247,17 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
     const [activeTab, setActiveTab] = useState<LeaseFormTab>('general');
     const [tenantModalOpen, setTenantModalOpen] = useState(false);
     const [guarantorModalOpen, setGuarantorModalOpen] = useState(false);
-    const [snapshot, setSnapshot] = useState(activeDbSnapshot);
+    const [snapshot, setSnapshot] = useState(activeLeaseDataSnapshot);
     const [pendingPropertyId, setPendingPropertyId] = useState<string | null>(null);
     const [toast, setToast] = useState<StatusToastState | null>(null);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
     const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+    const {
+        contacts,
+        status: contactListStatus,
+        error: contactListError,
+        refresh: refreshContacts,
+    } = useContactList();
     /**
      * QA 11B — limitazioni non bloccanti da preservare:
      *
@@ -303,8 +309,8 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
         .map((id: string) => snapshot.tenants.find((tenant: TenantRecord) => tenant.id === id))
         .filter((tenant): tenant is TenantRecord => Boolean(tenant)), [selectedTenantIds, snapshot.tenants]);
     const selectedGuarantors = useMemo(() => selectedGuarantorIds
-        .map((id: string) => snapshot.contacts.find((contact: ContactRecord) => contact.id === id))
-        .filter((contact): contact is ContactRecord => Boolean(contact)), [selectedGuarantorIds, snapshot.contacts]);
+        .map((id: string) => contacts.find((contact: ContactRecord) => contact.id === id))
+        .filter((contact): contact is ContactRecord => Boolean(contact)), [contacts, selectedGuarantorIds]);
     const selectedProperty = snapshot.properties.find((property) => property.id === watch('PropertyID'));
     const selectedBillingPeriod = watch('LeaseBillingPeriod');
     const editableLeaseDetail = isEditMode && leaseId ? getLeaseDetail(leaseId) : null;
@@ -312,15 +318,24 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
     const hasUnsavedContractChanges = Boolean(isEditMode && persistedLeaseFormData && JSON.stringify(values) !== JSON.stringify(persistedLeaseFormData));
     const isSignatureLocked = Boolean(editableLeaseDetail?.lease.signatureProcess);
     const firstBillProrata = values.LeaseFirstBill ? calculateFirstBillProrata(values) : null;
+    const isInitialContactLoading = (
+        contactListStatus === 'idle'
+        || contactListStatus === 'loading'
+    ) && contacts.length === 0;
+    const isContactListUnavailable =
+        contactListStatus === 'error' && contacts.length === 0;
+    const contactLoadError =
+        contactListError || 'Non è stato possibile caricare i contatti.';
 
     useEffect(() => {
-        const refresh = () => setSnapshot(activeDbSnapshot());
+        const refresh = () => setSnapshot(activeLeaseDataSnapshot());
         refresh();
         return subscribeJsonDb(refresh);
     }, []);
 
     useEffect(() => {
         if (isEditMode) return;
+        if (contactListStatus !== 'ready') return;
         if (restoredDraftRef.current) return;
         try {
             const draft = normalizeLeaseDraft(getDraft('leaseForm'));
@@ -335,7 +350,7 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
                 ...draft.formData,
                 PropertyID: snapshot.properties.some((property) => property.id === draft.formData.PropertyID) ? draft.formData.PropertyID : '',
                 LeaseTenantIds: (draft.formData.LeaseTenantIds || []).filter((id: string) => snapshot.tenants.some((tenant: TenantRecord) => tenant.id === id)),
-                LeaseGarantIds: (draft.formData.LeaseGarantIds || []).filter((id: string) => snapshot.contacts.some((contact: ContactRecord) => contact.id === id)),
+                LeaseGarantIds: (draft.formData.LeaseGarantIds || []).filter((id: string) => contacts.some((contact: ContactRecord) => contact.id === id)),
             });
             endDateEditedRef.current = Boolean(next.LeaseEndDate);
             reset(next);
@@ -348,7 +363,7 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
             draftHydratedRef.current = true;
             setToast({ variant: 'error', title: 'Bozza', message: 'Una parte della bozza non era più valida ed è stata ignorata.' });
         }
-    }, [activeTab, getValues, isEditMode, reset, snapshot.contacts, snapshot.properties, snapshot.tenants]);
+    }, [activeTab, contactListStatus, contacts, getValues, isEditMode, reset, snapshot.properties, snapshot.tenants]);
 
     useEffect(() => {
         if (!isEditMode || !leaseId || !initialValues) return;
@@ -988,7 +1003,20 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
                 </button>
             </div>
             {errors.LeaseGarantIds && <p className={errorClass}>{errors.LeaseGarantIds.message}</p>}
-            {selectedGuarantors.length === 0 ? (
+            {contactListStatus === 'error' && contacts.length > 0 && (
+                <div className="flex items-center justify-between gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+                    <span>{contactLoadError}</span>
+                    <button type="button" onClick={() => void refreshContacts()} className="rounded border border-amber-400 px-3 py-1 font-medium hover:bg-amber-100">Riprova</button>
+                </div>
+            )}
+            {isInitialContactLoading ? (
+                <div className="rounded border border-gray-200 bg-gray-50 py-10 text-center text-sm text-gray-500">Caricamento dei garanti...</div>
+            ) : isContactListUnavailable ? (
+                <div className="space-y-3 rounded border border-red-300 bg-red-50 p-4 text-sm text-red-700">
+                    <p>{contactLoadError}</p>
+                    <button type="button" onClick={() => void refreshContacts()} className="rounded border border-red-400 px-3 py-1 font-medium hover:bg-red-100">Riprova</button>
+                </div>
+            ) : selectedGuarantors.length === 0 ? (
                 <div className="rounded border border-dashed border-gray-300 bg-gray-50 py-10 text-center text-sm text-gray-500">Nessun garante aggiunto.</div>
             ) : (
                 <div className="grid gap-3 md:grid-cols-2">
@@ -1005,7 +1033,7 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
                     ))}
                 </div>
             )}
-            <AddGuarantorModal isOpen={guarantorModalOpen} onClose={() => setGuarantorModalOpen(false)} onGuarantorAdded={addGuarantorId} onError={(message) => setToast({ variant: 'error', title: 'Garante', message })} existingGuarantorIds={selectedGuarantorIds} linkedGuarantorIds={selectedGuarantorIds} />
+            <AddGuarantorModal isOpen={guarantorModalOpen} onClose={() => setGuarantorModalOpen(false)} onGuarantorAdded={addGuarantorId} onError={(message) => setToast({ variant: 'error', title: 'Garante', message })} existingGuarantorIds={selectedGuarantorIds} linkedGuarantorIds={selectedGuarantorIds} contacts={contacts} contactListStatus={contactListStatus} contactListError={contactListError} onRefreshContacts={refreshContacts} />
         </div>
     );
 
