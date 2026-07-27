@@ -24,17 +24,20 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA esaminato: 9a931f74ff957d9065bf34b456833bec3342767d
+SHA applicativo esaminato: 9a931f74ff957d9065bf34b456833bec3342767d
 ```
 
 La chiusura tecnica di D2C e il pilot del repository contatti, inclusa la migrazione dei consumer dei garanti, sono stati verificati sul codice pubblicato e nei collaudi dedicati. Il resto del codice applicativo non è stato riesaminato integralmente a questo SHA; le altre task devono essere riverificate prima di diventare prompt esecutivi.
 
 ## Mappa dei documenti
 
+- [Todo list e stato di avanzamento](./todo-list.md)
 - [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md)
 - [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md)
 - [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md)
 - [Decisioni da validare](./decisioni-da-validare.md)
+
+Questo documento conserva il dettaglio delle task; la Todo list ne mostra lo stato sintetico e il registro delle decisioni contiene le domande professionali complete.
 
 ## 2. Regole operative
 
@@ -135,12 +138,12 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 Ordine immediato:
 
-1. repository condiviso delle bozze manuali;
-2. guard condiviso;
-3. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
-4. repository e form Nuovo edificio;
-5. lista, lifecycle e collaudo edifici;
-6. completamento e collaudo dei quattro CRUD.
+1. F1 — repository condiviso delle bozze manuali;
+2. F2 — guard condiviso;
+3. F3 — integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
+4. A1/A2 — repository e form Nuovo edificio;
+5. A4–A7 — lista, lifecycle e collaudo edifici;
+6. K1/K2 — completamento e collaudo dei quattro CRUD, dopo le relative dipendenze.
 
 Classificazione complessiva:
 
@@ -185,7 +188,7 @@ Non modificare codice.
 
 ## TASK A1 — Repository edifici
 
-**Dipendenza:** specifica consolidata A0.
+**Dipendenze:** specifica consolidata A0; decisioni ED-01 ed ED-02.
 
 **Obiettivo:**
 
@@ -219,7 +222,7 @@ Non modificare codice.
 
 ## TASK A2 — Form Nuovo edificio
 
-**Dipendenze:** specifica consolidata A0, A1.
+**Dipendenze:** specifica consolidata A0; A1; F1; F2. ED-04, ED-06, ED-07, PA-08 e PA-09 influenzano il perimetro pertinente senza bloccare necessariamente ogni riga del form.
 
 **Obiettivo:**
 
@@ -236,11 +239,11 @@ Non modificare codice.
 - toast singolo;
 - round-trip di ogni controllo visibile.
 
-**File da definire dopo A0.**
+**File esecutivi:** devono essere confermati tramite audit tecnico pre-esecutivo sulla base della specifica A0 già consolidata.
 
 ## TASK A3 — Route e accessi edificio
 
-**Dipendenza:** A2.
+**Dipendenze:** A2; decisione ED-03.
 
 **Obiettivo:**
 
@@ -282,7 +285,7 @@ Non modificare codice.
 
 ## TASK A5 — Azioni edificio
 
-**Dipendenza:** A4.
+**Dipendenze:** A4; decisione ED-05.
 
 **Obiettivo:**
 
@@ -296,7 +299,7 @@ Non modificare codice.
 
 ## TASK A6 — Dettaglio e modifica edificio
 
-**Stato:** da confermare in A0.
+**Stato:** aperta; il lifecycle dipende da ED-05 e l’eventuale routing del dettaglio dipende da ED-03.
 
 **Vincoli:**
 
@@ -306,6 +309,8 @@ Non modificare codice.
 - non creare route senza approvazione.
 
 ## TASK A7 — Collaudo edifici
+
+**Dipendenze:** completamento di A1–A6 e decisioni pertinenti al perimetro effettivamente implementato.
 
 Verificare:
 
@@ -401,6 +406,8 @@ Verificare:
 
 ## TASK B5 — Bozza unità
 
+**Dipendenze:** F1 — Repository condiviso delle bozze manuali; F2 — Guard condiviso.
+
 **Obiettivo:**
 
 - salvataggio manuale;
@@ -485,7 +492,7 @@ Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale
 - store/hook asincrono con loading, error, refresh e protezioni dalle risposte stale;
 - consumer dei garanti di Nuova locazione migrati;
 - creazione di persone e società tramite repository;
-- protezione della bozza durante il caricamento;
+- protezione degli ID garanti nella bozza legacy di Nuova locazione durante il caricamento asincrono dei contatti;
 - collaudo browser dedicato;
 - click-through del backdrop corretto.
 
@@ -649,16 +656,9 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 2026-08-31 + 6 mesi → 2027-02-28
 ```
 
-Verificare inoltre:
-
-- 29 febbraio;
-- 30 aprile;
-- durate 36, 48, 72 e 108 mesi;
-- cambio data iniziale;
-- cambio tipo;
-- edit con data presente.
-
 ### D1B — Override motivato e storico
+
+**Influenze:** PA-06 e PA-07.
 
 - override manuale esplicito;
 - motivo obbligatorio;
@@ -727,9 +727,11 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 - il repair di un database account viene persistito immediatamente soltanto quando modifica il valore memorizzato, poi riletto e verificato; una seconda inizializzazione non riscrive il database;
 - consumer finanziari e saldi usano una semantica condivisa: la cassa richiede `paid` e `paidDate`, lo scaduto considera soltanto ricavi arrivati alla scadenza;
 - i movimenti con `accountingRole: deposit` restano esclusi dai consumer generali di ricavo e spesa;
-- sullo SHA documentato la copertura comprende 31 test D2C e 112 test complessivi, senza fallimenti o test saltati.
+- la copertura dedicata a D2C comprende 31 test. La baseline complessiva corrente è mantenuta nella TASK J1.
 
 ### D2D — Eccezioni ancora da decidere
+
+**Decisioni collegate:** PA-10, PA-11 e PA-12.
 
 - semantica dell’affitto prepagato ancora da validare;
 - politica di conservazione o annullamento del numero ricevuta quando un pagamento torna non pagato;
@@ -758,9 +760,14 @@ Pagamenti parziali e documenti di pagamento sono futuri. Riferimento: [Specifica
 
 ## TASK D3 — Regressione locazione mirata
 
+**Decisioni collegate:** PA-10, PA-11, PA-12 e PA-13.
+
 Verificare:
 
-- date;
+- date, inclusi 29 febbraio e 30 aprile;
+- durate 36, 48, 72 e 108 mesi;
+- cambio data iniziale e cambio tipo;
+- edit con data presente;
 - stati rate;
 - deposito escluso dai ricavi;
 - prepagato senza doppio ricavo;
@@ -840,7 +847,34 @@ Scenari:
 - submit fallito;
 - apertura con `Riprendi bozza`, `Elimina e ricomincia`, `Annulla`.
 
-## TASK F1 — Guard condiviso
+## TASK F1 — Repository condiviso delle bozze manuali
+
+**Perimetro futuro:**
+
+- porta repository stabile e asincrona;
+- adapter locale account-scoped;
+- record bozza separato dai record definitivi;
+- chiave logica basata almeno su account, `formType`, `mode` ed eventuale `entityId`;
+- recupero, salvataggio manuale, sostituzione e cancellazione;
+- nessun autosalvataggio;
+- nessuna creazione di entità definitive durante il caricamento;
+- isolamento account;
+- compatibilità o migrazione dei comportamenti legacy soltanto dopo audit;
+- invalidazione o subscription soltanto se confermata necessaria dall’audit;
+- test di contratto e adapter;
+- nessuna integrazione nei form nella stessa task.
+
+**Criteri di chiusura:**
+
+- contratto verificato;
+- adapter locale;
+- isolamento account;
+- idempotenza;
+- nessuna perdita delle bozze legacy senza migrazione;
+- suite mirata;
+- build e lint mirato positivi.
+
+## TASK F2 — Guard condiviso
 
 **Obiettivo:**
 
@@ -853,7 +887,9 @@ Scenari:
 - focus e accessibilità;
 - nessun blocco dopo submit.
 
-## TASK F2 — Integrazioni
+## TASK F3 — Integrazioni
+
+**Dipendenze:** F1 e F2.
 
 Mantenere task separate per form:
 
@@ -864,7 +900,9 @@ Mantenere task separate per form:
 
 Non unire le integrazioni se modificano form complessi diversi.
 
-## TASK F3 — Collaudo trasversale
+## TASK F4 — Collaudo trasversale
+
+**Dipendenze:** F2 e F3.
 
 Verificare create/edit, route, back, annulla, logout, refresh, bozza, abbandona, resta, submit riuscito e fallito.
 
@@ -1193,7 +1231,7 @@ Non aggiungere soltanto un’opzione allo schema o alla select senza implementar
 
 ## TASK J1 — Test automatizzati
 
-**Stato:** infrastruttura iniziale disponibile.
+**Stato:** infrastruttura attiva e copertura estesa; task ancora aperta perché accompagna le implementazioni future.
 
 Il progetto usa Vitest come runner TypeScript, con:
 
@@ -1217,28 +1255,34 @@ La copertura corrente include:
 - pagamenti manuali creati non pagati;
 - blocco della modifica di un pagamento manuale già pagato;
 - esclusione delle locazioni archiviate dal controllo di sovrapposizione.
+- repair e migrazione dei pagamenti;
+- deduplicazione delle rate generate;
+- consumer finanziari conservativi;
+- isolamento account dei contatti;
+- adapter `ContactRepository`;
+- composition root;
+- store asincrono, risposte obsolete, disconnect e reconnect.
 
 Snapshot verificato della suite:
 
 ```text
-81 test passati
+13 file di test
+144 test passati
 0 test falliti
 0 test saltati
 ```
 
 Aree residue:
 
-- repository e business rule non ancora coperte;
-- migrazioni e repair;
-- isolamento account;
-- duplicati;
-- operazioni atomiche;
+- repository futuri;
+- duplicati non ancora definiti;
+- lifecycle e CRUD mancanti;
 - bozze manuali;
 - guard condiviso;
-- repair, migrazione e transizioni storiche dei pagamenti;
-- annullamento e politica ricevute, deposito, prepagato e consumer finanziari;
-- storico append-only e override motivato;
+- D1B — storico append-only e override motivato;
+- D2D — prepagato, ricevuta e confirmation precedenti;
 - funzioni future gialle e realmente disabilitate.
+- audit finali.
 
 Vincoli:
 
@@ -1385,7 +1429,7 @@ Basato sulle decisioni G1–G7:
 
 - build completa;
 - lint dei file modificati;
-- suite automatica, se introdotta;
+- suite automatica completa positiva;
 - report separato del debito globale residuo;
 - nessun allargamento automatico.
 
