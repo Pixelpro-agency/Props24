@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { LogoutPage } from './auth/LogoutPage';
+import { ContactRepositoryProvider } from './contacts/ContactRepositoryContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { Layout } from './components/layout/Layout';
 import { PropertiesPage } from './pages/PropertiesPage';
@@ -54,6 +55,7 @@ function AuthenticatedApplication() {
 
     useEffect(() => {
         queryClientInstance.clear();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setReadyCacheScope({ accountId });
     }, [accountId, queryClientInstance]);
 
@@ -78,8 +80,9 @@ function AuthenticatedApplication() {
     }
 
     return (
-        <Layout>
-            <Routes>
+        <ContactRepositoryProvider accountId={account.id}>
+            <Layout>
+                <Routes>
                 <Route
                     path="/"
                     element={<Navigate to="/dashboard" replace />}
@@ -153,8 +156,9 @@ function AuthenticatedApplication() {
                     path="/logout"
                     element={<LogoutPage />}
                 />
-            </Routes>
-        </Layout>
+                </Routes>
+            </Layout>
+        </ContactRepositoryProvider>
     );
 }
 
