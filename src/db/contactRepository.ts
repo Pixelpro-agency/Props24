@@ -1,6 +1,7 @@
 import { generateId, getJsonDb, saveJsonDb } from './jsonDb';
 import type { ContactRecord } from './database.types';
-import { LeaseContactNotFoundError } from './databaseErrors';
+import { LeaseContactInUseError, LeaseContactNotFoundError } from './databaseErrors';
+import type { ContactDeleteCheck } from './contactRepository.port';
 
 export type ContactInput = Partial<Omit<ContactRecord, 'id' | 'createdAt' | 'updatedAt' | 'archived'>>;
 
@@ -76,7 +77,7 @@ export function archiveContact(id: string): ContactRecord {
     return saveJsonDb({ ...db, contacts }).contacts[index];
 }
 
-export function canDeleteContact(id: string): { canDelete: boolean; reason?: string } {
+export function canDeleteContact(id: string): ContactDeleteCheck {
     const db = getJsonDb();
     const used = db.leases.some((lease) => lease.guarantorIds.includes(id));
     return used ? { canDelete: false, reason: 'Il garante è collegato a una locazione.' } : { canDelete: true };
@@ -87,7 +88,7 @@ export function deleteContact(id: string): boolean {
     const contact = db.contacts.find((item) => item.id === id);
     if (!contact) throw new LeaseContactNotFoundError();
     const check = canDeleteContact(id);
-    if (!check.canDelete) throw new Error(check.reason);
+    if (!check.canDelete) throw new LeaseContactInUseError();
     saveJsonDb({ ...db, contacts: db.contacts.filter((item) => item.id !== id) });
     return true;
 }
