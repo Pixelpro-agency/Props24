@@ -24,6 +24,10 @@ import {
 
 const ACCOUNT_ID = 'user-001';
 const ACCOUNT_KEY = 'props24.localDb.user-001';
+const SECOND_ACCOUNT_ID = 'user-002';
+const SECOND_ACCOUNT_KEY = 'props24.localDb.user-002';
+const THIRD_ACCOUNT_ID = 'user-003';
+const THIRD_ACCOUNT_KEY = 'props24.localDb.user-003';
 const NOW = '2026-06-15T12:00:00.000Z';
 const EARLIER = '2026-01-01T00:00:00.000Z';
 
@@ -86,8 +90,8 @@ function emptyDatabase(contacts: ContactRecord[] = [contact()]): LocalDatabase {
   };
 }
 
-function linkedDatabase(): LocalDatabase {
-  const linkedContact = contact({ id: 'contact-linked' });
+function linkedDatabase(linkedContactId = 'contact-linked'): LocalDatabase {
+  const linkedContact = contact({ id: linkedContactId });
   const property = {
     id: 'property-linked',
     createdAt: EARLIER,
@@ -261,8 +265,32 @@ async function arrange(database = emptyDatabase()) {
   return {
     storage,
     jsonDb,
-    repository: createLocalContactRepository(),
+    repository: createLocalContactRepository({ accountId: ACCOUNT_ID }),
   };
+}
+
+function storedDatabase(storage: MemoryStorage, key: string): LocalDatabase {
+  const raw = storage.getItem(key);
+  if (!raw) throw new Error(`Database account mancante: ${key}`);
+  return JSON.parse(raw) as LocalDatabase;
+}
+
+async function arrangeAccounts(
+  firstDatabase: LocalDatabase,
+  secondDatabase: LocalDatabase,
+) {
+  const storage = new MemoryStorage({
+    [ACCOUNT_KEY]: JSON.stringify(firstDatabase),
+    [SECOND_ACCOUNT_KEY]: JSON.stringify(secondDatabase),
+  });
+  installJsonDbWindow(storage);
+  vi.resetModules();
+  const jsonDb = await import('../../src/db/jsonDb');
+  jsonDb.setActiveDatabaseAccount(ACCOUNT_ID);
+  const { createLocalContactRepository } = await import('../../src/db/localContactRepository');
+  const repository = createLocalContactRepository({ accountId: ACCOUNT_ID });
+  jsonDb.setActiveDatabaseAccount(SECOND_ACCOUNT_ID);
+  return { storage, jsonDb, repository };
 }
 
 describe('local contact repository adapter', () => {
@@ -416,5 +444,116 @@ describe('local contact repository adapter', () => {
 
     await expect(repository.getById('contact-existing')).resolves.toBeNull();
     expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes + 1);
+  });
+
+  it('keeps reads bound to the captured account after the global account changes', async () => {
+    const first = emptyDatabase([contact({ id: 'contact-user-001', firstName: 'Uno' })]);
+    const second = emptyDatabase([contact({ id: 'contact-user-002', firstName: 'Due' })]);
+    const { repository, storage, jsonDb } = await arrangeAccounts(first, second);
+    const firstWrites = storage.writesFor(ACCOUNT_KEY).length;
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+
+    await expect(repository.list()).resolves.toEqual(first.contacts);
+    await expect(repository.getById('contact-user-001')).resolves.toMatchObject({ firstName: 'Uno' });
+    await expect(repository.getById('contact-user-002')).resolves.toBeNull();
+    expect(jsonDb.getJsonDb().contacts).toEqual(second.contacts);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(firstWrites);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
+  });
+
+  it('creates only in the captured account after the global account changes', async () => {
+    const first = emptyDatabase([contact({ id: 'contact-user-001' })]);
+    const second = emptyDatabase([contact({ id: 'contact-user-002' })]);
+    const { repository, storage, jsonDb } = await arrangeAccounts(first, second);
+    const input = personInput({ firstName: 'Scoped' });
+    const original = structuredClone(input);
+    const firstWrites = storage.writesFor(ACCOUNT_KEY).length;
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+
+    const created = await repository.create(input);
+
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts).toContainEqual(created);
+    expect(storedDatabase(storage, SECOND_ACCOUNT_KEY)).toEqual(second);
+    expect(jsonDb.getJsonDb().contacts).toEqual(second.contacts);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(firstWrites + 1);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
+    expect(input).toEqual(original);
+  });
+
+  it('updates only the shared id in the captured account', async () => {
+    const sharedId = 'contact-shared';
+    const first = emptyDatabase([contact({ id: sharedId, notes: 'user-001' })]);
+    const second = emptyDatabase([contact({ id: sharedId, notes: 'user-002' })]);
+    const { repository, storage } = await arrangeAccounts(first, second);
+    const patch: ContactUpdateInput = { notes: 'updated-user-001' };
+    const original = structuredClone(patch);
+    const firstWrites = storage.writesFor(ACCOUNT_KEY).length;
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+
+    await repository.update(sharedId, patch);
+
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts[0].notes).toBe('updated-user-001');
+    expect(storedDatabase(storage, SECOND_ACCOUNT_KEY).contacts[0].notes).toBe('user-002');
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(firstWrites + 1);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
+    expect(patch).toEqual(original);
+  });
+
+  it('archives only the shared id in the captured account', async () => {
+    const sharedId = 'contact-shared';
+    const first = emptyDatabase([contact({ id: sharedId })]);
+    const second = emptyDatabase([contact({ id: sharedId })]);
+    const { repository, storage } = await arrangeAccounts(first, second);
+    const firstWrites = storage.writesFor(ACCOUNT_KEY).length;
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+
+    await repository.archive(sharedId);
+
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts[0].archived).toBe(true);
+    expect(storedDatabase(storage, SECOND_ACCOUNT_KEY).contacts[0].archived).toBe(false);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(firstWrites + 1);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
+  });
+
+  it('keeps delete and its guard bound to the captured account', async () => {
+    const sharedId = 'contact-shared';
+    const first = linkedDatabase(sharedId);
+    const second = emptyDatabase([contact({ id: sharedId })]);
+    const { repository, storage } = await arrangeAccounts(first, second);
+    const firstWrites = storage.writesFor(ACCOUNT_KEY).length;
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+
+    await expect(repository.canDelete(sharedId)).resolves.toMatchObject({
+      canDelete: false,
+      reason: expect.any(String),
+    });
+    await expect(repository.delete(sharedId)).rejects.toMatchObject({
+      name: 'LeaseContactInUseError',
+    });
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts).toHaveLength(1);
+    expect(storedDatabase(storage, SECOND_ACCOUNT_KEY).contacts).toHaveLength(1);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(firstWrites);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
+  });
+
+  it('initializes a non-active secondary account without changing the active account', async () => {
+    const second = emptyDatabase([contact({ id: 'contact-user-002' })]);
+    const storage = new MemoryStorage({
+      [SECOND_ACCOUNT_KEY]: JSON.stringify(second),
+    });
+    installJsonDbWindow(storage);
+    vi.resetModules();
+    const jsonDb = await import('../../src/db/jsonDb');
+    jsonDb.setActiveDatabaseAccount(SECOND_ACCOUNT_ID);
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+    const { createLocalContactRepository } = await import('../../src/db/localContactRepository');
+    const repository = createLocalContactRepository({ accountId: THIRD_ACCOUNT_ID });
+
+    await expect(repository.list()).resolves.toEqual([]);
+
+    expect(storedDatabase(storage, THIRD_ACCOUNT_KEY).contacts).toEqual([]);
+    expect(storage.writesFor(THIRD_ACCOUNT_KEY)).toHaveLength(1);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
+    expect(jsonDb.getJsonDb().contacts).toEqual(second.contacts);
   });
 });

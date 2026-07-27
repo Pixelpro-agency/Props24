@@ -849,6 +849,13 @@ function setCachedDatabase(database: LocalDatabase): LocalDatabase {
     return clone(database);
 }
 
+function cacheDatabaseForAccount(accountId: string, database: LocalDatabase): LocalDatabase {
+    if (accountId === activeDatabaseAccountId) {
+        return setCachedDatabase(database);
+    }
+    return clone(database);
+}
+
 export function getAccountDatabaseKey(accountId: string): string {
     if (!ACCOUNT_ID_PATTERN.test(accountId)) {
         throw new Error(`Account database non valido: ${accountId}`);
@@ -976,36 +983,38 @@ function verifyStoredDatabase(key: string): LocalDatabase {
 }
 
 function persistInitializedDatabase(
+    accountId: string,
+    key: string,
     database: LocalDatabase,
     removeLegacyAfterVerification: boolean,
 ): LocalDatabase {
-    const key = requireActiveDatabaseKey();
-
     try {
         writeLocalStorage(key, JSON.stringify(database));
         const verified = verifyStoredDatabase(key);
 
-        setCachedDatabase(verified);
+        cacheDatabaseForAccount(accountId, verified);
 
         if (removeLegacyAfterVerification) {
             removeLegacyKeysAfterVerifiedAccountDatabase();
         }
 
-        emitDbChange();
+        if (accountId === activeDatabaseAccountId) {
+            emitDbChange();
+        }
         return clone(verified);
     } catch (error) {
         console.warn('[local-db] persistenza account non riuscita, uso cache in memoria', {
-            accountId: activeDatabaseAccountId,
+            accountId,
             key,
             quota: isQuotaExceededError(error),
             error,
         });
 
-        return setCachedDatabase(database);
+        return cacheDatabaseForAccount(accountId, database);
     }
 }
 
-function existingAccountDatabase(key: string): LocalDatabase | null {
+function existingAccountDatabase(accountId: string, key: string): LocalDatabase | null {
     const raw = window.localStorage.getItem(key);
     if (!raw) return null;
 
@@ -1017,13 +1026,13 @@ function existingAccountDatabase(key: string): LocalDatabase | null {
         const repairedCanonical = JSON.stringify(database);
 
         if (repairedCanonical !== storedCanonical) {
-            return persistInitializedDatabase(database, false);
+            return persistInitializedDatabase(accountId, key, database, false);
         }
 
         return database;
     } catch (error) {
         console.warn('[local-db] database account non utilizzabile', {
-            accountId: activeDatabaseAccountId,
+            accountId,
             key,
             error,
         });
@@ -1031,11 +1040,11 @@ function existingAccountDatabase(key: string): LocalDatabase | null {
     }
 }
 
-function initializeDefaultAccountDatabase(key: string): LocalDatabase {
-    const existing = existingAccountDatabase(key);
+function initializeDefaultAccountDatabase(accountId: string, key: string): LocalDatabase {
+    const existing = existingAccountDatabase(accountId, key);
 
     if (existing) {
-        setCachedDatabase(existing);
+        cacheDatabaseForAccount(accountId, existing);
         removeLegacyKeysAfterVerifiedAccountDatabase();
         return clone(existing);
     }
@@ -1044,7 +1053,7 @@ function initializeDefaultAccountDatabase(key: string): LocalDatabase {
 
     if (sharedDatabase) {
         const migrated = attachLegacyDrafts(sharedDatabase);
-        return persistInitializedDatabase(migrated, true);
+        return persistInitializedDatabase(accountId, key, migrated, true);
     }
 
     const legacySources: Array<{ key: string; source: DatabaseSource }> = [
@@ -1059,49 +1068,31 @@ function initializeDefaultAccountDatabase(key: string): LocalDatabase {
 
         if (migrated) {
             const database = attachLegacyDrafts(migrated);
-            return persistInitializedDatabase(database, true);
+            return persistInitializedDatabase(accountId, key, database, true);
         }
     }
 
     const seeded = attachLegacyDrafts(migrateFromUnknown(seedDatabase, 'seed'));
-    return persistInitializedDatabase(seeded, true);
+    return persistInitializedDatabase(accountId, key, seeded, true);
 }
 
-function initializeSecondaryAccountDatabase(key: string): LocalDatabase {
-    const existing = existingAccountDatabase(key);
+function initializeSecondaryAccountDatabase(accountId: string, key: string): LocalDatabase {
+    const existing = existingAccountDatabase(accountId, key);
 
     if (existing) {
-        return setCachedDatabase(existing);
+        return cacheDatabaseForAccount(accountId, existing);
     }
 
-    return persistInitializedDatabase(emptyDb('seed'), false);
+    return persistInitializedDatabase(accountId, key, emptyDb('seed'), false);
 }
 
-function databaseForActiveAccount(): LocalDatabase {
-    const accountId = requireActiveDatabaseAccount();
-    const key = getAccountDatabaseKey(accountId);
-
+function databaseForAccount(accountId: string, key = getAccountDatabaseKey(accountId)): LocalDatabase {
     return accountId === DEFAULT_DATABASE_ACCOUNT_ID
-        ? initializeDefaultAccountDatabase(key)
-        : initializeSecondaryAccountDatabase(key);
+        ? initializeDefaultAccountDatabase(accountId, key)
+        : initializeSecondaryAccountDatabase(accountId, key);
 }
 
-export function initializeJsonDb(): LocalDatabase {
-    requireActiveDatabaseAccount();
-
-    if (inMemoryDatabase) {
-        return clone(inMemoryDatabase);
-    }
-
-    return databaseForActiveAccount();
-}
-
-export function getJsonDb(): LocalDatabase {
-    return initializeJsonDb();
-}
-
-export function saveJsonDb(database: LocalDatabase): LocalDatabase {
-    const key = requireActiveDatabaseKey();
+function saveJsonDbForAccount(accountId: string, key: string, database: LocalDatabase): LocalDatabase {
     const nextDb = normalizeV3Database({ ...database, meta: { ...database.meta, updatedAt: nowIso() } }, false);
 
     assertDatabaseIntegrity(nextDb);
@@ -1109,10 +1100,44 @@ export function saveJsonDb(database: LocalDatabase): LocalDatabase {
 
     const verified = verifyStoredDatabase(key);
 
-    setCachedDatabase(verified);
-    emitDbChange();
+    cacheDatabaseForAccount(accountId, verified);
+    if (accountId === activeDatabaseAccountId) {
+        emitDbChange();
+    }
 
     return clone(verified);
+}
+
+export function initializeJsonDb(): LocalDatabase {
+    const accountId = requireActiveDatabaseAccount();
+
+    if (inMemoryDatabase) {
+        return clone(inMemoryDatabase);
+    }
+
+    return databaseForAccount(accountId);
+}
+
+export function getJsonDb(): LocalDatabase {
+    return initializeJsonDb();
+}
+
+export function saveJsonDb(database: LocalDatabase): LocalDatabase {
+    const accountId = requireActiveDatabaseAccount();
+    return saveJsonDbForAccount(accountId, requireActiveDatabaseKey(), database);
+}
+
+export interface JsonDbAccountScope {
+    getDatabase(): LocalDatabase;
+    saveDatabase(database: LocalDatabase): LocalDatabase;
+}
+
+export function createJsonDbAccountScope(accountId: string): JsonDbAccountScope {
+    const key = getAccountDatabaseKey(accountId);
+    return {
+        getDatabase: () => databaseForAccount(accountId, key),
+        saveDatabase: (database) => saveJsonDbForAccount(accountId, key, database),
+    };
 }
 
 export function resetJsonDb(): LocalDatabase {
