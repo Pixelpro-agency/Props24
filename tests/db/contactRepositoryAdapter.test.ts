@@ -275,6 +275,15 @@ function storedDatabase(storage: MemoryStorage, key: string): LocalDatabase {
   return JSON.parse(raw) as LocalDatabase;
 }
 
+function dispatchStorageEvent(key: string): void {
+  const event = new Event('storage');
+  Object.defineProperty(event, 'key', {
+    configurable: true,
+    value: key,
+  });
+  window.dispatchEvent(event);
+}
+
 async function arrangeAccounts(
   firstDatabase: LocalDatabase,
   secondDatabase: LocalDatabase,
@@ -555,5 +564,132 @@ describe('local contact repository adapter', () => {
     expect(storage.writesFor(THIRD_ACCOUNT_KEY)).toHaveLength(1);
     expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
     expect(jsonDb.getJsonDb().contacts).toEqual(second.contacts);
+  });
+
+  it('notifies once after a local create in the captured account', async () => {
+    const first = emptyDatabase([]);
+    const second = emptyDatabase([contact({ id: 'contact-user-002' })]);
+    const { repository, storage } = await arrangeAccounts(first, second);
+    const callback = vi.fn();
+    repository.subscribe(callback);
+    const firstWrites = storage.writesFor(ACCOUNT_KEY).length;
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+
+    await repository.list();
+    expect(callback).not.toHaveBeenCalled();
+    await repository.create(personInput());
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(firstWrites + 1);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
+  });
+
+  it('notifies once for each update archive and delete mutation', async () => {
+    const { repository, storage } = await arrange();
+    const callback = vi.fn();
+    repository.subscribe(callback);
+    const writes = storage.writesFor(ACCOUNT_KEY).length;
+
+    await repository.update('contact-existing', { notes: 'Aggiornato' });
+    expect(callback).toHaveBeenCalledTimes(1);
+    await repository.archive('contact-existing');
+    expect(callback).toHaveBeenCalledTimes(2);
+    await repository.delete('contact-existing');
+    expect(callback).toHaveBeenCalledTimes(3);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes + 3);
+  });
+
+  it('notifies an account-scoped subscriber after a matching legacy write', async () => {
+    const { repository, storage } = await arrange(emptyDatabase([]));
+    const callback = vi.fn();
+    repository.subscribe(callback);
+    const writes = storage.writesFor(ACCOUNT_KEY).length;
+    const { createContact } = await import('../../src/db/contactRepository');
+
+    const created = createContact(personInput());
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts).toContainEqual(created);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes + 1);
+  });
+
+  it('does not notify after failed validation', async () => {
+    const { repository, storage } = await arrange(emptyDatabase([]));
+    const callback = vi.fn();
+    repository.subscribe(callback);
+    const writes = storage.writesFor(ACCOUNT_KEY).length;
+
+    await expect(repository.create(personInput({ firstName: '' }))).rejects.toThrow();
+
+    expect(callback).not.toHaveBeenCalled();
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes);
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts).toEqual([]);
+  });
+
+  it('does not notify when delete is blocked', async () => {
+    const { repository, storage } = await arrange(linkedDatabase());
+    const callback = vi.fn();
+    repository.subscribe(callback);
+    const writes = storage.writesFor(ACCOUNT_KEY).length;
+
+    await expect(repository.delete('contact-linked')).rejects.toMatchObject({
+      name: 'LeaseContactInUseError',
+    });
+
+    expect(callback).not.toHaveBeenCalled();
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes);
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts).toHaveLength(1);
+  });
+
+  it('unsubscribe blocks subsequent local and storage notifications', async () => {
+    const { repository } = await arrange(emptyDatabase([]));
+    const callback = vi.fn();
+    const unsubscribe = repository.subscribe(callback);
+
+    unsubscribe();
+    await repository.create(personInput());
+    dispatchStorageEvent(ACCOUNT_KEY);
+
+    expect(callback).not.toHaveBeenCalled();
+    await expect(repository.list()).resolves.toHaveLength(1);
+  });
+
+  it('filters storage notifications by the captured account key', async () => {
+    const first = emptyDatabase([contact({ id: 'contact-user-001' })]);
+    const second = emptyDatabase([contact({ id: 'contact-user-002' })]);
+    const { repository, jsonDb } = await arrangeAccounts(first, second);
+    const callback = vi.fn();
+    repository.subscribe(callback);
+
+    dispatchStorageEvent(SECOND_ACCOUNT_KEY);
+    expect(callback).not.toHaveBeenCalled();
+    dispatchStorageEvent(ACCOUNT_KEY);
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(jsonDb.getJsonDb().contacts).toEqual(second.contacts);
+  });
+
+  it('keeps subscriptions isolated across two captured accounts', async () => {
+    const first = emptyDatabase([]);
+    const second = emptyDatabase([]);
+    const { repository: repositoryOne, storage } = await arrangeAccounts(first, second);
+    const { createLocalContactRepository } = await import('../../src/db/localContactRepository');
+    const repositoryTwo = createLocalContactRepository({ accountId: SECOND_ACCOUNT_ID });
+    const callbackOne = vi.fn();
+    const callbackTwo = vi.fn();
+    repositoryOne.subscribe(callbackOne);
+    repositoryTwo.subscribe(callbackTwo);
+    const firstWrites = storage.writesFor(ACCOUNT_KEY).length;
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+
+    await repositoryOne.create(personInput({ firstName: 'Uno' }));
+    expect(callbackOne).toHaveBeenCalledTimes(1);
+    expect(callbackTwo).not.toHaveBeenCalled();
+
+    await repositoryTwo.create(personInput({ firstName: 'Due' }));
+    expect(callbackOne).toHaveBeenCalledTimes(1);
+    expect(callbackTwo).toHaveBeenCalledTimes(1);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(firstWrites + 1);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites + 1);
   });
 });

@@ -22,4 +22,5 @@ export interface ContactRepository {
     archive(id: string): Promise<ContactRecord>;
     canDelete(id: string): Promise<ContactDeleteCheck>;
     delete(id: string): Promise<void>;
+    subscribe(callback: () => void): () => void;
 }

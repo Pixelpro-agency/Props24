@@ -21,5 +21,6 @@ export function createLocalContactRepository(
         delete: async (id) => {
             contacts.delete(id);
         },
+        subscribe: (callback) => database.subscribe(callback),
     };
 }

@@ -31,6 +31,7 @@ const TENANT_DRAFT_KEY = 'tenant_form_draft';
 const PROPERTY_DRAFT_KEY = 'property_form_draft';
 const CORRUPTED_DB_PREFIX = 'rentila.localDb.corrupted.';
 const DB_EVENT = 'rentila-local-db-change';
+const DB_ACCOUNT_EVENT_PREFIX = 'rentila-local-db-account-change';
 const SEED_VERSION = 3;
 
 const LEGACY_LOCAL_DB_KEYS = [OLD_DB_KEY_V3, PREVIOUS_DB_KEY, LEGACY_DB_KEY, TENANT_DRAFT_KEY, PROPERTY_DRAFT_KEY];
@@ -844,6 +845,17 @@ function emitDbChange(): void {
     window.dispatchEvent(new Event(DB_EVENT));
 }
 
+function accountDbEventName(accountId: string): string {
+    return `${DB_ACCOUNT_EVENT_PREFIX}:${accountId}`;
+}
+
+function emitDbChangeForAccount(accountId: string): void {
+    window.dispatchEvent(new Event(accountDbEventName(accountId)));
+    if (accountId === activeDatabaseAccountId) {
+        emitDbChange();
+    }
+}
+
 function setCachedDatabase(database: LocalDatabase): LocalDatabase {
     inMemoryDatabase = clone(database);
     return clone(database);
@@ -998,9 +1010,7 @@ function persistInitializedDatabase(
             removeLegacyKeysAfterVerifiedAccountDatabase();
         }
 
-        if (accountId === activeDatabaseAccountId) {
-            emitDbChange();
-        }
+        emitDbChangeForAccount(accountId);
         return clone(verified);
     } catch (error) {
         console.warn('[local-db] persistenza account non riuscita, uso cache in memoria', {
@@ -1101,9 +1111,7 @@ function saveJsonDbForAccount(accountId: string, key: string, database: LocalDat
     const verified = verifyStoredDatabase(key);
 
     cacheDatabaseForAccount(accountId, verified);
-    if (accountId === activeDatabaseAccountId) {
-        emitDbChange();
-    }
+    emitDbChangeForAccount(accountId);
 
     return clone(verified);
 }
@@ -1130,6 +1138,31 @@ export function saveJsonDb(database: LocalDatabase): LocalDatabase {
 export interface JsonDbAccountScope {
     getDatabase(): LocalDatabase;
     saveDatabase(database: LocalDatabase): LocalDatabase;
+    subscribe(callback: () => void): () => void;
+}
+
+function subscribeJsonDbAccount(
+    accountId: string,
+    key: string,
+    callback: () => void,
+): () => void {
+    const eventName = accountDbEventName(accountId);
+    const handleLocal = () => callback();
+    const handleStorage = (event: StorageEvent) => {
+        if (event.key !== key) return;
+        if (accountId === activeDatabaseAccountId) {
+            inMemoryDatabase = null;
+        }
+        callback();
+    };
+
+    window.addEventListener(eventName, handleLocal);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+        window.removeEventListener(eventName, handleLocal);
+        window.removeEventListener('storage', handleStorage);
+    };
 }
 
 export function createJsonDbAccountScope(accountId: string): JsonDbAccountScope {
@@ -1137,6 +1170,7 @@ export function createJsonDbAccountScope(accountId: string): JsonDbAccountScope 
     return {
         getDatabase: () => databaseForAccount(accountId, key),
         saveDatabase: (database) => saveJsonDbForAccount(accountId, key, database),
+        subscribe: (callback) => subscribeJsonDbAccount(accountId, key, callback),
     };
 }
 
