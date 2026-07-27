@@ -29,6 +29,24 @@ archivedAt
 
 La UI non conosce chiavi di storage, formato fisico locale, dettagli Supabase o query SQL future. I repository offrono operazioni di dominio come `list`, `get`, `create`, `update`, `archive`, `restore`, eliminazione protetta e `subscribe` quando necessario. Le mutazioni multirecord sono una singola operazione atomica.
 
+### Pilot implementato: contacts
+
+Il dominio contatti costituisce il primo pilot concreto del confine repository:
+
+- espone una porta di dominio asincrona `ContactRepository`;
+- offre `list`, `getById`, `create`, `update`, `archive`, `canDelete`, `delete` e `subscribe`;
+- usa `subscribe` come invalidazione senza payload, lasciando al consumer una nuova lettura;
+- l'adapter locale cattura l'`accountId` al momento della composizione;
+- il repository non cambia account quando cambia lo stato globale;
+- scritture e notifiche dello storage raggiungono soltanto l'account corretto;
+- il gateway globale legacy resta temporaneamente compatibile per i consumer non ancora migrati;
+- la composizione del repository avviene sotto l'app autenticata;
+- `useContactList` gestisce caricamento iniziale, conservazione della lista precedente durante loading o error, retry, subscription con reference counting, risposte fuori ordine e completamenti dopo la disconnessione;
+- `LeaseForm` e `AddGuarantorModal` usano il nuovo percorso repository per i garanti;
+- proprietà e inquilini usati da `LeaseForm` passano ancora dal gateway globale;
+- il pilot non implica che tutti i domini o consumer siano già migrati;
+- non introduce SDK Supabase, backend, SQL o Realtime.
+
 ## 5. Bozze separate
 
 L'archivio bozze è separato dai record definitivi e usa almeno:
@@ -100,7 +118,7 @@ I metadati risiedono nel database; i binari in storage dedicato. IndexedDB può 
 
 ## 10. Migrazione verso Supabase/PostgreSQL
 
-La migrazione sostituirà l'implementazione dei repository senza riscrivere i form. Dovrà prevedere mapping dei record locali, migrazioni versionate, validazione prima dell'import, report degli scarti, idempotenza, isolamento account, transazioni, vincoli univoci, foreign key, Row Level Security, storage separato e rollback.
+La migrazione sostituirà l'implementazione dei repository senza riscrivere i form. Il pilot contacts è la prima verifica concreta di questo confine, ma non costituisce un'implementazione Supabase e non rende ancora ogni form indipendente da `jsonDb`. La migrazione dovrà prevedere mapping dei record locali, migrazioni versionate, validazione prima dell'import, report degli scarti, idempotenza, isolamento account, transazioni, vincoli univoci, foreign key, Row Level Security, storage separato e rollback.
 
 Supabase non viene implementato in questa task.
 

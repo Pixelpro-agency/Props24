@@ -24,10 +24,10 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA esaminato: cdf84db977d34da43a05e2e992d1978b9ea4e69c
+SHA esaminato: 9a931f74ff957d9065bf34b456833bec3342767d
 ```
 
-La chiusura tecnica di D2C è stata verificata sul codice corrente. Il resto del codice applicativo non è stato riesaminato integralmente a questo SHA; le altre task devono essere riverificate prima di diventare prompt esecutivi.
+La chiusura tecnica di D2C e il pilot del repository contatti, inclusa la migrazione dei consumer dei garanti, sono stati verificati sul codice pubblicato e nei collaudi dedicati. Il resto del codice applicativo non è stato riesaminato integralmente a questo SHA; le altre task devono essere riverificate prima di diventare prompt esecutivi.
 
 ## Mappa dei documenti
 
@@ -135,13 +135,12 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 Ordine immediato:
 
-1. contratto repository compatibile con Supabase/PostgreSQL;
-2. repository condiviso delle bozze manuali;
-3. guard condiviso;
-4. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
-5. repository e form Nuovo edificio;
-6. lista, lifecycle e collaudo edifici;
-7. completamento e collaudo dei quattro CRUD.
+1. repository condiviso delle bozze manuali;
+2. guard condiviso;
+3. integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
+4. repository e form Nuovo edificio;
+5. lista, lifecycle e collaudo edifici;
+6. completamento e collaudo dei quattro CRUD.
 
 Classificazione complessiva:
 
@@ -476,15 +475,28 @@ Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale
 
 ## TASK C1 — Garanti e rubrica
 
-**Obiettivo:**
+**Baseline già completata:**
 
-- rimuovere `existingContacts` da `mockTenants.ts`;
-- usare `contactRepository`;
-- ricerca nella rubrica reale;
-- creazione del nuovo garante come `ContactRecord`;
-- relazione tramite ID;
-- nessun contatto duplicato o orfano;
-- modello canonico unico tra inquilini e locazioni.
+- porta asincrona `ContactRepository`;
+- adapter locale;
+- binding immutabile all'account;
+- `subscribe` account-scoped con callback di invalidazione senza payload;
+- provider autenticato;
+- store/hook asincrono con loading, error, refresh e protezioni dalle risposte stale;
+- consumer dei garanti di Nuova locazione migrati;
+- creazione di persone e società tramite repository;
+- protezione della bozza durante il caricamento;
+- collaudo browser dedicato;
+- click-through del backdrop corretto.
+
+**Attività residue:**
+
+- rimuovere le dipendenze residue da `existingContacts` e dai mock;
+- migrare i consumer contatti di Nuovo inquilino;
+- completare rubrica e lifecycle dei contatti;
+- consolidare il modello canonico tra inquilini e locazioni;
+- gestire contatti di emergenza, duplicati e record orfani;
+- integrare le decisioni ancora aperte sui duplicati.
 
 ## TASK C2 — ID annidati
 

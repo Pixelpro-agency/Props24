@@ -119,19 +119,21 @@ Nella fase locale i relativi controlli rispettano la convenzione gialla e disabi
 
 ## 8. Ordine operativo prioritario
 
-Dopo le task frontend già concluse, l'ordine è:
+### Baseline repository già raggiunta
 
-1. audit del database locale e del comportamento attuale delle bozze;
-2. definizione del contratto repository compatibile con Supabase/PostgreSQL;
-3. repository condiviso delle bozze manuali;
-4. guard condiviso delle modifiche non salvate;
-5. integrazione bozza e guard nel form Nuovo inquilino;
-6. integrazione nel form Nuova unità;
-7. integrazione nel form Nuova locazione;
-8. repository edifici;
-9. form Nuovo edificio;
-10. lista, lifecycle e collaudo edifici;
-11. completamento e collaudo trasversale dei quattro CRUD.
+L'audit del confine repository locale è concluso. Il pilot contacts comprende porta e adapter, isolamento account, provider e hook asincrono, oltre alla migrazione e al collaudo dei consumer dei garanti. Questa baseline non implica che tutti i domini o consumer siano già migrati.
+
+Dopo l'audit del confine repository e il pilot contacts già conclusi, l'ordine è:
+
+1. repository condiviso delle bozze manuali;
+2. guard condiviso delle modifiche non salvate;
+3. integrazione bozza e guard nel form Nuovo inquilino;
+4. integrazione nel form Nuova unità;
+5. integrazione nel form Nuova locazione;
+6. repository edifici;
+7. form Nuovo edificio;
+8. lista, lifecycle e collaudo edifici;
+9. completamento e collaudo trasversale dei quattro CRUD.
 
 Le integrazioni dei form complessi restano task separate.
 
