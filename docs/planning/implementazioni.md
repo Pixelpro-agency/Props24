@@ -134,16 +134,12 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 - servizi documentali;
 - deployment.
 
-## 4. Ordine operativo
+## 4. Stato operativo
 
-Ordine immediato:
-
-1. F1 — repository condiviso delle bozze manuali;
-2. F2 — guard condiviso;
-3. F3 — integrazioni separate in Nuovo inquilino, Nuova unità e Nuova locazione;
-4. A1/A2 — repository e form Nuovo edificio;
-5. A4–A7 — lista, lifecycle e collaudo edifici;
-6. K1/K2 — completamento e collaudo dei quattro CRUD, dopo le relative dipendenze.
+F1 — repository condiviso delle bozze manuali — è completata. La priorità
+successiva tra le attività residue non è ancora stata decisa e sarà analizzata
+separatamente. Restano valide le dipendenze dichiarate nelle singole task,
+senza implicare un nuovo ordinamento operativo.
 
 Classificazione complessiva:
 
@@ -849,30 +845,64 @@ Scenari:
 
 ## TASK F1 — Repository condiviso delle bozze manuali
 
-**Perimetro futuro:**
+**Stato:** COMPLETATA.
 
-- porta repository stabile e asincrona;
-- adapter locale account-scoped;
-- record bozza separato dai record definitivi;
-- chiave logica basata almeno su account, `formType`, `mode` ed eventuale `entityId`;
-- recupero, salvataggio manuale, sostituzione e cancellazione;
-- nessun autosalvataggio;
-- nessuna creazione di entità definitive durante il caricamento;
-- isolamento account;
-- compatibilità o migrazione dei comportamenti legacy soltanto dopo audit;
-- invalidazione o subscription soltanto se confermata necessaria dall’audit;
-- test di contratto e adapter;
-- nessuna integrazione nei form nella stessa task.
+L’infrastruttura condivisa e account-scoped del repository bozze è completata.
+L’integrazione nei form e la sostituzione degli autosalvataggi esistenti restano
+attività successive.
 
-**Criteri di chiusura:**
+### F1A — Contratto e operazioni pure — COMPLETATA
 
-- contratto verificato;
-- adapter locale;
-- isolamento account;
-- idempotenza;
-- nessuna perdita delle bozze legacy senza migrazione;
-- suite mirata;
-- build e lint mirato positivi.
+- port asincrono `DraftRepository` con `get`, `list`, `save` e `delete`, senza
+  subscription;
+- form supportati: `building`, `property`, `tenant` e `lease`;
+- modalità `create` ed `edit`;
+- chiave logica univoca composta da `accountId`, `formType`, `mode` ed
+  `entityId`, con `entityId: null` in create e stringa valida in edit;
+- normalizzazione e costruzione della chiave, lettura, elenco, upsert e
+  cancellazione come operazioni pure;
+- validazione payload tramite `DraftDefinition`, cloni difensivi ed errori
+  dominio dedicati.
+
+### F1B — Schema canonico e migrazione — COMPLETATA
+
+- database locale canonico aggiornato da `schemaVersion` 3 a `schemaVersion` 4
+  con `drafts: DraftRecord<unknown>[]`;
+- migrazione degli slot embedded `tenantForm`, `propertyForm` e `leaseForm` e
+  import delle standalone `tenant_form_draft` e `property_form_draft`;
+- riconciliazione con equivalenza JSON ricorsiva, ordine degli array
+  significativo e conservazione dei conflitti reali;
+- rimozione delle standalone soltanto dopo scrittura verificata, rollback e
+  migrazione idempotente;
+- validazione dei record canonici, inclusa la proprietà `payload` obbligatoria
+  e la validità di `payload: null`;
+- esclusione di `drafts` dal CRUD generico;
+- bridge temporaneo `getDraft`, `setDraft` e `clearDraft`;
+- cancellazione atomica della bozza lease durante `createLease`.
+
+### F1C — Adapter locale account-scoped — COMPLETATA
+
+- factory `createLocalDraftRepository({ accountId })` basata su un unico
+  `createJsonDbAccountScope(accountId)`;
+- account catturato alla costruzione e indipendenza dai cambi successivi
+  dell’account globale;
+- letture senza scritture applicative, una scrittura per save valida e delete
+  esistente, nessuna scrittura per validazione rifiutata o delete assente;
+- rilettura del record dal database verificato dopo la save;
+- isolamento logico e fisico tra account;
+- quota tradotta in `DraftStorageQuotaError`, altri errori gateway in
+  `DraftStorageError`, con errori dominio e cause preservati;
+- nessuna subscription.
+
+La verifica conclusiva F1 ha registrato 74 test mirati e 218 test complessivi
+passati, senza test falliti o saltati; ESLint, build e `git diff --check` sono
+risultati positivi.
+
+**Fuori dal perimetro completato:** integrazione del repository nei form React,
+sostituzione e rimozione degli autosalvataggi legacy, restore e cancellazione
+delle bozze nei form, UX di avviso/ripristino, debounce o hook di autosave e
+test end-to-end dei form. Nessuna pagina, componente o UI è stata modificata e
+non è stato deciso quale form integrare per primo.
 
 ## TASK F2 — Guard condiviso
 

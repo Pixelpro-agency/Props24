@@ -13,26 +13,27 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 2
+- Completate integralmente: 3
 - Parzialmente completate: 4
-- Non concluse: 66
+- Non concluse: 65
 - Domande professionali aperte: 29
-- Prossimo punto: F1 — Repository condiviso delle bozze manuali
+- Prossimo punto: da definire con un’analisi separata
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 66 task non concluse e non vanno sommati nuovamente. D1A/D1B e D2A–D2D sono sottopunti e non aumentano il numero delle 72 task principali.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 65 task non concluse e non vanno sommati nuovamente. D1A/D1B e D2A–D2D sono sottopunti e non aumentano il numero delle 72 task principali.
 
 ## Percorso operativo immediato
 
-> - [ ] F1 — Repository condiviso delle bozze manuali — **PROSSIMO**
-> - [ ] F2 — Guard condiviso delle modifiche non salvate — **APERTO; dipende da F1**
-> - [ ] F3.1 — Integrazione in Nuovo inquilino — **APERTO; dipende da F1 e F2**
-> - [ ] F3.2 — Integrazione in Nuova unità — **APERTO; dipende da F1 e F2**
-> - [ ] F3.3 — Integrazione in Nuova locazione — **APERTO; dipende da F1 e F2**
+> - [x] F1 — Repository condiviso delle bozze manuali — **COMPLETATA**
+> - [ ] F2 — Guard condiviso delle modifiche non salvate — **APERTO**
+> - [ ] F3.1 — Integrazione in Nuovo inquilino — **APERTO; dipende da F2**
+> - [ ] F3.2 — Integrazione in Nuova unità — **APERTO; dipende da F2**
+> - [ ] F3.3 — Integrazione in Nuova locazione — **APERTO; dipende da F2**
 > - [ ] A1/A2 — Repository e form Nuovo edificio — **IN ATTESA delle decisioni indicate**
 > - [ ] A4–A7 — Lista, lifecycle e collaudo edifici — **APERTO**
 > - [ ] K1/K2 — Audit e collaudo trasversale dei quattro CRUD — **FINALE**
 
 Questa sezione è un percorso sintetico e non sostituisce le voci complete dei blocchi.
+La prossima priorità non è ancora stata scelta.
 
 ## Baseline trasversale già raggiunta
 
@@ -51,6 +52,7 @@ Questa sezione è un percorso sintetico e non sostituisce le voci complete dei b
 - [x] QA browser del pilot `contacts`
 - [x] Click-through del backdrop corretto e ricollaudato
 - [x] Pianificazione aggiornata dopo il pilot
+- [x] F1 — Infrastruttura condivisa e account-scoped del repository bozze
 
 Questa baseline non rientra nel conteggio delle 72 task principali.
 
@@ -127,13 +129,20 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 ## Blocco F — Modifiche non salvate
 
 - [x] F0 — Specifica — **COMPLETATA**
-- [ ] F1 — Repository condiviso delle bozze manuali — **PROSSIMO**
-- [ ] F2 — Guard condiviso — **APERTO; dipende da F1**
-- [ ] F3 — Integrazioni — **APERTO; dipende da F1, F2**
+- [x] F1 — Repository condiviso delle bozze manuali — **COMPLETATA**
+  - [x] F1A — Contratto asincrono, chiavi logiche e operazioni pure
+  - [x] F1B — Schema canonico 4, migrazione legacy e bridge compatibile
+  - [x] F1C — Adapter locale account-scoped e test infrastrutturali
+- [ ] F2 — Guard condiviso — **APERTO**
+- [ ] F3 — Integrazioni — **APERTO; dipende da F2**
   - [ ] Nuova unità — **APERTO**
   - [ ] Nuovo inquilino — **APERTO**
   - [ ] Nuova locazione — **APERTO**
   - [ ] Nuovo edificio, dopo il Blocco A — **APERTO**
+  - [ ] Sostituire gli autosalvataggi legacy e integrare restore/cancellazione
+        delle bozze nei form — **APERTO**
+  - [ ] Definire eventuale UX bozza, debounce e hook di autosave — **APERTO**
+  - [ ] Test end-to-end dei form — **APERTO**
 - [ ] F4 — Collaudo trasversale — **APERTO; dipende da F2, F3**
 
 ## Blocco G — Azioni simulate, mock e route
@@ -181,9 +190,10 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] Adapter `ContactRepository`
   - [x] Composition root
   - [x] Store asincrono e risposte obsolete
+  - [x] Repository bozze: contratto, migrazione e adapter account-scoped
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline corrente: 13 file, 144 test passati, 0 falliti, 0 saltati.
+Baseline verificata al termine di F1: 16 file, 218 test passati, 0 falliti, 0 saltati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
