@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AuthModal } from './components/auth/AuthModal';
 import { Layout } from './components/layout/Layout';
 import { ContactRepositoryProvider } from './contacts/ContactRepositoryContext';
+import { DraftRepositoryProvider } from './drafts/DraftRepositoryContext';
 import { useAuth } from './auth/AuthContext';
 import { LogoutPage } from './auth/LogoutPage';
 import { BuildingsPage } from './pages/BuildingsPage';
@@ -66,11 +67,13 @@ function AuthenticatedRootRoute() {
     }
 
     return (
-        <ContactRepositoryProvider accountId={account.id}>
-            <Layout>
-                <Outlet />
-            </Layout>
-        </ContactRepositoryProvider>
+        <DraftRepositoryProvider accountId={account.id}>
+            <ContactRepositoryProvider accountId={account.id}>
+                <Layout>
+                    <Outlet />
+                </Layout>
+            </ContactRepositoryProvider>
+        </DraftRepositoryProvider>
     );
 }
 

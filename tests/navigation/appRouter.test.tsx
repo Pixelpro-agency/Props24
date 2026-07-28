@@ -42,6 +42,20 @@ vi.mock('../../src/contacts/ContactRepositoryContext', () => ({
     ),
 }));
 
+vi.mock('../../src/drafts/DraftRepositoryContext', () => ({
+    DraftRepositoryProvider: ({
+        accountId,
+        children,
+    }: {
+        accountId: string;
+        children: React.ReactNode;
+    }) => (
+        <div data-testid="draft-provider" data-account-id={accountId}>
+            {children}
+        </div>
+    ),
+}));
+
 vi.mock('../../src/components/layout/Layout', () => ({
     Layout: ({ children }: { children: React.ReactNode }) => (
         <div data-testid="layout">
@@ -221,6 +235,10 @@ describe('app Data Router', () => {
         expect(screen.getByTestId('layout')).toBeTruthy();
         expect(screen.getByTestId('contact-provider').dataset.accountId)
             .toBe(account.id);
+        expect(screen.getByTestId('draft-provider').dataset.accountId)
+            .toBe(account.id);
+        expect(screen.getByTestId('draft-provider')
+            .contains(screen.getByTestId('contact-provider'))).toBe(true);
         expect(screen.queryByTestId('auth-modal')).toBeNull();
     });
 
@@ -242,5 +260,6 @@ describe('app Data Router', () => {
         });
         expect(localStorage.getItem(AUTH_SESSION_STORAGE_KEY)).toBeNull();
         expect(screen.queryByTestId('layout')).toBeNull();
+        expect(screen.queryByTestId('draft-provider')).toBeNull();
     });
 });
