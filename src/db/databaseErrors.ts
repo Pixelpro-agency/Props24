@@ -267,3 +267,51 @@ export class LeaseInsuranceDocumentLinkError extends Error {
         this.name = 'LeaseInsuranceDocumentLinkError';
     }
 }
+
+export class DraftInvalidKeyError extends Error {
+    constructor(message = 'La chiave della bozza non è valida.', cause?: unknown) {
+        super(message);
+        this.name = 'DraftInvalidKeyError';
+        this.cause = cause;
+    }
+}
+
+export class DraftPayloadValidationError extends Error {
+    constructor(cause?: unknown) {
+        super('I dati della bozza non sono validi.');
+        this.name = 'DraftPayloadValidationError';
+        this.cause = cause;
+    }
+}
+
+export class DraftCorruptedError extends Error {
+    constructor(cause?: unknown) {
+        super('La bozza salvata è danneggiata o incompatibile.');
+        this.name = 'DraftCorruptedError';
+        this.cause = cause;
+    }
+}
+
+export class DraftStorageError extends Error {
+    constructor(cause?: unknown) {
+        super('Impossibile accedere alle bozze nel database locale.');
+        this.name = 'DraftStorageError';
+        this.cause = cause;
+    }
+}
+
+export class DraftStorageQuotaError extends Error {
+    constructor(cause?: unknown) {
+        super('Spazio locale esaurito: non è stato possibile salvare la bozza.');
+        this.name = 'DraftStorageQuotaError';
+        this.cause = cause;
+    }
+}
+
+export class DraftMigrationError extends Error {
+    constructor(cause?: unknown) {
+        super('Non è stato possibile migrare le bozze salvate.');
+        this.name = 'DraftMigrationError';
+        this.cause = cause;
+    }
+}

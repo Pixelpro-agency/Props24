@@ -13,6 +13,8 @@ export class MemoryStorage implements Storage {
   readonly operations: StorageOperation[] = [];
 
   private readonly values = new Map<string, string>();
+  private nextSetError: unknown | null = null;
+  private corruptNextSetValue: string | null = null;
 
   constructor(initialValues: Readonly<Record<string, string>> = {}) {
     Object.entries(initialValues).forEach(([key, value]) => {
@@ -43,13 +45,33 @@ export class MemoryStorage implements Storage {
   }
 
   setItem(key: string, value: string): void {
+    if (this.nextSetError !== null) {
+      const error = this.nextSetError;
+      this.nextSetError = null;
+      throw error;
+    }
     this.setItemCalls.push({ key, value });
     this.operations.push({ type: 'set', key, value });
-    this.values.set(key, value);
+    this.values.set(key, this.corruptNextSetValue ?? value);
+    this.corruptNextSetValue = null;
   }
 
   writesFor(key: string): StorageWrite[] {
     return this.setItemCalls.filter((call) => call.key === key);
+  }
+
+  failNextSet(error: unknown): void {
+    this.nextSetError = error;
+  }
+
+  corruptNextSet(value: string): void {
+    this.corruptNextSetValue = value;
+  }
+
+  resetOperationLogs(): void {
+    this.setItemCalls.length = 0;
+    this.removeItemCalls.length = 0;
+    this.operations.length = 0;
   }
 }
 

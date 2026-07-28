@@ -202,7 +202,7 @@ describe('legacy payment migration', () => {
     expect(database.payments.some((item) => item.id.startsWith('payment-migrated-expense-'))).toBe(false);
   });
 
-  it('writes the account database before removing every observable legacy key', async () => {
+  it('writes the account database before removing valid legacy keys and preserves unreadable drafts', async () => {
     const raw = createLegacyDatabase();
     raw.payments = [manualPayment(raw, 'legacy-payment-order')];
     const storage = new MemoryStorage(Object.fromEntries(
@@ -212,7 +212,14 @@ describe('legacy payment migration', () => {
     await migrate(storage);
 
     expect(storage.getItem(ACCOUNT_KEY)).not.toBeNull();
-    LEGACY_KEYS.forEach((key) => expect(storage.getItem(key)).toBeNull());
+    const unreadableDraftKeys = ['tenant_form_draft', 'property_form_draft'];
+    LEGACY_KEYS.forEach((key) => {
+      if (unreadableDraftKeys.includes(key)) {
+        expect(storage.getItem(key)).toBe('placeholder');
+      } else {
+        expect(storage.getItem(key)).toBeNull();
+      }
+    });
     const accountWrite = storage.operations.findIndex((operation) => (
       operation.type === 'set' && operation.key === ACCOUNT_KEY
     ));
@@ -220,7 +227,7 @@ describe('legacy payment migration', () => {
       .map((operation, index) => ({ operation, index }))
       .filter(({ operation }) => operation.type === 'remove' && LEGACY_KEYS.includes(operation.key));
     expect(accountWrite).toBeGreaterThanOrEqual(0);
-    expect(removals.length).toBe(LEGACY_KEYS.length);
+    expect(removals.length).toBe(LEGACY_KEYS.length - unreadableDraftKeys.length);
     removals.forEach(({ index }) => expect(index).toBeGreaterThan(accountWrite));
     expect(storage.removeItemCalls).not.toContain(ACCOUNT_KEY);
   });

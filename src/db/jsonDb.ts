@@ -18,8 +18,18 @@ import { assertDatabaseIntegrity } from './databaseValidation';
 import { recalculateBuildingUnits, todayIso } from './dataSelectors';
 import { normalizePropertyIdentifier } from './businessRules';
 import { LocalStorageQuotaError, isQuotaExceededError } from './databaseErrors';
+import { DraftMigrationError } from './databaseErrors';
+import type { DraftDefinition, DraftFormType, DraftRecord } from './draftRepository.port';
+import {
+    deleteDraftRecord,
+    draftLogicalKey,
+    getDraftRecord,
+    listDraftRecords,
+    normalizeDraftKey,
+    upsertDraftRecord,
+} from './draftRepository';
 import { leaseTypeLabel } from '../landlord/leases/data/leaseTypes';
-import { normalizeLeaseFormData } from '../landlord/leases/schema/leaseFormSchema';
+import { normalizeLeaseFormData, type LeaseDraftSnapshot } from '../landlord/leases/schema/leaseFormSchema';
 import { ensureAllLeasePaymentSchedules, isGeneratedRentPayment } from './paymentRepository';
 import { normalizePaymentConfirmationRecord } from './paymentConfirmation';
 
@@ -34,7 +44,6 @@ const DB_EVENT = 'rentila-local-db-change';
 const DB_ACCOUNT_EVENT_PREFIX = 'rentila-local-db-account-change';
 const SEED_VERSION = 3;
 
-const LEGACY_LOCAL_DB_KEYS = [OLD_DB_KEY_V3, PREVIOUS_DB_KEY, LEGACY_DB_KEY, TENANT_DRAFT_KEY, PROPERTY_DRAFT_KEY];
 const ACCOUNT_ID_PATTERN = /^user-[0-9]{3,}$/;
 const DEFAULT_DATABASE_ACCOUNT_ID = 'user-001';
 
@@ -249,7 +258,7 @@ function splitAddress(address: unknown): Pick<PropertyFormData, 'PropertyAddress
 function emptyDb(source: DatabaseSource): LocalDatabase {
     const timestamp = nowIso();
     return {
-        meta: { schemaVersion: 3, seedVersion: SEED_VERSION, createdAt: timestamp, updatedAt: timestamp, source },
+        meta: { schemaVersion: 4, seedVersion: SEED_VERSION, createdAt: timestamp, updatedAt: timestamp, source },
         properties: [],
         buildings: [],
         tenants: [],
@@ -267,11 +276,7 @@ function emptyDb(source: DatabaseSource): LocalDatabase {
         candidates: [],
         settings: {},
         userProfile: {},
-        drafts: {
-            tenantForm: null,
-            propertyForm: null,
-            leaseForm: null,
-        },
+        drafts: [],
     };
 }
 
@@ -517,9 +522,18 @@ function normalizeBuildingRecord(input: unknown, fallbackId: string): BuildingRe
     };
 }
 
-function migrateFromUnknown(source: unknown, migrationSource: DatabaseSource): LocalDatabase {
+function migrateFromUnknown(
+    source: unknown,
+    migrationSource: DatabaseSource,
+    accountId = DEFAULT_DATABASE_ACCOUNT_ID,
+): LocalDatabase {
     const sourceObject = asObject(source);
-    if (asObject(sourceObject.meta).schemaVersion === 3) return normalizeV3Database(sourceObject, true);
+    if (
+        asObject(sourceObject.meta).schemaVersion === 3
+        || asObject(sourceObject.meta).schemaVersion === 4
+    ) {
+        return normalizeDatabase(sourceObject, accountId, true);
+    }
 
     const db = emptyDb(migrationSource);
     db.properties = (Array.isArray(sourceObject.properties) ? sourceObject.properties : []).map((item, index) => normalizePropertyRecord(item, `property-migrated-${index + 1}`));
@@ -791,10 +805,92 @@ export function repairRecoverablePayments(database: LocalDatabase, referenceDate
     return { ...database, payments: [...manualPayments, ...dedupedGenerated.values()] };
 }
 
-function normalizeV3Database(input: Record<string, unknown>, repair = false): LocalDatabase {
+function draftTimestamp(value: unknown, fallback: string): string {
+    if (typeof value !== 'string' || !value || !Number.isFinite(Date.parse(value))) {
+        return fallback;
+    }
+    return value;
+}
+
+function validateCanonicalDrafts(
+    value: unknown[],
+    accountId: string,
+): DraftRecord<unknown>[] {
+    try {
+        const drafts = clone(value) as DraftRecord<unknown>[];
+        if (drafts.some((draft) =>
+            typeof draft !== 'object'
+            || draft === null
+            || !Object.prototype.hasOwnProperty.call(draft, 'payload'))) {
+            throw new Error('Payload bozza obbligatorio.');
+        }
+        if (drafts.some((draft) => draft?.accountId !== accountId)) {
+            throw new Error('Account bozza non coerente con il database.');
+        }
+        listDraftRecords(drafts, accountId);
+        const ids = new Set<string>();
+        const keys = new Set<string>();
+        for (const draft of drafts) {
+            if (ids.has(draft.id)) throw new Error('ID bozza duplicato.');
+            ids.add(draft.id);
+            const key = draftLogicalKey(accountId, draft);
+            if (keys.has(key)) throw new Error('Chiave logica bozza duplicata.');
+            keys.add(key);
+        }
+        return drafts;
+    } catch (error) {
+        throw new DraftMigrationError(error);
+    }
+}
+
+function migrateDraftSlots(
+    value: unknown,
+    accountId: string,
+    timestamp: string,
+): DraftRecord<unknown>[] {
+    if (value === undefined) return [];
+    if (Array.isArray(value)) return validateCanonicalDrafts(value, accountId);
+    if (typeof value !== 'object' || value === null) {
+        throw new DraftMigrationError(
+            new Error('Struttura bozze legacy non interpretabile.'),
+        );
+    }
+    const slots = value as Record<string, unknown>;
+    const mappings: Array<[string, DraftFormType]> = [
+        ['tenantForm', 'tenant'],
+        ['propertyForm', 'property'],
+        ['leaseForm', 'lease'],
+    ];
+    return mappings.flatMap(([slot, formType]) => {
+        const payload = slots[slot];
+        if (payload === undefined || payload === null) return [];
+        const historical = formType === 'lease'
+            ? draftTimestamp(asObject(payload).updatedAt, timestamp)
+            : timestamp;
+        return [{
+            id: generateId('draft'),
+            accountId,
+            formType,
+            mode: 'create' as const,
+            entityId: null,
+            payload: clone(payload),
+            schemaVersion: 1,
+            createdAt: historical,
+            updatedAt: historical,
+        }];
+    });
+}
+
+function normalizeDatabase(
+    input: Record<string, unknown>,
+    accountId: string,
+    repair = false,
+): LocalDatabase {
+    const inputVersion = asObject(input.meta).schemaVersion;
+    const migrationTimestamp = nowIso();
     const db = emptyDb(asObject(input.meta).source === 'migration-v1' || asObject(input.meta).source === 'migration-v2' ? asObject(input.meta).source as DatabaseSource : 'seed');
     db.meta = {
-        schemaVersion: 3,
+        schemaVersion: 4,
         seedVersion: valueAsNumber(asObject(input.meta).seedVersion, SEED_VERSION),
         createdAt: valueAsString(asObject(input.meta).createdAt) || nowIso(),
         updatedAt: valueAsString(asObject(input.meta).updatedAt) || nowIso(),
@@ -817,12 +913,16 @@ function normalizeV3Database(input: Record<string, unknown>, repair = false): Lo
     db.candidates = Array.isArray(input.candidates) ? input.candidates as LocalDatabase['candidates'] : [];
     db.settings = clone(asObject(input.settings));
     db.userProfile = clone(asObject(input.userProfile));
-    const drafts = asObject(input.drafts);
-    db.drafts = {
-        tenantForm: drafts.tenantForm ?? null,
-        propertyForm: drafts.propertyForm ?? null,
-        leaseForm: (drafts.leaseForm ?? null) as LocalDatabase['drafts']['leaseForm'],
-    };
+    if (inputVersion === 4) {
+        if (!Array.isArray(input.drafts)) {
+            throw new DraftMigrationError(
+                new Error('La collezione bozze dello schema 4 non è valida.'),
+            );
+        }
+        db.drafts = validateCanonicalDrafts(input.drafts, accountId);
+    } else {
+        db.drafts = migrateDraftSlots(input.drafts, accountId, migrationTimestamp);
+    }
     validateStoredShape(db);
     const normalized = repair ? repairRecoverableDatabase(db) : recalculateBuildingUnits(db);
     if (!repair) assertDatabaseIntegrity(normalized);
@@ -830,14 +930,18 @@ function normalizeV3Database(input: Record<string, unknown>, repair = false): Lo
 }
 
 function validateStoredShape(database: LocalDatabase): void {
-    if (database.meta.schemaVersion !== 3) throw new Error('Schema database non valido.');
+    if (database.meta.schemaVersion !== 4) throw new Error('Schema database non valido.');
     if (!Array.isArray(database.properties) || !Array.isArray(database.buildings) || !Array.isArray(database.tenants) || !Array.isArray(database.leases) || !Array.isArray(database.payments)) {
         throw new Error('Collezioni database essenziali mancanti.');
     }
 }
 
-function parseStoredDb(raw: string): LocalDatabase {
-    const parsed = normalizeV3Database(JSON.parse(raw) as Record<string, unknown>, true);
+function parseStoredDb(raw: string, accountId: string): LocalDatabase {
+    const parsed = normalizeDatabase(
+        JSON.parse(raw) as Record<string, unknown>,
+        accountId,
+        true,
+    );
     return parsed;
 }
 
@@ -934,25 +1038,119 @@ function readJsonKey(key: string): unknown | null {
     }
 }
 
-function readDraftKey(key: string): unknown | null {
+type LegacyDraftRead =
+    | { status: 'missing' }
+    | { status: 'invalid' }
+    | { status: 'valid'; value: unknown };
+
+function readDraftKey(key: string): LegacyDraftRead {
     const raw = window.localStorage.getItem(key);
-    if (!raw) return null;
+    if (raw === null) return { status: 'missing' };
     try {
-        return JSON.parse(raw) as unknown;
+        return { status: 'valid', value: JSON.parse(raw) as unknown };
     } catch (error) {
         console.warn('[local-db] bozza legacy ignorata: JSON non leggibile', { key, error });
-        return null;
+        return { status: 'invalid' };
     }
 }
 
-function tryNormalizeSource(key: string, source: DatabaseSource): LocalDatabase | null {
+function legacyDraftDefinition(formType: DraftFormType): DraftDefinition<unknown> {
+    return {
+        formType,
+        schemaVersion: 1,
+        parse: (payload) => clone(payload),
+    };
+}
+
+function jsonValuesEqual(left: unknown, right: unknown): boolean {
+    if (Object.is(left, right)) return true;
+    if (left === null || right === null) return false;
+    if (typeof left !== 'object' || typeof right !== 'object') return false;
+
+    if (Array.isArray(left) || Array.isArray(right)) {
+        return Array.isArray(left)
+            && Array.isArray(right)
+            && left.length === right.length
+            && left.every((value, index) => jsonValuesEqual(value, right[index]));
+    }
+
+    const leftObject = left as Record<string, unknown>;
+    const rightObject = right as Record<string, unknown>;
+    const leftKeys = Object.keys(leftObject).sort();
+    const rightKeys = Object.keys(rightObject).sort();
+    return leftKeys.length === rightKeys.length
+        && leftKeys.every((key, index) =>
+            key === rightKeys[index]
+            && jsonValuesEqual(leftObject[key], rightObject[key]));
+}
+
+function reconcileStandaloneDrafts(
+    database: LocalDatabase,
+    accountId: string,
+    importMissing: boolean,
+): { database: LocalDatabase; removableKeys: string[] } {
+    if (accountId !== DEFAULT_DATABASE_ACCOUNT_ID) {
+        return { database, removableKeys: [] };
+    }
+    let drafts = database.drafts;
+    const removableKeys: string[] = [];
+    const mappings: Array<[string, DraftFormType]> = [
+        [TENANT_DRAFT_KEY, 'tenant'],
+        [PROPERTY_DRAFT_KEY, 'property'],
+    ];
+    for (const [storageKey, formType] of mappings) {
+        const legacy = readDraftKey(storageKey);
+        if (legacy.status !== 'valid') continue;
+        if (legacy.value === null) {
+            removableKeys.push(storageKey);
+            continue;
+        }
+        const key = normalizeDraftKey(formType, { mode: 'create' });
+        const existing = drafts.find((draft) =>
+            draftLogicalKey(accountId, draft)
+            === draftLogicalKey(accountId, key));
+        if (existing) {
+            if (jsonValuesEqual(existing.payload, legacy.value)) {
+                removableKeys.push(storageKey);
+            } else {
+                console.warn('[local-db] conflitto bozza legacy conservato', {
+                    key: storageKey,
+                    formType,
+                });
+            }
+            continue;
+        }
+        if (!importMissing) continue;
+        const result = upsertDraftRecord({
+            records: drafts,
+            accountId,
+            definition: legacyDraftDefinition(formType),
+            input: { mode: 'create', payload: legacy.value },
+            now: nowIso,
+            generateId: () => generateId('draft'),
+        });
+        drafts = result.records;
+        removableKeys.push(storageKey);
+    }
+    return {
+        database: { ...database, drafts },
+        removableKeys,
+    };
+}
+
+function tryNormalizeSource(
+    key: string,
+    source: DatabaseSource,
+    accountId: string,
+): LocalDatabase | null {
     const stored = readJsonKey(key);
     if (!stored) return null;
     try {
-        const database = migrateFromUnknown(stored, source);
+        const database = migrateFromUnknown(stored, source, accountId);
         assertDatabaseIntegrity(database);
         return database;
     } catch (error) {
+        if (error instanceof DraftMigrationError) throw error;
         console.warn('[local-db] sorgente non utilizzabile', { key, source, error });
         return null;
     }
@@ -962,19 +1160,14 @@ function legacyCorruptedSources(): Array<{ key: string; source: DatabaseSource }
     return corruptedBackupKeys().sort().reverse().map((key) => ({ key, source: 'migration-v2' as DatabaseSource }));
 }
 
-function attachLegacyDrafts(database: LocalDatabase): LocalDatabase {
-    return {
-        ...database,
-        drafts: {
-            tenantForm: database.drafts.tenantForm ?? readDraftKey(TENANT_DRAFT_KEY),
-            propertyForm: database.drafts.propertyForm ?? readDraftKey(PROPERTY_DRAFT_KEY),
-            leaseForm: database.drafts.leaseForm ?? null,
-        },
-    };
-}
-
 function legacyKeysToRemove(): string[] {
-    return [LOCAL_DB_KEY, ...LEGACY_LOCAL_DB_KEYS, ...corruptedBackupKeys()];
+    return [
+        LOCAL_DB_KEY,
+        OLD_DB_KEY_V3,
+        PREVIOUS_DB_KEY,
+        LEGACY_DB_KEY,
+        ...corruptedBackupKeys(),
+    ];
 }
 
 function removeLegacyKeysAfterVerifiedAccountDatabase(): void {
@@ -983,13 +1176,13 @@ function removeLegacyKeysAfterVerifiedAccountDatabase(): void {
     }
 }
 
-function verifyStoredDatabase(key: string): LocalDatabase {
+function verifyStoredDatabase(key: string, accountId: string): LocalDatabase {
     const verifiedRaw = window.localStorage.getItem(key);
     if (!verifiedRaw) {
         throw new Error(`Database non rileggibile dopo la scrittura: ${key}`);
     }
 
-    const verified = parseStoredDb(verifiedRaw);
+    const verified = parseStoredDb(verifiedRaw, accountId);
     assertDatabaseIntegrity(verified);
     return verified;
 }
@@ -999,20 +1192,46 @@ function persistInitializedDatabase(
     key: string,
     database: LocalDatabase,
     removeLegacyAfterVerification: boolean,
+    draftKeysToRemove: string[] = [],
+    draftMigration = false,
 ): LocalDatabase {
+    const previousRaw = window.localStorage.getItem(key);
     try {
         writeLocalStorage(key, JSON.stringify(database));
-        const verified = verifyStoredDatabase(key);
+        const verified = verifyStoredDatabase(key, accountId);
 
         cacheDatabaseForAccount(accountId, verified);
 
         if (removeLegacyAfterVerification) {
             removeLegacyKeysAfterVerifiedAccountDatabase();
         }
+        draftKeysToRemove.forEach((legacyKey) => {
+            window.localStorage.removeItem(legacyKey);
+        });
 
         emitDbChangeForAccount(accountId);
         return clone(verified);
     } catch (error) {
+        if (draftMigration) {
+            if (previousRaw !== null) {
+                try {
+                    window.localStorage.setItem(key, previousRaw);
+                } catch {
+                    // La sorgente originale resta disponibile quando la scrittura
+                    // iniziale è fallita; un rollback fallito non elimina legacy.
+                }
+            } else {
+                try {
+                    window.localStorage.removeItem(key);
+                } catch {
+                    // Le sorgenti legacy restano disponibili anche se non è
+                    // possibile ripristinare l'assenza originaria della chiave.
+                }
+            }
+            throw error instanceof DraftMigrationError
+                ? error
+                : new DraftMigrationError(error);
+        }
         console.warn('[local-db] persistenza account non riuscita, uso cache in memoria', {
             accountId,
             key,
@@ -1029,18 +1248,31 @@ function existingAccountDatabase(accountId: string, key: string): LocalDatabase 
     if (!raw) return null;
 
     try {
-        const database = parseStoredDb(raw);
+        const rawVersion = asObject(asObject(JSON.parse(raw) as unknown).meta)
+            .schemaVersion;
+        const database = parseStoredDb(raw, accountId);
         assertDatabaseIntegrity(database);
 
         const storedCanonical = JSON.stringify(JSON.parse(raw) as unknown);
         const repairedCanonical = JSON.stringify(database);
 
         if (repairedCanonical !== storedCanonical) {
-            return persistInitializedDatabase(accountId, key, database, false);
+            const standalone = rawVersion === 3
+                ? reconcileStandaloneDrafts(database, accountId, true)
+                : { database, removableKeys: [] };
+            return persistInitializedDatabase(
+                accountId,
+                key,
+                standalone.database,
+                false,
+                standalone.removableKeys,
+                rawVersion === 3,
+            );
         }
 
         return database;
     } catch (error) {
+        if (error instanceof DraftMigrationError) throw error;
         console.warn('[local-db] database account non utilizzabile', {
             accountId,
             key,
@@ -1056,14 +1288,33 @@ function initializeDefaultAccountDatabase(accountId: string, key: string): Local
     if (existing) {
         cacheDatabaseForAccount(accountId, existing);
         removeLegacyKeysAfterVerifiedAccountDatabase();
+        const standalone = reconcileStandaloneDrafts(existing, accountId, false);
+        standalone.removableKeys.forEach((legacyKey) => {
+            window.localStorage.removeItem(legacyKey);
+        });
         return clone(existing);
     }
 
-    const sharedDatabase = tryNormalizeSource(LOCAL_DB_KEY, 'migration-v2');
+    const sharedDatabase = tryNormalizeSource(
+        LOCAL_DB_KEY,
+        'migration-v2',
+        accountId,
+    );
 
     if (sharedDatabase) {
-        const migrated = attachLegacyDrafts(sharedDatabase);
-        return persistInitializedDatabase(accountId, key, migrated, true);
+        const standalone = reconcileStandaloneDrafts(
+            sharedDatabase,
+            accountId,
+            true,
+        );
+        return persistInitializedDatabase(
+            accountId,
+            key,
+            standalone.database,
+            true,
+            standalone.removableKeys,
+            true,
+        );
     }
 
     const legacySources: Array<{ key: string; source: DatabaseSource }> = [
@@ -1074,16 +1325,35 @@ function initializeDefaultAccountDatabase(accountId: string, key: string): Local
     ];
 
     for (const item of legacySources) {
-        const migrated = tryNormalizeSource(item.key, item.source);
+        const migrated = tryNormalizeSource(item.key, item.source, accountId);
 
         if (migrated) {
-            const database = attachLegacyDrafts(migrated);
-            return persistInitializedDatabase(accountId, key, database, true);
+            const standalone = reconcileStandaloneDrafts(
+                migrated,
+                accountId,
+                true,
+            );
+            return persistInitializedDatabase(
+                accountId,
+                key,
+                standalone.database,
+                true,
+                standalone.removableKeys,
+                true,
+            );
         }
     }
 
-    const seeded = attachLegacyDrafts(migrateFromUnknown(seedDatabase, 'seed'));
-    return persistInitializedDatabase(accountId, key, seeded, true);
+    const seeded = migrateFromUnknown(seedDatabase, 'seed', accountId);
+    const standalone = reconcileStandaloneDrafts(seeded, accountId, true);
+    return persistInitializedDatabase(
+        accountId,
+        key,
+        standalone.database,
+        true,
+        standalone.removableKeys,
+        standalone.removableKeys.length > 0,
+    );
 }
 
 function initializeSecondaryAccountDatabase(accountId: string, key: string): LocalDatabase {
@@ -1103,12 +1373,16 @@ function databaseForAccount(accountId: string, key = getAccountDatabaseKey(accou
 }
 
 function saveJsonDbForAccount(accountId: string, key: string, database: LocalDatabase): LocalDatabase {
-    const nextDb = normalizeV3Database({ ...database, meta: { ...database.meta, updatedAt: nowIso() } }, false);
+    const nextDb = normalizeDatabase(
+        { ...database, meta: { ...database.meta, updatedAt: nowIso() } },
+        accountId,
+        false,
+    );
 
     assertDatabaseIntegrity(nextDb);
     writeLocalStorage(key, JSON.stringify(nextDb));
 
-    const verified = verifyStoredDatabase(key);
+    const verified = verifyStoredDatabase(key, accountId);
 
     cacheDatabaseForAccount(accountId, verified);
     emitDbChangeForAccount(accountId);
@@ -1178,13 +1452,13 @@ export function resetJsonDb(): LocalDatabase {
     const accountId = requireActiveDatabaseAccount();
     const key = getAccountDatabaseKey(accountId);
     const resetDatabase = accountId === DEFAULT_DATABASE_ACCOUNT_ID
-        ? migrateFromUnknown(seedDatabase, 'seed')
+        ? migrateFromUnknown(seedDatabase, 'seed', accountId)
         : emptyDb('seed');
 
     assertDatabaseIntegrity(resetDatabase);
     writeLocalStorage(key, JSON.stringify(resetDatabase));
 
-    const verified = verifyStoredDatabase(key);
+    const verified = verifyStoredDatabase(key, accountId);
 
     setCachedDatabase(verified);
     emitDbChange();
@@ -1192,18 +1466,80 @@ export function resetJsonDb(): LocalDatabase {
     return clone(verified);
 }
 
-export function getDraft<Name extends keyof LocalDatabase['drafts']>(name: Name): LocalDatabase['drafts'][Name] {
-    return clone(getJsonDb().drafts[name]) as LocalDatabase['drafts'][Name];
+interface LegacyDraftValueMap {
+    tenantForm: unknown | null;
+    propertyForm: unknown | null;
+    leaseForm: LeaseDraftSnapshot | null;
 }
 
-export function setDraft<Name extends keyof LocalDatabase['drafts']>(name: Name, value: LocalDatabase['drafts'][Name]): void {
+const LEGACY_DRAFT_FORM_TYPES: Record<
+    keyof LegacyDraftValueMap,
+    DraftFormType
+> = {
+    tenantForm: 'tenant',
+    propertyForm: 'property',
+    leaseForm: 'lease',
+};
+
+export function getDraft<Name extends keyof LegacyDraftValueMap>(
+    name: Name,
+): LegacyDraftValueMap[Name] {
+    const accountId = requireActiveDatabaseAccount();
+    const definition = legacyDraftDefinition(LEGACY_DRAFT_FORM_TYPES[name]);
+    const record = getDraftRecord(
+        getJsonDb().drafts,
+        accountId,
+        definition,
+        { mode: 'create' },
+    );
+    return (record ? clone(record.payload) : null) as LegacyDraftValueMap[Name];
+}
+
+export function setDraft<Name extends keyof LegacyDraftValueMap>(
+    name: Name,
+    value: LegacyDraftValueMap[Name],
+): void {
+    if (value === null) {
+        clearDraft(name);
+        return;
+    }
+    const accountId = requireActiveDatabaseAccount();
     const db = getJsonDb();
-    db.drafts = { ...db.drafts, [name]: clone(value) };
-    saveJsonDb(db);
+    const result = upsertDraftRecord({
+        records: db.drafts,
+        accountId,
+        definition: legacyDraftDefinition(LEGACY_DRAFT_FORM_TYPES[name]),
+        input: { mode: 'create', payload: value },
+        now: nowIso,
+        generateId: () => generateId('draft'),
+    });
+    saveJsonDb({ ...db, drafts: result.records });
 }
 
-export function clearDraft<Name extends keyof LocalDatabase['drafts']>(name: Name): void {
-    setDraft(name, null);
+export function clearDraft<Name extends keyof LegacyDraftValueMap>(
+    name: Name,
+): void {
+    const accountId = requireActiveDatabaseAccount();
+    const db = getJsonDb();
+    const result = deleteDraftRecord(
+        db.drafts,
+        accountId,
+        normalizeDraftKey(LEGACY_DRAFT_FORM_TYPES[name], { mode: 'create' }),
+    );
+    if (result.deleted) saveJsonDb({ ...db, drafts: result.records });
+}
+
+export function clearDraftFromDatabase<Name extends keyof LegacyDraftValueMap>(
+    database: LocalDatabase,
+    name: Name,
+): LocalDatabase {
+    const accountId = requireActiveDatabaseAccount();
+    const result = deleteDraftRecord(
+        database.drafts,
+        accountId,
+        normalizeDraftKey(LEGACY_DRAFT_FORM_TYPES[name], { mode: 'create' }),
+    );
+    return result.deleted ? { ...database, drafts: result.records } : database;
 }
 export function getCollection<Name extends LocalDatabaseCollectionName>(name: Name): LocalDatabase[Name] {
     return clone(getJsonDb()[name]);

@@ -59,7 +59,7 @@ function contact(overrides: Partial<ContactRecord> = {}): ContactRecord {
 function emptyDatabase(contacts: ContactRecord[] = [contact()]): LocalDatabase {
   return {
     meta: {
-      schemaVersion: 3,
+      schemaVersion: 4,
       seedVersion: 1,
       createdAt: EARLIER,
       updatedAt: EARLIER,
@@ -82,11 +82,7 @@ function emptyDatabase(contacts: ContactRecord[] = [contact()]): LocalDatabase {
     candidates: [],
     settings: {},
     userProfile: {},
-    drafts: {
-      tenantForm: null,
-      propertyForm: null,
-      leaseForm: null,
-    },
+    drafts: [],
   };
 }
 

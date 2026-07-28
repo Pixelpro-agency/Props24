@@ -1,12 +1,13 @@
 import type { PropertyFormData, StoredLocalFile } from '../components/property-form/schema';
 import type { EmergencyContact, Guarantor, TenantDocument, TenantInvitation } from '../types/tenant';
-import type { LeaseBillingPeriod, LeaseDraftSnapshot, LeaseFormData } from '../landlord/leases/schema/leaseFormSchema';
+import type { LeaseBillingPeriod, LeaseFormData } from '../landlord/leases/schema/leaseFormSchema';
 import type { PaymentConfirmationRecord } from './paymentConfirmation';
+import type { DraftRecord } from './draftRepository.port';
 
 export type DatabaseSource = 'seed' | 'migration-v1' | 'migration-v2';
 
 export interface DbMeta {
-    schemaVersion: 3;
+    schemaVersion: 4;
     seedVersion: number;
     createdAt: string;
     updatedAt: string;
@@ -288,13 +289,9 @@ export interface LocalDatabase {
     candidates: EmptyRecord[];
     settings: Record<string, unknown>;
     userProfile: Record<string, unknown>;
-    drafts: {
-        tenantForm: unknown | null;
-        propertyForm: unknown | null;
-        leaseForm: LeaseDraftSnapshot | null;
-    };
+    drafts: DraftRecord<unknown>[];
 }
 
-export type LocalDatabaseCollectionName = {
+export type LocalDatabaseCollectionName = Exclude<{
     [Key in keyof LocalDatabase]: LocalDatabase[Key] extends unknown[] ? Key : never;
-}[keyof LocalDatabase];
+}[keyof LocalDatabase], 'drafts'>;

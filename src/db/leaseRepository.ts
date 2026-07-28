@@ -1,4 +1,9 @@
-import { generateId, getJsonDb, saveJsonDb } from './jsonDb';
+import {
+    clearDraftFromDatabase,
+    generateId,
+    getJsonDb,
+    saveJsonDb,
+} from './jsonDb';
 import type { LeaseRecord, LocalDatabase, TenantRecord } from './database.types';
 import type { LeaseDetail } from '../types/leaseDetail';
 import { assertNoTenantLeaseConflicts, findTenantLeaseConflicts } from './businessRules';
@@ -178,8 +183,8 @@ export function createLease(input: LeaseInput): LeaseRecord {
             assertGeneratedLeasePaymentSchedule(record, generated, todayIso());
             return generated;
         })()],
-        drafts: { ...nextDb.drafts, leaseForm: null },
     };
+    nextDb = clearDraftFromDatabase(nextDb, 'leaseForm');
     nextDb = ensureLeaseDepositPayment(nextDb, record, todayIso());
     nextDb = rebuildLeaseRelations(nextDb);
 
