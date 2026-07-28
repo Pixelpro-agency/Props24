@@ -35,6 +35,7 @@ La chiusura tecnica di D2C e il pilot del repository contatti, inclusa la migraz
 - [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md)
 - [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md)
 - [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md)
+- [Ruoli, inviti e workspace](./specifiche/ruoli-inviti-e-workspace.md)
 - [Decisioni da validare](./decisioni-da-validare.md)
 
 Questo documento conserva il dettaglio delle task; la Todo list ne mostra lo stato sintetico e il registro delle decisioni contiene le domande professionali complete.
@@ -137,12 +138,11 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 ## 4. Stato operativo
 
 F1 — repository condiviso delle bozze manuali — e F2 — guard condiviso delle
-modifiche non salvate — sono completate. Le dipendenze tecniche F1 e F2 di F3
-sono quindi soddisfatte, ma nessun form F3 è ancora stato integrato e F3 non è
-automaticamente iniziata. La priorità tra Nuova unità, Nuovo inquilino e Nuova
-locazione non è ancora stata scelta e sarà analizzata separatamente. Nuovo
-edificio resta dipendente anche dal Blocco A. L’ordine generale dei blocchi
-rimane invariato.
+modifiche non salvate — sono completate. L’allineamento di prodotto su ruoli,
+inviti e workspace è documentato, ma nessuna funzione è stata implementata.
+F3.1 — Nuovo inquilino resta la prossima task tecnica. Inviti, portale
+inquilino, contesto professionista, visure e KPI non entrano in F3.1: la task
+deve soltanto evitare modelli incompatibili con le decisioni future.
 
 Classificazione complessiva:
 
@@ -221,7 +221,7 @@ Non modificare codice.
 
 ## TASK A2 — Form Nuovo edificio
 
-**Dipendenze:** specifica consolidata A0; A1; F1; F2. ED-04, ED-06, ED-07, PA-08 e PA-09 influenzano il perimetro pertinente senza bloccare necessariamente ogni riga del form.
+**Dipendenze:** specifica consolidata A0; A1; F1; F2. ED-04 è validata; ED-06, ED-07, PA-08 e PA-09 restano aperte e influenzano il perimetro pertinente senza bloccare necessariamente ogni riga del form.
 
 **Obiettivo:**
 
@@ -237,19 +237,20 @@ Non modificare codice.
 - submit singolo;
 - toast singolo;
 - round-trip di ogni controllo visibile.
+- dopo il salvataggio, mostrare “Aggiungi unità” e aprire il form Nuova unità con `buildingId` e indirizzo precompilati, senza creazione inline.
 
 **File esecutivi:** devono essere confermati tramite audit tecnico pre-esecutivo sulla base della specifica A0 già consolidata.
 
 ## TASK A3 — Route e accessi edificio
 
-**Dipendenze:** A2; decisione ED-03.
+**Dipendenze:** A2; ED-03 validata.
 
 **Obiettivo:**
 
 - aggiungere `/properties/buildings/new`;
 - collegare pulsante, empty state e quick-add;
 - proteggere la route con autenticazione;
-- gestire annullamento e destinazione post-submit;
+- gestire annullamento e aprire il dettaglio edificio dopo il submit;
 - aggiornare `src/utils/routes.ts`.
 
 **File da verificare:**
@@ -284,7 +285,7 @@ Non modificare codice.
 
 ## TASK A5 — Azioni edificio
 
-**Dipendenze:** A4; decisione ED-05.
+**Dipendenze:** A4; ED-05 validata.
 
 **Obiettivo:**
 
@@ -298,14 +299,15 @@ Non modificare codice.
 
 ## TASK A6 — Dettaglio e modifica edificio
 
-**Stato:** aperta; il lifecycle dipende da ED-05 e l’eventuale routing del dettaglio dipende da ED-03.
+**Stato:** aperta; routing del dettaglio e lifecycle sono definiti da ED-03 ed ED-05 validate.
 
 **Vincoli:**
 
 - riusare schema e normalizzatore;
 - mostrare unità tramite relazione canonica;
 - non propagare automaticamente un cambio indirizzo alle unità;
-- non creare route senza approvazione.
+- mostrare le unità collegate e aprire il dettaglio unità dal relativo click;
+- supportare modifica, archivio, ripristino ed eliminazione protetta.
 
 ## TASK A7 — Collaudo edifici
 
@@ -450,11 +452,17 @@ Verificare:
 
 **Obiettivo futuro:**
 
-- OCR/analisi del documento catastale;
+- etichetta UI futura “Carica visura” e caricamento manuale;
+- visura catastale distinta dalla visura camerale;
+- OCR/analisi futura del documento catastale;
+- estrazione di foglio, particella, subalterno, categoria, rendita e altri riferimenti catastali;
 - qualità e completezza;
 - validazione dei dati estratti;
+- anteprima e autorizzazione esplicita, con fonte e trattamento dichiarati;
 - conferma utente prima della compilazione automatica;
 - distinzione tra file salvato e documento realmente verificato.
+
+Riferimento visuale: [colonne della visura catastale](./riferimenti%20catastali%20-%20colonne%20visura%20catastale%20agenzia%20delle%20entrate%20tramite%20CF.png).
 
 ## TASK B9 — Collaudo unità
 
@@ -472,6 +480,22 @@ Verificare:
 - isolamento account;
 - nessun doppio submit;
 - nessuna scrittura eccessiva.
+
+### B9A — Card e KPI unità
+
+Le sei card approvate sono:
+
+- Affittate;
+- Valore locativo;
+- Valore patrimoniale;
+- Redditività lorda;
+- Redditività netta;
+- Tasso di occupazione.
+
+Affittate = unità non archiviate collegate a una locazione attiva secondo lo
+stato canonico della locazione. Il calcolo non è implementato. Formule, fonti,
+basi temporali e trattamento dei dati mancanti dei cinque KPI restano
+subordinati a KPI-01 e KPI-02.
 
 ---
 
@@ -502,7 +526,7 @@ Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale
 - completare rubrica e lifecycle dei contatti;
 - consolidare il modello canonico tra inquilini e locazioni;
 - gestire contatti di emergenza, duplicati e record orfani;
-- integrare le decisioni ancora aperte sui duplicati.
+- integrare CT-01, CT-02 e CT-05 validate; CT-03 e CT-04 restano aperte per casi esteri e politica dei duplicati.
 
 ## TASK C2 — ID annidati
 
@@ -515,7 +539,7 @@ Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale
 
 ## TASK C3 — Duplicati anagrafici
 
-**Dipendenza:** decisioni anagrafiche in [Decisioni da validare](./decisioni-da-validare.md).
+**Dipendenza:** CT-01, CT-02 e CT-05 sono validate; CT-03 e CT-04 restano aperte.
 
 **Obiettivo:**
 
@@ -577,6 +601,14 @@ Import/export e azioni non operative rispettano la convenzione gialla e disabili
 - stato invito distinto da invio effettivo;
 - gestione errori e retry;
 - nessun messaggio che implichi invio quando è stato aggiornato soltanto lo stato locale.
+- invito manuale e distinto per partecipante, associato atomicamente ad account, email, partecipante e locazione;
+- stati `non_preparato`, `pronto`, `inviato`, `accettato`, `scaduto`, `revocato`, `fallito`;
+- sezione dell’invito visibile anche senza email, ma invio indisponibile o disabilitato finché manca un’email valida;
+- “Invia” disponibile con email valida e nessun invito attivo;
+- “Reinvia” disponibile soltanto negli stati compatibili;
+- “Revoca” disponibile soltanto quando esiste un invito revocabile;
+- nessuna azione deve fingere un invio reale;
+- accettazione esplicita, collegamento account–partecipante e accesso limitato a “Le mie locazioni”.
 
 ## TASK C8 — Allegati delle bozze
 
@@ -624,6 +656,18 @@ Verificare:
 - isolamento account;
 - ID stabili;
 - nessun record orfano.
+
+### C10A — Card inquilini
+
+Le tre card approvate sono:
+
+- Attivi = inquilini non archiviati;
+- Connessi = inquilini con invito accettato e account collegato;
+- Con locazione = inquilini distinti presenti in almeno una locazione attiva.
+
+Gli stati degli inviti restano documentati nella TASK C7 e non sostituiscono
+le tre card principali della lista inquilini. Non aggiungere altre card senza
+una decisione separata.
 
 ---
 
@@ -774,6 +818,18 @@ Verificare:
 - edit;
 - firma locale;
 - nessuna regressione dei flussi già completati.
+
+### D3A — Terminologia e card locazioni
+
+Usare “Deposito cauzionale”. Le tre card approvate sono:
+
+- Attive = locazioni non archiviate che risultano attive secondo lo stato canonico e il periodo della locazione;
+- Canoni di affitto;
+- Depositi cauzionali.
+
+Canoni di affitto e Depositi cauzionali restano subordinati a KPI-03 per base
+temporale e distinzione tra valori contrattuali e incassi reali. Non modificare
+modelli dati o nomi tecnici persistiti.
 
 ---
 
@@ -975,8 +1031,8 @@ integrazione è iniziata.
 
 Mantenere task separate per form:
 
-1. unità;
-2. inquilino;
+1. inquilino;
+2. unità;
 3. locazione;
 4. edificio, dopo il Blocco A.
 
@@ -1138,19 +1194,31 @@ Riferimenti: [Database locale e migrazione futura](./specifiche/database-locale-
 
 Non implementare parzialmente dentro una task UI.
 
-## TASK H2 — Ruolo inquilino invitato
+## TASK H2 — Identità, workspace e accessi
 
 **Origine:** commento in `auth.types.ts`.
 
-Prima dell’implementazione:
+### H2A — Portale inquilino invitato
 
-- verificare il comportamento del prodotto di riferimento;
-- definire permessi;
-- definire visibilità della locazione;
-- impedire accesso ai dati privati del proprietario;
-- impedire accesso alla scheda inquilino dell’account proprietario;
-- definire CRUD ammessi;
-- testare isolamento e autorizzazione lato backend.
+- accesso limitato alle proprie locazioni;
+- permessi e visibilità definiti nella specifica ruoli e workspace;
+- isolamento dai dati privati del proprietario e dalla scheda inquilino conservata dal proprietario;
+- test backend e autorizzativi futuri.
+
+### H2B — Account multi-ruolo e workspace
+
+- identità unica con ruoli dipendenti da workspace o relazione;
+- workspace personale/proprietario, accesso come inquilino, studio e cliente delegato;
+- nessuna impersonificazione tecnica del cliente;
+- revoca dell’accesso e audit dell’attore reale.
+
+### H2C — Gestione professionale e deleghe
+
+- account personale del professionista;
+- cliente attivo sempre evidente;
+- accettazione del cliente obbligatoria prima dell’accesso;
+- ruoli e permessi futuri, deleghe, revoca e audit;
+- nessun permission engine in questa fase.
 
 ## TASK H3 — Storage documentale
 
@@ -1164,6 +1232,7 @@ Definire:
 - cancellazione coordinata;
 - migrazione dei Data URL;
 - accesso per account e ruoli;
+- `document_access_grants` per visibilità privata, professionisti autorizzati, tutti gli inquilini o inquilini selezionati;
 - gestione offline e retry.
 
 Dipendenze:
@@ -1249,6 +1318,10 @@ Prima di automatizzare definire:
 - effetto sulle rate successive;
 - correzioni e audit.
 
+I conguagli distinguono spesa effettiva, acconti, periodo, criterio di
+attribuzione, saldo a debito o credito, giustificativi ed effetto sulla rata
+successiva. Il PDF è un giustificativo, non l’intero modello contabile.
+
 ## TASK I6 — Notifiche locazione
 
 Collegare le preferenze salvate a:
@@ -1270,6 +1343,8 @@ Collegare le preferenze salvate a:
 - preservare riferimenti legacy;
 - impedire riferimenti orfani;
 - definire storage backend futuro.
+- usare categorie coerenti, inclusi Deposito cauzionale, Assicurazioni, Ricevute e Comunicazioni;
+- applicare grant espliciti: il collegamento alla locazione non implica condivisione con l’inquilino.
 
 ## TASK I8 — Documenti durante creazione locazione
 
@@ -1279,6 +1354,13 @@ Valutare una transazione che:
 - evita record orfani;
 - gestisce rollback;
 - conserva la possibilità attuale di aggiungere documenti dopo il primo salvataggio.
+
+La futura estrazione da contratti PDF o immagini deve sempre mostrare anteprima
+e richiedere conferma; nessun dato estratto è automaticamente verificato.
+
+> Nota non pianificata: è emersa un’idea futura sull’affidabilità di clienti o
+> inquilini tramite fonti esterne. Non è approvata, non ha priorità né task e
+> richiede prima discovery e audit legale, privacy e qualità dei dati.
 
 ## TASK I9 — Modelli, cataloghi e inventari
 

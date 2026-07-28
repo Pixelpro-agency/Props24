@@ -1,6 +1,6 @@
 # Props24 — Decisioni da validare con i professionisti
 
-Questo registro contiene soltanto questioni aperte. Per tutte le voci: Stato `aperta`, Risposta `non ancora fornita`, Data validazione `—`.
+Questo registro contiene le questioni ancora aperte e, nella sezione finale, le decisioni validate. Per le voci aperte: Stato `aperta`, Risposta `non ancora fornita`, Data validazione `—`.
 
 - [Todo list e stato di avanzamento](./todo-list.md)
 - [Implementazioni residue](./implementazioni.md)
@@ -28,39 +28,6 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Perché serve: evitare falsi duplicati.
 - Task bloccate o influenzate: repository edifici.
 - Checklist collegata: A1
-- Stato: aperta
-- Risposta: non ancora fornita
-- Data validazione: —
-
-### ED-03
-- Area: routing edifici
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Dopo la creazione dell'edificio si deve aprire la lista o il dettaglio?
-- Perché serve: definire la destinazione post-submit.
-- Task bloccate o influenzate: route Nuovo edificio.
-- Checklist collegata: A3, A6
-- Stato: aperta
-- Risposta: non ancora fornita
-- Data validazione: —
-
-### ED-04
-- Area: edifici e unità
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Dal form edificio deve essere possibile creare una nuova unità oppure soltanto associare unità esistenti?
-- Perché serve: delimitare il flusso e prevenire entità incomplete.
-- Task bloccate o influenzate: form Nuovo edificio.
-- Checklist collegata: A2
-- Stato: aperta
-- Risposta: non ancora fornita
-- Data validazione: —
-
-### ED-05
-- Area: lifecycle edifici
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Quali azioni sono richieste nel dettaglio edificio: modifica, archivio, ripristino, eliminazione?
-- Perché serve: definire il lifecycle approvato.
-- Task bloccate o influenzate: dettaglio e azioni edificio.
-- Checklist collegata: A5, A6, A7
 - Stato: aperta
 - Risposta: non ancora fornita
 - Data validazione: —
@@ -131,28 +98,6 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Risposta: non ancora fornita
 - Data validazione: —
 
-### CT-01
-- Area: anagrafiche
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Per una persona fisica il codice fiscale è sempre obbligatorio?
-- Perché serve: validazione e duplicati.
-- Task bloccate o influenzate: form inquilino.
-- Checklist collegata: C1, C3, C4, C10
-- Stato: aperta
-- Risposta: non ancora fornita
-- Data validazione: —
-
-### CT-02
-- Area: anagrafiche
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Per una società la partita IVA è sempre obbligatoria?
-- Perché serve: validazione e duplicati.
-- Task bloccate o influenzate: form inquilino.
-- Checklist collegata: C1, C3, C4, C10
-- Stato: aperta
-- Risposta: non ancora fornita
-- Data validazione: —
-
 ### CT-03
 - Area: anagrafiche estere
 - Destinatario: agente immobiliare o amministratore
@@ -175,13 +120,35 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Risposta: non ancora fornita
 - Data validazione: —
 
-### CT-05
-- Area: identificatori
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Email e SIRET sono identificatori o soltanto segnali secondari?
-- Perché serve: evitare falsi duplicati.
-- Task bloccate o influenzate: controllo anagrafiche.
-- Checklist collegata: C1, C3, C4, C10
+### KPI-01 — Valori e redditività delle unità
+- Area: KPI unità
+- Destinatario: agente immobiliare, amministratore o consulente
+- Domanda: Quali fonti e basi temporali devono essere usate per valore locativo, valore patrimoniale, redditività lorda e redditività netta?
+- Perché serve: chiarire mensile o annuale; canone richiesto, contrattuale o incassato; prezzo d’acquisto, valore dichiarato o stima; spese comprese nel netto; trattamento dei dati mancanti e delle unità non locate.
+- Task bloccate o influenzate: card KPI unità.
+- Checklist collegata: B9A
+- Stato: aperta
+- Risposta: non ancora fornita
+- Data validazione: —
+
+### KPI-02 — Tasso di occupazione
+- Area: KPI unità
+- Destinatario: agente immobiliare, amministratore o consulente
+- Domanda: Il tasso di occupazione deve essere istantaneo oppure ponderato sui giorni del periodo selezionato?
+- Perché serve: chiarire periodo annuale o selezionabile, unità archiviate o indisponibili, giorni coperti da locazioni, sovrapposizioni e unità create durante il periodo.
+- Task bloccate o influenzate: card KPI unità.
+- Checklist collegata: B9A
+- Stato: aperta
+- Risposta: non ancora fornita
+- Data validazione: —
+
+### KPI-03 — KPI delle locazioni
+- Area: KPI locazioni
+- Destinatario: agente immobiliare, amministratore o consulente
+- Domanda: La card Canoni di affitto deve mostrare importo mensile, annualizzato o relativo al periodo selezionato, e la card Depositi cauzionali deve mostrare importi contrattuali oppure effettivamente incassati?
+- Perché serve: rendere esplicita la base temporale e distinguere valori contrattuali da incassi reali.
+- Task bloccate o influenzate: card KPI locazioni.
+- Checklist collegata: D3A
 - Stato: aperta
 - Risposta: non ancora fornita
 - Data validazione: —
@@ -330,3 +297,71 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Stato: aperta
 - Risposta: non ancora fornita
 - Data validazione: —
+
+## Decisioni validate
+
+### ED-03
+- Area: routing edifici
+- Destinatario: agente immobiliare o amministratore
+- Domanda: Dopo la creazione dell'edificio si deve aprire la lista o il dettaglio?
+- Perché serve: definire la destinazione post-submit.
+- Task bloccate o influenzate: route Nuovo edificio.
+- Checklist collegata: A3, A6
+- Stato: validata
+- Risposta: dopo la creazione si apre il dettaglio dell’edificio. La lista edifici conduce al dettaglio edificio; il dettaglio mostra la lista delle unità collegate e il click su un’unità apre il dettaglio unità. Edificio/fabbricato è l’aggregato gestionale, mentre l’unità immobiliare è l’elemento atomico gestibile e locabile. Un edificio può avere una o più unità; nessuna classificazione è automatica in base al solo aspetto fisico.
+- Data validazione: 2026-07-28
+
+### ED-04
+- Area: edifici e unità
+- Destinatario: agente immobiliare o amministratore
+- Domanda: Dal form edificio deve essere possibile creare una nuova unità oppure soltanto associare unità esistenti?
+- Perché serve: delimitare il flusso e prevenire entità incomplete.
+- Task bloccate o influenzate: form Nuovo edificio.
+- Checklist collegata: A2
+- Stato: validata
+- Risposta: non creare unità inline nel form Nuovo edificio. Dopo il salvataggio mostrare “Aggiungi unità” e aprire il normale form Nuova unità con `buildingId` preimpostato e indirizzo dell’edificio precompilato e read-only quando il flusso parte dal dettaglio edificio. Resta disponibile la creazione autonoma da Nuova unità. In futuro sarà possibile associare un’unità esistente priva di edificio, senza duplicare il record.
+- Data validazione: 2026-07-28
+
+### ED-05
+- Area: lifecycle edifici
+- Destinatario: agente immobiliare o amministratore
+- Domanda: Quali azioni sono richieste nel dettaglio edificio: modifica, archivio, ripristino, eliminazione?
+- Perché serve: definire il lifecycle approvato.
+- Task bloccate o influenzate: dettaglio e azioni edificio.
+- Checklist collegata: A5, A6, A7
+- Stato: validata
+- Risposta: sono richiesti modifica, archivio, ripristino ed eliminazione protetta con conferma esplicita. L’eliminazione è bloccata in presenza di unità o riferimenti non gestiti e non deve produrre cancellazioni parziali. Quando esiste storico, l’archivio è preferibile.
+- Data validazione: 2026-07-28
+
+### CT-01
+- Area: anagrafiche
+- Destinatario: agente immobiliare o amministratore
+- Domanda: Per una persona fisica il codice fiscale è sempre obbligatorio?
+- Perché serve: validazione e duplicati.
+- Task bloccate o influenzate: form inquilino.
+- Checklist collegata: C1, C3, C4, C10
+- Stato: validata
+- Risposta: Props24 non calcola il codice fiscale: viene richiesto all’utente, ma non è sempre obbligatorio nella prima anagrafica né necessario per ricevere un invito. È richiesto prima della finalizzazione di una locazione italiana quando applicabile, con eccezioni per soggetti esteri o casi non applicabili; nelle fasi precedenti è facoltativo ma consigliato, dichiarandone i vantaggi di verifica e futura precompilazione. Il CF non normalizza gli indirizzi e non avvia consultazioni catastali silenziose: una futura consultazione avverrà soltanto su richiesta esplicita e autorizzazione.
+- Data validazione: 2026-07-28
+
+### CT-02
+- Area: anagrafiche
+- Destinatario: agente immobiliare o amministratore
+- Domanda: Per una società la partita IVA è sempre obbligatoria?
+- Perché serve: validazione e duplicati.
+- Task bloccate o influenzate: form inquilino.
+- Checklist collegata: C1, C3, C4, C10
+- Stato: validata
+- Risposta: la partita IVA non è sempre obbligatoria per ogni organizzazione. Per i soggetti italiani si acquisisce il codice fiscale dell’ente e la partita IVA quando applicabile; per i soggetti esteri si usano Paese e identificatore country-aware, senza applicare indiscriminatamente la validazione italiana.
+- Data validazione: 2026-07-28
+
+### CT-05
+- Area: identificatori
+- Destinatario: agente immobiliare o amministratore
+- Domanda: Email e SIRET sono identificatori o soltanto segnali secondari?
+- Perché serve: evitare falsi duplicati.
+- Task bloccate o influenzate: controllo anagrafiche.
+- Checklist collegata: C1, C3, C4, C10
+- Stato: validata
+- Risposta: l’email è recapito e canale di invito e, da sola, non blocca i duplicati. SIREN identifica l’impresa o entità legale francese; SIRET identifica uno specifico stabilimento francese. SIREN è richiesto quando applicabile e SIRET quando il record rappresenta uno stabilimento; SIRET non si applica ai soggetti italiani. Gli identificatori dipendono dal Paese; i segnali secondari possono generare avvisi, ma non costituiscono da soli prova di duplicazione.
+- Data validazione: 2026-07-28

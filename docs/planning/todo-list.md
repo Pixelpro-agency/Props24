@@ -9,6 +9,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - [Fase locale prioritaria](./specifiche/fase-locale-prioritaria.md)
 - [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md)
 - [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md)
+- [Ruoli, inviti e workspace](./specifiche/ruoli-inviti-e-workspace.md)
 
 ## Riepilogo
 
@@ -16,8 +17,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Completate integralmente: 4
 - Parzialmente completate: 4
 - Non concluse: 64
-- Domande professionali aperte: 29
-- Prossimo punto: da definire con un’analisi separata
+- Domande professionali aperte: 26
+- Prossimo punto: F3.1 — Nuovo inquilino
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 64 task non concluse e non vanno sommati nuovamente. D1A/D1B e D2A–D2D sono sottopunti e non aumentano il numero delle 72 task principali.
 
@@ -25,6 +26,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 
 > - [x] F1 — Repository condiviso delle bozze manuali — **COMPLETATA**
 > - [x] F2 — Guard condiviso delle modifiche non salvate — **COMPLETATA**
+> - [x] PRODUCT-ALIGNMENT-DOC-1 — Allineamento prodotto documentato — **COMPLETATO; nessuna funzione implementata**
 > - [ ] F3.1 — Integrazione in Nuovo inquilino — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
 > - [ ] F3.2 — Integrazione in Nuova unità — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
 > - [ ] F3.3 — Integrazione in Nuova locazione — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
@@ -33,7 +35,9 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 > - [ ] K1/K2 — Audit e collaudo trasversale dei quattro CRUD — **FINALE**
 
 Questa sezione è un percorso sintetico e non sostituisce le voci complete dei blocchi.
-La prossima priorità non è ancora stata scelta.
+La prossima task tecnica è F3.1 — Nuovo inquilino. Inviti, portale inquilino,
+professionista, visure e KPI sono esclusi da F3.1; il form deve soltanto evitare
+modelli incompatibili con le decisioni future.
 
 ## Baseline trasversale già raggiunta
 
@@ -61,11 +65,11 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 
 - [x] A0 — Specifica Nuovo edificio — **COMPLETATA**
 - [ ] A1 — Repository edifici — **IN ATTESA: ED-01, ED-02**
-- [ ] A2 — Form Nuovo edificio — **IN ATTESA: ED-04, ED-06, ED-07, PA-08, PA-09; dipende da A1, F1, F2**
-- [ ] A3 — Route e accessi edificio — **IN ATTESA: ED-03; dipende da A2**
+- [ ] A2 — Form Nuovo edificio — **IN ATTESA: ED-06, ED-07, PA-08, PA-09; ED-04 validata; dipende da A1, F1, F2**
+- [ ] A3 — Route e accessi edificio — **APERTO; ED-03 validata; dipende da A2**
 - [ ] A4 — Lista edifici reale — **APERTO; dipende da A1, A3**
-- [ ] A5 — Azioni edificio — **IN ATTESA: ED-05; dipende da A4**
-- [ ] A6 — Dettaglio e modifica edificio — **IN ATTESA: ED-03, ED-05**
+- [ ] A5 — Azioni edificio — **APERTO; ED-05 validata; dipende da A4**
+- [ ] A6 — Dettaglio e modifica edificio — **APERTO; ED-03 ed ED-05 validate**
 - [ ] A7 — Collaudo edifici — **APERTO; dipende da A1–A6**
 
 ## Blocco B — Unità
@@ -79,10 +83,11 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 - [ ] B7 — Import ed export unità — **RINVIATO**
 - [ ] B8 — Analisi catastale futura — **FUTURO — BACKEND**
 - [ ] B9 — Collaudo unità — **APERTO; dipende dal completamento delle task precedenti del blocco**
+  - [ ] B9A — Sei card unità: Affittate, Valore locativo, Valore patrimoniale, Redditività lorda, Redditività netta e Tasso di occupazione — **FUTURO; in attesa di KPI-01 e KPI-02**
 
 ## Blocco C — Inquilini e contatti
 
-- [ ] C1 — Garanti e rubrica — **PARZIALE; influenzata da CT-01–CT-05**
+- [ ] C1 — Garanti e rubrica — **PARZIALE; CT-01, CT-02 e CT-05 validate; CT-03 e CT-04 aperte**
   - [x] Porta asincrona `ContactRepository`
   - [x] Adapter locale
   - [x] Binding immutabile all’account
@@ -99,9 +104,10 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [ ] Completare rubrica e lifecycle dei contatti — **APERTO**
   - [ ] Consolidare il modello canonico tra inquilini e locazioni — **APERTO**
   - [ ] Gestire contatti di emergenza, duplicati e record orfani — **APERTO**
-  - [ ] Integrare CT-01–CT-05 — **INFLUENZATO DA DECISIONE**
+  - [ ] Integrare CT-01, CT-02 e CT-05 — **DECISIONI VALIDATE**
+  - [ ] Definire casi esteri e politica duplicati — **IN ATTESA: CT-03, CT-04**
 - [ ] C2 — ID annidati — **APERTO**
-- [ ] C3 — Duplicati anagrafici — **IN ATTESA: CT-01–CT-05**
+- [ ] C3 — Duplicati anagrafici — **IN ATTESA: CT-03, CT-04; CT-01, CT-02 e CT-05 validate**
 - [ ] C4 — Creazione atomica — **APERTO; dipende da C1–C3**
 - [ ] C5 — Modifica e lifecycle — **APERTO**
 - [ ] C6 — Azioni lista ancora simulate — **DECISIONE PRODOTTO**
@@ -109,6 +115,7 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 - [ ] C8 — Allegati delle bozze — **FUTURO — STORAGE**
 - [ ] C9 — Verifica documentale/OCR — **FUTURO — BACKEND**
 - [ ] C10 — Collaudo inquilini — **APERTO; dipende dal completamento del blocco**
+  - [ ] C10A — Card inquilini: Attivi, Connessi e Con locazione — **FUTURO**
 
 ## Blocco D — Locazioni e pagamenti
 
@@ -121,6 +128,7 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] D2C — Repair, migrazione e consumer finanziari
   - [ ] D2D — Prepagato, ricevuta e confirmation precedenti — **IN ATTESA: PA-10, PA-11, PA-12**
 - [ ] D3 — Regressione locazione mirata — **IN ATTESA/APERTO; influenzato da PA-10–PA-13**
+  - [ ] D3A — Tre card locazioni: Attive, Canoni di affitto e Depositi cauzionali — **FUTURO; in attesa di KPI-03**
 
 ## Blocco E — Preferenze
 
@@ -141,10 +149,10 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] F2C-FIX1 — Compatibilità reale con React Strict Mode
   - [x] F2D — Integrazione logout e gate finale
 - [ ] F3 — Integrazioni — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
-  - [ ] Nuova unità — **APERTO**
-  - [ ] Nuovo inquilino — **APERTO**
-  - [ ] Nuova locazione — **APERTO**
-  - [ ] Nuovo edificio, dopo il Blocco A — **APERTO**
+  - [ ] F3.1 — Nuovo inquilino — **PROSSIMA TASK TECNICA**
+  - [ ] F3.2 — Nuova unità — **APERTO**
+  - [ ] F3.3 — Nuova locazione — **APERTO**
+  - [ ] F3.4 — Nuovo edificio, dopo il Blocco A — **APERTO**
   - [ ] Sostituire gli autosalvataggi legacy e integrare restore/cancellazione
         delle bozze nei form — **APERTO**
   - [ ] Definire eventuale UX bozza, debounce e hook di autosave — **APERTO**
@@ -165,7 +173,10 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 ## Blocco H — Sicurezza, backend e storage
 
 - [ ] H1 — Autenticazione di produzione — **FUTURO — BACKEND**
-- [ ] H2 — Ruolo inquilino invitato — **FUTURO — BACKEND; richiede anche decisione prodotto**
+- [ ] H2 — Identità, workspace e accessi — **FUTURO — BACKEND**
+  - [ ] H2A — Portale inquilino invitato
+  - [ ] H2B — Account multi-ruolo e workspace
+  - [ ] H2C — Gestione professionale e deleghe
 - [ ] H3 — Storage documentale — **FUTURO — STORAGE/BACKEND**
 
 ## Blocco I — Automazioni e servizi documentali
@@ -174,7 +185,7 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 - [ ] I2 — Generazione programmata e avvisi — **FUTURO — BACKEND**
 - [ ] I3 — Aggiornamento canone — **FUTURO — BACKEND**
 - [ ] I4 — Ricevute, fatture e numerazione — **FUTURO — BACKEND; influenzato da PA-02, PA-04, PA-05, PA-11**
-- [ ] I5 — Riporto saldo e riconciliazione — **FUTURO — BACKEND; influenzato da PA-03, PA-10**
+- [ ] I5 — Riporto saldo, conguagli e riconciliazione — **FUTURO — BACKEND; influenzato da PA-03, PA-10**
 - [ ] I6 — Notifiche locazione — **FUTURO — BACKEND**
 - [ ] I7 — Documenti deposito e assicurazioni — **FUTURO — STORAGE**
 - [ ] I8 — Documenti durante creazione locazione — **FUTURO — STORAGE**
@@ -244,20 +255,14 @@ Baseline verificata al termine di F2: 21 file, 342 test passati, 0 falliti, 0 sa
 
 - [ ] [ED-01](./decisioni-da-validare.md#ed-01) — Unicità identificativo edificio — **IN ATTESA**
 - [ ] [ED-02](./decisioni-da-validare.md#ed-02) — Edifici distinti allo stesso indirizzo — **IN ATTESA**
-- [ ] [ED-03](./decisioni-da-validare.md#ed-03) — Destinazione dopo creazione edificio — **IN ATTESA**
-- [ ] [ED-04](./decisioni-da-validare.md#ed-04) — Creazione unità dal form edificio — **IN ATTESA**
-- [ ] [ED-05](./decisioni-da-validare.md#ed-05) — Lifecycle edificio richiesto — **IN ATTESA**
 - [ ] [ED-06](./decisioni-da-validare.md#ed-06) — Somma obbligatoria dei millesimi — **IN ATTESA**
 - [ ] [ED-07](./decisioni-da-validare.md#ed-07) — Significato dei millesimi — **IN ATTESA**
 - [ ] [UN-01](./decisioni-da-validare.md#un-01) — Tipi di locazione dell’unità — **IN ATTESA**
 - [ ] [UN-02](./decisioni-da-validare.md#un-02) — Periodicità di pagamento — **IN ATTESA**
 - [ ] [UN-03](./decisioni-da-validare.md#un-03) — Classi energetiche — **IN ATTESA**
 - [ ] [UN-04](./decisioni-da-validare.md#un-04) — Unità estere o senza catasto completo — **IN ATTESA**
-- [ ] [CT-01](./decisioni-da-validare.md#ct-01) — Obbligatorietà codice fiscale — **IN ATTESA**
-- [ ] [CT-02](./decisioni-da-validare.md#ct-02) — Obbligatorietà partita IVA — **IN ATTESA**
 - [ ] [CT-03](./decisioni-da-validare.md#ct-03) — Anagrafiche estere — **IN ATTESA**
 - [ ] [CT-04](./decisioni-da-validare.md#ct-04) — Gestione duplicati anagrafici — **IN ATTESA**
-- [ ] [CT-05](./decisioni-da-validare.md#ct-05) — Ruolo di email e SIRET — **IN ATTESA**
 - [ ] [PA-01](./decisioni-da-validare.md#pa-01) — Catalogo metodi di pagamento — **IN ATTESA**
 - [ ] [PA-02](./decisioni-da-validare.md#pa-02) — Prove ufficiali del pagamento — **IN ATTESA**
 - [ ] [PA-03](./decisioni-da-validare.md#pa-03) — Pagamenti parziali, crediti e debiti — **IN ATTESA**
@@ -271,6 +276,9 @@ Baseline verificata al termine di F2: 21 file, 342 test passati, 0 falliti, 0 sa
 - [ ] [PA-11](./decisioni-da-validare.md#pa-11) — Annullamento ricevute — **IN ATTESA**
 - [ ] [PA-12](./decisioni-da-validare.md#pa-12) — Confirmation precedente — **IN ATTESA**
 - [ ] [PA-13](./decisioni-da-validare.md#pa-13) — Rinnovo locazione — **IN ATTESA**
+- [ ] [KPI-01](./decisioni-da-validare.md#kpi-01--valori-e-redditività-delle-unità) — Valori e redditività delle unità — **IN ATTESA**
+- [ ] [KPI-02](./decisioni-da-validare.md#kpi-02--tasso-di-occupazione) — Tasso di occupazione — **IN ATTESA**
+- [ ] [KPI-03](./decisioni-da-validare.md#kpi-03--kpi-delle-locazioni) — KPI delle locazioni — **IN ATTESA**
 
 ## Decisioni prodotto ancora aperte
 
@@ -278,4 +286,3 @@ Baseline verificata al termine di F2: 21 file, 342 test passati, 0 falliti, 0 sa
 - [ ] Azioni edificio, unità e inquilini — **DECISIONE PRODOTTO; riferimento G3**
 - [ ] Dashboard e navbar — **DECISIONE PRODOTTO; riferimento G5**
 - [ ] Route future — **DECISIONE PRODOTTO; riferimento G6**
-- [ ] Ruolo e permessi dell’inquilino invitato — **DECISIONE PRODOTTO; riferimento H2**
