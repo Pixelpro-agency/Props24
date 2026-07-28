@@ -13,21 +13,21 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 3
+- Completate integralmente: 4
 - Parzialmente completate: 4
-- Non concluse: 65
+- Non concluse: 64
 - Domande professionali aperte: 29
 - Prossimo punto: da definire con un’analisi separata
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 65 task non concluse e non vanno sommati nuovamente. D1A/D1B e D2A–D2D sono sottopunti e non aumentano il numero delle 72 task principali.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 64 task non concluse e non vanno sommati nuovamente. D1A/D1B e D2A–D2D sono sottopunti e non aumentano il numero delle 72 task principali.
 
 ## Percorso operativo immediato
 
 > - [x] F1 — Repository condiviso delle bozze manuali — **COMPLETATA**
-> - [ ] F2 — Guard condiviso delle modifiche non salvate — **APERTO**
-> - [ ] F3.1 — Integrazione in Nuovo inquilino — **APERTO; dipende da F2**
-> - [ ] F3.2 — Integrazione in Nuova unità — **APERTO; dipende da F2**
-> - [ ] F3.3 — Integrazione in Nuova locazione — **APERTO; dipende da F2**
+> - [x] F2 — Guard condiviso delle modifiche non salvate — **COMPLETATA**
+> - [ ] F3.1 — Integrazione in Nuovo inquilino — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
+> - [ ] F3.2 — Integrazione in Nuova unità — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
+> - [ ] F3.3 — Integrazione in Nuova locazione — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
 > - [ ] A1/A2 — Repository e form Nuovo edificio — **IN ATTESA delle decisioni indicate**
 > - [ ] A4–A7 — Lista, lifecycle e collaudo edifici — **APERTO**
 > - [ ] K1/K2 — Audit e collaudo trasversale dei quattro CRUD — **FINALE**
@@ -53,6 +53,7 @@ La prossima priorità non è ancora stata scelta.
 - [x] Click-through del backdrop corretto e ricollaudato
 - [x] Pianificazione aggiornata dopo il pilot
 - [x] F1 — Infrastruttura condivisa e account-scoped del repository bozze
+- [x] F2 — Data Router, macchina a stati, hook, dialog accessibile e gate logout
 
 Questa baseline non rientra nel conteggio delle 72 task principali.
 
@@ -133,8 +134,13 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] F1A — Contratto asincrono, chiavi logiche e operazioni pure
   - [x] F1B — Schema canonico 4, migrazione legacy e bridge compatibile
   - [x] F1C — Adapter locale account-scoped e test infrastrutturali
-- [ ] F2 — Guard condiviso — **APERTO**
-- [ ] F3 — Integrazioni — **APERTO; dipende da F2**
+- [x] F2 — Guard condiviso — **COMPLETATA**
+  - [x] F2A — Migrazione controllata a Data Router e infrastruttura test DOM
+  - [x] F2B — Contratto e macchina a stati pura
+  - [x] F2C — Hook React Router, beforeunload e dialog accessibile
+  - [x] F2C-FIX1 — Compatibilità reale con React Strict Mode
+  - [x] F2D — Integrazione logout e gate finale
+- [ ] F3 — Integrazioni — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
   - [ ] Nuova unità — **APERTO**
   - [ ] Nuovo inquilino — **APERTO**
   - [ ] Nuova locazione — **APERTO**
@@ -191,9 +197,15 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] Composition root
   - [x] Store asincrono e risposte obsolete
   - [x] Repository bozze: contratto, migrazione e adapter account-scoped
+  - [x] Data Router e configurazione route condivisa
+  - [x] Macchina a stati pura del guard
+  - [x] Hook React Router e beforeunload
+  - [x] Dialog accessibile delle modifiche non salvate
+  - [x] Compatibilità React Strict Mode del guard
+  - [x] Integrazione auth/logout del guard
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di F1: 16 file, 218 test passati, 0 falliti, 0 saltati.
+Baseline verificata al termine di F2: 21 file, 342 test passati, 0 falliti, 0 saltati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**

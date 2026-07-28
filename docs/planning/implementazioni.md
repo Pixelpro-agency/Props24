@@ -136,10 +136,13 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-F1 — repository condiviso delle bozze manuali — è completata. La priorità
-successiva tra le attività residue non è ancora stata decisa e sarà analizzata
-separatamente. Restano valide le dipendenze dichiarate nelle singole task,
-senza implicare un nuovo ordinamento operativo.
+F1 — repository condiviso delle bozze manuali — e F2 — guard condiviso delle
+modifiche non salvate — sono completate. Le dipendenze tecniche F1 e F2 di F3
+sono quindi soddisfatte, ma nessun form F3 è ancora stato integrato e F3 non è
+automaticamente iniziata. La priorità tra Nuova unità, Nuovo inquilino e Nuova
+locazione non è ancora stata scelta e sarà analizzata separatamente. Nuovo
+edificio resta dipendente anche dal Blocco A. L’ordine generale dei blocchi
+rimane invariato.
 
 Classificazione complessiva:
 
@@ -906,20 +909,69 @@ non è stato deciso quale form integrare per primo.
 
 ## TASK F2 — Guard condiviso
 
-**Obiettivo:**
+**Stato:** COMPLETATA.
 
-- soluzione riusabile con React Router 7;
-- modale applicativa per la navigazione interna;
-- avviso nativo `beforeunload` per refresh e chiusura;
-- `Resta`, `Abbandona` e bozza manuale secondo specifica;
-- stato submitting;
-- nessun doppio modal;
-- focus e accessibilità;
-- nessun blocco dopo submit.
+### F2A — Data Router e infrastruttura test — COMPLETATA
+
+- migrazione da `BrowserRouter` a `createBrowserRouter` e `RouterProvider`;
+- configurazione condivisa e riusabile tramite `createAppRoutes`;
+- `QueryClientProvider` e `AuthProvider` conservati sopra il router;
+- ramo autenticato con provider contatti account-scoped, `Layout` e `Outlet`;
+- tutte le 17 route, i componenti e i redirect preservati;
+- aggiunte esclusivamente come dev dependency `jsdom`,
+  `@testing-library/react` e `@testing-library/user-event`;
+- nessun comportamento applicativo modificato intenzionalmente.
+
+### F2B — Contratto e macchina a stati pura — COMPLETATA
+
+- fasi `idle`, `blocked`, `saving`, `discarding` e `proceeding`;
+- prima navigazione sospesa preservata ed eventi concorrenti ignorati;
+- `Resta`, save e discard asincroni con retry ed errore normalizzato;
+- bypass one-shot e helper puri per blocco, dialog e disponibilità azioni;
+- nessuna dipendenza da React, router, auth o database.
+
+### F2C — Hook e dialog — COMPLETATA
+
+- binding ufficiale con `useBlocker` e `useBeforeUnload` per refresh e chiusura;
+- `UnsavedChangesDialog` basato sulle primitive accessibili Headless UI;
+- azioni `Resta`, `Abbandona` e `Salva bozza`;
+- operazioni serializzate, errori mostrati senza chiudere il dialog e bypass
+  utilizzabile nello stesso tick;
+- callback aggiornate senza closure obsolete;
+- titolo e descrizione associati, focus iniziale, focus trap, ripristino del
+  focus, Escape e backdrop equivalenti a Resta, alert accessibile e pulsanti
+  disabilitati durante le operazioni;
+- compatibilità React Strict Mode verificata da F2C-FIX1.
+
+### F2D — Integrazione logout — COMPLETATA
+
+- test integrato con `AuthProvider` e `LogoutPage` reali;
+- sessione e account conservati mentre il dialog è aperto e durante operazioni
+  pendenti;
+- logout eseguito soltanto dopo save o discard riusciti;
+- `Resta` ed errori non cancellano la sessione;
+- prima destinazione `/logout` preservata rispetto a navigazioni concorrenti;
+- nessuna doppia operazione sotto Strict Mode;
+- smoke browser della baseline applicativa positivo.
+
+### Verifica finale F2
+
+La verifica conclusiva registra 5 file di test specifici F2 e 124 test
+specifici F2. La suite complessiva comprende 21 file e 342 test passati, con
+0 falliti e 0 saltati. Lint focalizzato, build e `git diff --check` sono
+positivi. Lo smoke browser è positivo. Restano non bloccanti il warning Vite
+sulla dimensione del chunk e gli avvisi LF→CRLF.
+
+**Fuori dal perimetro completato:** F2 non ha integrato il guard nei form
+reali, collegato il repository bozze ai form, rimosso gli autosalvataggi
+legacy, implementato restore o cancellazione delle bozze nei form, collaudato
+interattivamente il guard dentro i form reali, né completato F3 o F4. Il guard
+condiviso è disponibile per F3, ma non è ancora attivo nei form.
 
 ## TASK F3 — Integrazioni
 
-**Dipendenze:** F1 e F2.
+**Dipendenze tecniche:** F1 e F2 sono soddisfatte. F3 resta aperta e nessuna
+integrazione è iniziata.
 
 Mantenere task separate per form:
 
