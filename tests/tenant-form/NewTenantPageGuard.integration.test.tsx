@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import userEvent from '@testing-library/user-event';
 import { useFormContext } from 'react-hook-form';
 import {
+    createBrowserRouter,
     createMemoryRouter,
     Link,
     RouterProvider,
@@ -30,6 +31,7 @@ import {
 } from '../../src/auth/authStorage';
 
 let repository: DraftRepository;
+const browserRouters: ReturnType<typeof createBrowserRouter>[] = [];
 
 vi.mock('../../src/drafts/DraftRepositoryContext', () => ({
     useDraftRepository: () => repository,
@@ -111,6 +113,28 @@ function renderPage(draft: DraftRecord<TenantFormData> | null = null) {
     return router;
 }
 
+function renderBrowserPage(
+    draft: DraftRecord<TenantFormData> | null = null,
+    strictMode = false,
+) {
+    repository = makeRepository(draft);
+    window.history.replaceState(null, '', '/tenants');
+    const router = createBrowserRouter([
+        {
+            path: '/tenants',
+            element: <Link to="/tenants/new">Nuovo inquilino</Link>,
+        },
+        { path: '/tenants/new', element: <NewTenantPage /> },
+        { path: '/sidebar', element: <p>sidebar target</p> },
+        { path: '/logout', element: <p>logout target</p> },
+        { path: '/tenants/:id', element: <p>tenant detail</p> },
+    ]);
+    browserRouters.push(router);
+    const app = <RouterProvider router={router} />;
+    render(strictMode ? <React.StrictMode>{app}</React.StrictMode> : app);
+    return router;
+}
+
 function AuthState() {
     const { account } = useAuth();
     const location = useLocation();
@@ -167,11 +191,143 @@ function renderAuthenticatedPage(
 
 afterEach(() => {
     cleanup();
+    browserRouters.splice(0).forEach((router) => router.dispose());
     vi.clearAllMocks();
     window.history.replaceState(null, '');
     clearSession();
     localStorage.clear();
     sessionStorage.clear();
+});
+
+describe('NewTenantPage browser history integration', () => {
+    it('blocca POP dirty, Resta conserva e Abbandona procede', async () => {
+        const router = renderBrowserPage(null, true);
+        await userEvent.click(screen.getByRole('link', {
+            name: 'Nuovo inquilino',
+        }));
+        const input = await screen.findByLabelText('Nome');
+        await userEvent.type(input, 'Ada');
+        expect((input as HTMLInputElement).value).toBe('Ada');
+
+        window.history.back();
+        await screen.findByText('Modifiche non salvate');
+        expect(router.state.location.pathname).toBe('/tenants/new');
+        expect((input as HTMLInputElement).value).toBe('Ada');
+        expect(repository.save).not.toHaveBeenCalled();
+        expect(repository.delete).not.toHaveBeenCalled();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Resta' }));
+        expect(router.state.location.pathname).toBe('/tenants/new');
+        expect((input as HTMLInputElement).value).toBe('Ada');
+
+        window.history.back();
+        await screen.findByText('Modifiche non salvate');
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Abbandona',
+        }));
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/tenants'));
+        expect(repository.save).not.toHaveBeenCalled();
+        expect(repository.delete).not.toHaveBeenCalled();
+    });
+
+    it('consente POP con form pulito senza dialog', async () => {
+        const router = renderBrowserPage();
+        await userEvent.click(screen.getByRole('link', {
+            name: 'Nuovo inquilino',
+        }));
+        await screen.findByLabelText('Nome');
+        window.history.back();
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/tenants'));
+        expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+        expect(repository.save).not.toHaveBeenCalled();
+        expect(repository.delete).not.toHaveBeenCalled();
+    });
+
+    it('blocca POP su bozza ripresa dirty e conserva la bozza persistita', async () => {
+        const router = renderBrowserPage(record('Salvato'));
+        await userEvent.click(screen.getByRole('link', {
+            name: 'Nuovo inquilino',
+        }));
+        await userEvent.click(await screen.findByRole('button', {
+            name: 'Riprendi bozza',
+        }));
+        const input = screen.getByLabelText('Nome');
+        await userEvent.clear(input);
+        await userEvent.type(input, 'Modificato');
+        window.history.back();
+        await screen.findByText('Modifiche non salvate');
+        expect(router.state.location.pathname).toBe('/tenants/new');
+        await userEvent.click(screen.getByRole('button', { name: 'Resta' }));
+        expect((input as HTMLInputElement).value).toBe('Modificato');
+        window.history.back();
+        await screen.findByText('Modifiche non salvate');
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Abbandona',
+        }));
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/tenants'));
+        expect(repository.delete).not.toHaveBeenCalled();
+    });
+
+    it('preserva il primo POP mentre il dialog è aperto', async () => {
+        const router = renderBrowserPage();
+        await userEvent.click(screen.getByRole('link', {
+            name: 'Nuovo inquilino',
+        }));
+        await userEvent.type(await screen.findByLabelText('Nome'), 'Ada');
+        window.history.back();
+        await screen.findByText('Modifiche non salvate');
+        await router.navigate('/sidebar');
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Abbandona',
+        }));
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/tenants'));
+        expect(screen.queryByText('sidebar target')).toBeNull();
+    });
+
+    it('salva una volta e procede verso il primo POP', async () => {
+        const router = renderBrowserPage();
+        await userEvent.click(screen.getByRole('link', {
+            name: 'Nuovo inquilino',
+        }));
+        await userEvent.type(await screen.findByLabelText('Nome'), 'Ada');
+        window.history.back();
+        await screen.findByText('Modifiche non salvate');
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Salva bozza',
+        }));
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/tenants'));
+        expect(repository.save).toHaveBeenCalledOnce();
+        expect(repository.delete).not.toHaveBeenCalled();
+    });
+
+    it('save fallita mantiene il POP sospeso e consente retry', async () => {
+        const router = renderBrowserPage();
+        vi.mocked(repository.save)
+            .mockRejectedValueOnce(new Error('storage'))
+            .mockResolvedValueOnce(record('Ada'));
+        await userEvent.click(screen.getByRole('link', {
+            name: 'Nuovo inquilino',
+        }));
+        await userEvent.type(await screen.findByLabelText('Nome'), 'Ada');
+        window.history.back();
+        await screen.findByText('Modifiche non salvate');
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Salva bozza',
+        }));
+        expect(await screen.findByRole('alert')).toBeTruthy();
+        expect(router.state.location.pathname).toBe('/tenants/new');
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Salva bozza',
+        }));
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/tenants'));
+        expect(repository.save).toHaveBeenCalledTimes(2);
+    });
 });
 
 describe('NewTenantPage guard integration', () => {

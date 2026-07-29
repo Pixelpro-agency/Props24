@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import React from 'react';
+import React, { useState } from 'react';
+import { flushSync } from 'react-dom';
 import {
     cleanup,
     fireEvent,
@@ -11,7 +12,9 @@ import {
 import userEvent from '@testing-library/user-event';
 import {
     RouterProvider,
+    createBrowserRouter,
     createMemoryRouter,
+    Link,
     Outlet,
     useNavigate,
 } from 'react-router-dom';
@@ -118,6 +121,59 @@ afterEach(() => {
 });
 
 describe('useUnsavedChangesGuard', () => {
+    it('blocca un POP immediato dopo il commit dirty nello stesso task', async () => {
+        window.history.replaceState(null, '', '/previous');
+
+        function BrowserPopHarness() {
+            const [isDirty, setIsDirty] = useState(false);
+            const guard = useUnsavedChangesGuard({
+                enabled: true,
+                isDirty,
+                isSubmitting: false,
+                isSavingDraft: false,
+                saveDraft: async () => undefined,
+                discardChanges: () => undefined,
+            });
+            return (
+                <>
+                    <output data-testid="browser-dirty">
+                        {String(isDirty)}
+                    </output>
+                    <output data-testid="browser-phase">
+                        {guard.state.phase}
+                    </output>
+                    <button onClick={() => {
+                        flushSync(() => setIsDirty(true));
+                        window.history.back();
+                    }}>
+                        Dirty e indietro
+                    </button>
+                </>
+            );
+        }
+
+        const router = createBrowserRouter([
+            {
+                path: '/previous',
+                element: <Link to="/current">Apri form</Link>,
+            },
+            { path: '/current', element: <BrowserPopHarness /> },
+        ]);
+        render(<RouterProvider router={router} />);
+        await userEvent.click(screen.getByRole('link', {
+            name: 'Apri form',
+        }));
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Dirty e indietro',
+        }));
+        expect(screen.getByTestId('browser-dirty').textContent).toBe('true');
+        await waitFor(() => expect(
+            screen.getByTestId('browser-phase').textContent,
+        ).toBe('blocked'));
+        expect(router.state.location.pathname).toBe('/current');
+        router.dispose();
+    });
+
     it.each([
         ['clean', { isDirty: false }],
         ['disabilitato', { enabled: false }],
