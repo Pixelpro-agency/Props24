@@ -132,6 +132,7 @@ export type PropertyContactFormData = z.infer<typeof propertyContactSchema>;
 export type PropertyDocumentFormData = z.infer<typeof propertyDocumentSchema>;
 export type PropertyFormData = z.infer<typeof propertySchema>;
 export const propertyDraftSchema = propertySchema.extend({
+    PropertyTitle: stringField,
     PropertyAddress: stringField,
     PropertyCity: stringField,
     PropertyPostalCode: stringField,
