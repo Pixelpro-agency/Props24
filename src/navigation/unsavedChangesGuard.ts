@@ -121,8 +121,11 @@ export function shouldBlockUnsavedChangesNavigation(
     state: UnsavedChangesGuardState,
     conditions: UnsavedChangesGuardConditions,
 ): boolean {
+    const hasPendingNavigation = state.phase !== 'idle'
+        && state.requestId !== null;
+
     return conditions.enabled
-        && conditions.isDirty
+        && (conditions.isDirty || hasPendingNavigation)
         && !state.bypassNextNavigation;
 }
 

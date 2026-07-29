@@ -68,6 +68,49 @@ describe('unsaved changes guard state machine', () => {
         expect(shouldBlockUnsavedChangesNavigation(state, conditions)).toBe(expected);
     });
 
+    it.each<UnsavedChangesGuardPhase>([
+        'blocked',
+        'saving',
+        'discarding',
+        'proceeding',
+    ])('mantiene protetta la navigazione %s anche con form clean', (phase) => {
+        expect(shouldBlockUnsavedChangesNavigation(
+            { ...blocked(), phase },
+            { ...readyConditions, isDirty: false },
+        )).toBe(true);
+    });
+
+    it.each<UnsavedChangesGuardPhase>([
+        'idle',
+        'blocked',
+        'saving',
+        'discarding',
+        'proceeding',
+    ])('enabled=false prevale in fase %s', (phase) => {
+        expect(shouldBlockUnsavedChangesNavigation(
+            phase === 'idle'
+                ? createInitialUnsavedChangesGuardState()
+                : { ...blocked(), phase },
+            { ...readyConditions, enabled: false, isDirty: false },
+        )).toBe(false);
+    });
+
+    it.each<UnsavedChangesGuardPhase>([
+        'idle',
+        'blocked',
+        'saving',
+        'discarding',
+        'proceeding',
+    ])('bypass prevale in fase %s', (phase) => {
+        const state = phase === 'idle'
+            ? createInitialUnsavedChangesGuardState()
+            : { ...blocked(), phase };
+        expect(shouldBlockUnsavedChangesNavigation(
+            { ...state, bypassNextNavigation: true },
+            readyConditions,
+        )).toBe(false);
+    });
+
     it('apre il blocco con request ID normalizzato', () => {
         expect(blocked('  request-1  ')).toEqual({
             phase: 'blocked',

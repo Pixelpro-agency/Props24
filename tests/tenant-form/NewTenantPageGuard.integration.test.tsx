@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useFormContext } from 'react-hook-form';
@@ -185,6 +185,55 @@ function renderAuthenticatedPage(
         <AuthProvider>
             <RouterProvider router={router} />
         </AuthProvider>,
+    );
+    return { router, logoutMount };
+}
+
+function renderAuthenticatedBrowserPage() {
+    repository = makeRepository();
+    const logoutMount = vi.fn();
+    function RealLogout() {
+        const recordedRef = useRef(false);
+        useEffect(() => {
+            if (!recordedRef.current) {
+                recordedRef.current = true;
+                logoutMount();
+            }
+        }, []);
+        return <LogoutPage />;
+    }
+    window.history.replaceState(null, '', '/tenants/new');
+    const router = createBrowserRouter([
+        {
+            path: '/tenants/new',
+            element: (
+                <>
+                    <AuthState />
+                    <Link to="/logout">Logout BrowserRouter</Link>
+                    <NewTenantPage />
+                </>
+            ),
+        },
+        { path: '/logout', element: <RealLogout /> },
+        {
+            path: '/dashboard',
+            element: (
+                <>
+                    <AuthState />
+                    <p>dashboard browser</p>
+                </>
+            ),
+        },
+        { path: '/tenants/:id', element: <p>tenant detail</p> },
+        { path: '/tenants', element: <p>tenants</p> },
+    ]);
+    browserRouters.push(router);
+    render(
+        <React.StrictMode>
+            <AuthProvider>
+                <RouterProvider router={router} />
+            </AuthProvider>
+        </React.StrictMode>,
     );
     return { router, logoutMount };
 }
@@ -493,6 +542,29 @@ describe('NewTenantPage guard integration', () => {
         expect(screen.getByTestId('account').textContent).toBe('user-001');
         expect((input as HTMLInputElement).value).toBe('Ada');
         expect(logoutMount).not.toHaveBeenCalled();
+    });
+
+    it('BrowserRouter logout + save completa dopo reset dirty in Strict Mode', async () => {
+        initializeAccounts();
+        writeSession('user-001');
+        const { router, logoutMount } = renderAuthenticatedBrowserPage();
+        await waitFor(() => expect(screen.getByTestId('account').textContent)
+            .toBe('user-001'));
+        await userEvent.type(await screen.findByLabelText('Nome'), 'Ada');
+        await userEvent.click(screen.getByRole('link', {
+            name: 'Logout BrowserRouter',
+        }));
+        await screen.findByText('Modifiche non salvate');
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Salva bozza',
+        }));
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/dashboard'));
+        expect(screen.getByTestId('account').textContent).toBe('none');
+        expect(logoutMount).toHaveBeenCalledOnce();
+        expect(repository.save).toHaveBeenCalledOnce();
+        expect(repository.delete).not.toHaveBeenCalled();
+        expect(screen.queryByText('Modifiche non salvate')).toBeNull();
     });
 
     it.each([

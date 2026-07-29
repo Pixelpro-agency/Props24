@@ -121,6 +121,68 @@ afterEach(() => {
 });
 
 describe('useUnsavedChangesGuard', () => {
+    it('preserva la navigazione BrowserRouter se save rende il form clean', async () => {
+        window.history.replaceState(null, '', '/form');
+        const pending = deferred();
+        const saveDraft = vi.fn(() => pending.promise);
+
+        function BrowserSaveHarness() {
+            const [isDirty, setIsDirty] = useState(true);
+            const guard = useUnsavedChangesGuard({
+                enabled: true,
+                isDirty,
+                isSubmitting: false,
+                isSavingDraft: false,
+                saveDraft: async () => {
+                    saveDraft();
+                    flushSync(() => setIsDirty(false));
+                    await pending.promise;
+                },
+                discardChanges: () => undefined,
+            });
+
+            return (
+                <>
+                    <output data-testid="browser-save-dirty">
+                        {String(isDirty)}
+                    </output>
+                    <output data-testid="browser-save-phase">
+                        {guard.state.phase}
+                    </output>
+                    <Link to="/logout">Logout</Link>
+                    <button onClick={() => void guard.saveAndProceed()}>
+                        Salva bozza
+                    </button>
+                </>
+            );
+        }
+
+        const router = createBrowserRouter([
+            { path: '/form', element: <BrowserSaveHarness /> },
+            { path: '/logout', element: <p>Logout raggiunto</p> },
+            { path: '/other', element: <p>Altra destinazione</p> },
+        ]);
+        render(<RouterProvider router={router} />);
+        await userEvent.click(screen.getByRole('link', { name: 'Logout' }));
+        await waitFor(() => expect(
+            screen.getByTestId('browser-save-phase').textContent,
+        ).toBe('blocked'));
+        fireEvent.click(screen.getByRole('button', { name: 'Salva bozza' }));
+        await waitFor(() => expect(
+            screen.getByTestId('browser-save-dirty').textContent,
+        ).toBe('false'));
+        expect(screen.getByTestId('browser-save-phase').textContent)
+            .toBe('saving');
+        expect(router.state.location.pathname).toBe('/form');
+        expect(saveDraft).toHaveBeenCalledTimes(1);
+        await router.navigate('/other');
+        expect(router.state.location.pathname).toBe('/form');
+        pending.resolve();
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/logout'));
+        router.dispose();
+    });
+
     it('blocca un POP immediato dopo il commit dirty nello stesso task', async () => {
         window.history.replaceState(null, '', '/previous');
 
