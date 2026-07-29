@@ -71,6 +71,9 @@ describe('tenant draft definition', () => {
         }, 1);
 
         expect(parsed.TenantPhoto).toEqual(file);
+        expect(parsed.TenantIDCard).toEqual(file);
+        expect(parsed.TenantIDCardBack).toEqual(file);
+        expect(parsed.TenantCompanyRegistryFile).toEqual(file);
         expect(parsed.TenantGuarantors[0]?.id).toBe('guarantor-1');
         expect(parsed.TenantEmergencyContacts[0]?.isPrimary).toBe(true);
         expect(parsed.TenantDocuments[0]?.file).toEqual(file);
