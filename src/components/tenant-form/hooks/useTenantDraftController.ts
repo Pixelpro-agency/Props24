@@ -64,9 +64,7 @@ function saveErrorMessage(error: unknown): string {
     if (error instanceof DraftStorageError) {
         return 'Impossibile salvare la bozza nel database locale.';
     }
-    return error instanceof Error && error.message
-        ? error.message
-        : 'Impossibile salvare la bozza.';
+    return 'Impossibile salvare la bozza.';
 }
 
 export interface TenantDraftController {
@@ -81,6 +79,7 @@ export interface TenantDraftController {
     deleteAndRestart(): Promise<void>;
     retryLoad(): void;
     saveDraft(): Promise<void>;
+    deletePersistedDraft(): Promise<void>;
     discardChanges(): void;
     clearDraftFeedback(): void;
 }
@@ -111,6 +110,7 @@ export function useTenantDraftController(
     const requestIdRef = useRef(0);
     const savePendingRef = useRef(false);
     const deletePendingRef = useRef(false);
+    const persistedDeletePromiseRef = useRef<Promise<void> | null>(null);
 
     useEffect(() => {
         const requestId = ++requestIdRef.current;
@@ -225,12 +225,27 @@ export function useTenantDraftController(
             methods.reset(snapshot);
             setDraftSuccess('Bozza salvata.');
         } catch (error) {
-            setDraftError(saveErrorMessage(error));
+            const message = saveErrorMessage(error);
+            setDraftError(message);
+            throw new Error(message);
         } finally {
             savePendingRef.current = false;
             setIsSavingDraft(false);
         }
     }, [methods, phase, repository]);
+
+    const deletePersistedDraft = useCallback((): Promise<void> => {
+        if (persistedDeletePromiseRef.current) {
+            return persistedDeletePromiseRef.current;
+        }
+        const operation = repository.delete(TENANT_DRAFT_KEY)
+            .then(() => undefined)
+            .finally(() => {
+                persistedDeletePromiseRef.current = null;
+            });
+        persistedDeletePromiseRef.current = operation;
+        return operation;
+    }, [repository]);
 
     const discardChanges = useCallback(() => {
         methods.reset(cloneSnapshot(lastSavedSnapshotRef.current));
@@ -253,6 +268,7 @@ export function useTenantDraftController(
         deleteAndRestart,
         retryLoad,
         saveDraft,
+        deletePersistedDraft,
         discardChanges,
         clearDraftFeedback,
     };

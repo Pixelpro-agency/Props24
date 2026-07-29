@@ -24,6 +24,7 @@ import {
     type TenantFormData,
 } from '../../src/components/tenant-form/schema';
 import { useTenantDraftController } from '../../src/components/tenant-form/hooks/useTenantDraftController';
+import type { TenantDraftController } from '../../src/components/tenant-form/hooks/useTenantDraftController';
 
 let repository: DraftRepository;
 
@@ -71,9 +72,14 @@ function makeRepository(
 interface HarnessProps {
     onPhaseChange?: (phase: string) => void;
     onReset?: () => void;
+    onController?: (controller: TenantDraftController) => void;
 }
 
-function Harness({ onPhaseChange, onReset }: HarnessProps = {}) {
+function Harness({
+    onPhaseChange,
+    onReset,
+    onController,
+}: HarnessProps = {}) {
     const methods = useForm<TenantFormData>({
         defaultValues: defaultTenantValues,
     });
@@ -99,6 +105,10 @@ function Harness({ onPhaseChange, onReset }: HarnessProps = {}) {
     useEffect(() => {
         onPhaseChange?.(controller.phase);
     }, [controller.phase, onPhaseChange]);
+
+    useEffect(() => {
+        onController?.(controller);
+    }, [controller, onController]);
 
     return (
         <div>
@@ -172,7 +182,11 @@ function Harness({ onPhaseChange, onReset }: HarnessProps = {}) {
                 elimina
             </button>
             <button type="button" onClick={controller.retryLoad}>riprova</button>
-            <button type="button" onClick={() => void controller.saveDraft()}>
+            <button
+                type="button"
+                onClick={() => void controller.saveDraft()
+                    .catch(() => undefined)}
+            >
                 salva
             </button>
             <button type="button" onClick={controller.discardChanges}>
@@ -314,6 +328,23 @@ describe('useTenantDraftController', () => {
         expect(screen.getByTestId('dirty').textContent).toBe('true');
     });
 
+    it('saveDraft fallito aggiorna feedback e rifiuta user-safe', async () => {
+        let controller!: TenantDraftController;
+        repository = makeRepository();
+        vi.mocked(repository.save).mockRejectedValue(
+            new DraftStorageQuotaError(),
+        );
+        render(<Harness onController={(value) => {
+            controller = value;
+        }} />);
+        await screen.findByText('ready');
+        await expect(controller.saveDraft()).rejects.toThrow(
+            'Spazio locale esaurito',
+        );
+        await waitFor(() => expect(screen.getByTestId('error').textContent)
+            .toContain('Spazio locale esaurito'));
+    });
+
     it.each([
         ['email', 'email invalida', 'email', 'non-valida'],
         ['IBAN', 'iban invalido', 'iban', 'IT60$'],
@@ -386,6 +417,55 @@ describe('useTenantDraftController', () => {
         expect(screen.getByTestId('dirty').textContent).toBe('false');
         expect(screen.getByTestId('deleting').textContent).toBe('false');
         expect(onReset).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([true, false])(
+        'deletePersistedDraft tratta %s come successo senza reset',
+        async (deleted) => {
+            let controller!: TenantDraftController;
+            const onReset = vi.fn();
+            repository = makeRepository();
+            vi.mocked(repository.delete).mockResolvedValue(deleted);
+            render(<Harness
+                onReset={onReset}
+                onController={(value) => {
+                    controller = value;
+                }}
+            />);
+            await screen.findByText('ready');
+            onReset.mockClear();
+            await controller.deletePersistedDraft();
+            expect(repository.delete).toHaveBeenCalledWith({
+                formType: 'tenant',
+                mode: 'create',
+                entityId: null,
+            });
+            expect(onReset).not.toHaveBeenCalled();
+        },
+    );
+
+    it('serializza deletePersistedDraft e permette retry dopo errore', async () => {
+        let controller!: TenantDraftController;
+        const pending = deferred<boolean>();
+        repository = makeRepository();
+        vi.mocked(repository.delete)
+            .mockReturnValueOnce(pending.promise)
+            .mockRejectedValueOnce(new DraftStorageError())
+            .mockResolvedValueOnce(true);
+        render(<Harness onController={(value) => {
+            controller = value;
+        }} />);
+        await screen.findByText('ready');
+        const first = controller.deletePersistedDraft();
+        const second = controller.deletePersistedDraft();
+        expect(first).toBe(second);
+        expect(repository.delete).toHaveBeenCalledTimes(1);
+        pending.resolve(true);
+        await first;
+        await expect(controller.deletePersistedDraft())
+            .rejects.toBeInstanceOf(DraftStorageError);
+        await expect(controller.deletePersistedDraft()).resolves.toBeUndefined();
+        expect(repository.delete).toHaveBeenCalledTimes(3);
     });
 
     it('esegue una sola lettura logica sotto Strict Mode', async () => {

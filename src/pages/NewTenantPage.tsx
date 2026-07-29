@@ -35,21 +35,19 @@ function navigateBackOrTenants(
 
 interface TenantFormContentProps {
     activeTab: TenantTabId;
-    isSubmitting: boolean;
     submitError: string | null;
     clearSubmitError(): void;
 }
 
 function TenantFormContent({
     activeTab,
-    isSubmitting,
     submitError,
     clearSubmitError,
 }: TenantFormContentProps) {
     const navigate = useNavigate();
     const draft = useTenantFormContext();
     const operationsPending =
-        isSubmitting || draft.isSavingDraft || draft.isDeletingDraft;
+        draft.isSubmitting || draft.isSavingDraft || draft.isDeletingDraft;
     const toast = submitError
         ? { variant: 'error' as const, title: 'Errore', message: submitError }
         : draft.draftError
@@ -89,7 +87,10 @@ function TenantFormContent({
                         <div className="mt-8 flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:justify-end">
                             <button
                                 type="button"
-                                onClick={() => void draft.saveDraft()}
+                                onClick={() => {
+                                    void draft.saveDraft()
+                                        .catch(() => undefined);
+                                }}
                                 disabled={
                                     draft.draftPhase !== 'ready'
                                     || operationsPending
@@ -113,7 +114,7 @@ function TenantFormContent({
                                 disabled={operationsPending}
                                 className="inline-flex min-w-[100px] items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {isSubmitting ? 'Salvataggio...' : (
+                                {draft.isSubmitting ? 'Salvataggio...' : (
                                     <>
                                         <Save className="w-4 h-4 ml-[-4px]" />
                                         Salva
@@ -133,26 +134,24 @@ export function NewTenantPage() {
     const [activeTab, setActiveTabId] = useState<TenantTabId>(
         TENANT_TABS[0].id,
     );
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isDraftBusy, setIsDraftBusy] = useState(true);
+    const [isFormBusy, setIsFormBusy] = useState(true);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
-    const handleSubmit = async (data: TenantFormData) => {
-        setIsSubmitting(true);
+    const handleCreateTenant = (data: TenantFormData) => {
         setSubmitError(null);
-        try {
-            const tenant = createTenant(data);
-            navigate(`/tenants/${tenant.id}`, {
-                state: {
-                    toast: {
-                        title: 'Successo',
-                        message: 'Creato!',
-                    },
+        const tenant = createTenant(data);
+        return { id: tenant.id };
+    };
+
+    const handleTenantCreated = ({ id }: { id: string }) => {
+        navigate(`/tenants/${id}`, {
+            state: {
+                toast: {
+                    title: 'Successo',
+                    message: 'Creato!',
                 },
-            });
-        } finally {
-            setIsSubmitting(false);
-        }
+            },
+        });
     };
 
     return (
@@ -163,7 +162,7 @@ export function NewTenantPage() {
                         <button
                             type="button"
                             onClick={() => navigateBackOrTenants(navigate)}
-                            disabled={isSubmitting || isDraftBusy}
+                            disabled={isFormBusy}
                             className="p-2 hover:bg-gray-100 rounded-md transition-colors text-gray-500 disabled:opacity-60"
                             aria-label="Indietro"
                         >
@@ -178,14 +177,14 @@ export function NewTenantPage() {
             <TenantFormProvider
                 activeTab={activeTab}
                 setActiveTab={(id) => setActiveTabId(id as TenantTabId)}
-                onSubmit={handleSubmit}
+                onCreateTenant={handleCreateTenant}
+                onTenantCreated={handleTenantCreated}
                 onSubmitError={setSubmitError}
                 onExitDraft={() => navigateBackOrTenants(navigate)}
-                onDraftBusyChange={setIsDraftBusy}
+                onFormBusyChange={setIsFormBusy}
             >
                 <TenantFormContent
                     activeTab={activeTab}
-                    isSubmitting={isSubmitting}
                     submitError={submitError}
                     clearSubmitError={() => setSubmitError(null)}
                 />

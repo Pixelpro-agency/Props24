@@ -11,9 +11,8 @@ import {
 import userEvent from '@testing-library/user-event';
 import { useFormContext } from 'react-hook-form';
 import {
-    MemoryRouter,
-    Route,
-    Routes,
+    createMemoryRouter,
+    RouterProvider,
 } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -27,7 +26,6 @@ import {
 } from '../../src/components/tenant-form/schema';
 import { NewTenantPage } from '../../src/pages/NewTenantPage';
 import { createTenant } from '../../src/db/tenantRepository';
-import { clearDraft } from '../../src/db/jsonDb';
 
 let repository: DraftRepository;
 
@@ -47,10 +45,6 @@ vi.mock('../../src/drafts/DraftRepositoryContext', () => ({
 
 vi.mock('../../src/db/tenantRepository', () => ({
     createTenant: vi.fn(() => ({ id: 'tenant-created' })),
-}));
-
-vi.mock('../../src/db/jsonDb', () => ({
-    clearDraft: vi.fn(),
 }));
 
 vi.mock('../../src/components/tenant-form/TenantFormTabs', () => ({
@@ -122,19 +116,13 @@ function makeRepository(
 }
 
 function renderPage(entries = ['/tenants/new']) {
-    return render(
-        <MemoryRouter initialEntries={entries}>
-            <Routes>
-                <Route path="/previous" element={<div>previous</div>} />
-                <Route path="/tenants" element={<div>tenant list</div>} />
-                <Route path="/tenants/new" element={<NewTenantPage />} />
-                <Route
-                    path="/tenants/:id"
-                    element={<div>tenant detail</div>}
-                />
-            </Routes>
-        </MemoryRouter>,
-    );
+    const router = createMemoryRouter([
+        { path: '/previous', element: <div>previous</div> },
+        { path: '/tenants', element: <div>tenant list</div> },
+        { path: '/tenants/new', element: <NewTenantPage /> },
+        { path: '/tenants/:id', element: <div>tenant detail</div> },
+    ], { initialEntries: entries });
+    return { ...render(<RouterProvider router={router} />), router };
 }
 
 afterEach(() => {
@@ -265,7 +253,7 @@ describe('NewTenantPage draft integration', () => {
         expect(screen.getAllByText('Bozza salvata.')).toHaveLength(1);
     });
 
-    it('mantiene submit definitivo e pulizia legacy solo su successo', async () => {
+    it('mantiene submit definitivo e pulizia repository solo su successo', async () => {
         repository = makeRepository(null);
         const user = userEvent.setup();
         renderPage();
@@ -274,7 +262,11 @@ describe('NewTenantPage draft integration', () => {
         await user.click(screen.getByRole('button', { name: 'Salva' }));
         expect(await screen.findByText('tenant detail')).toBeTruthy();
         expect(createTenant).toHaveBeenCalledOnce();
-        expect(clearDraft).toHaveBeenCalledWith('tenantForm');
+        expect(repository.delete).toHaveBeenCalledWith({
+            formType: 'tenant',
+            mode: 'create',
+            entityId: null,
+        });
     });
 
     it('su submit fallito conserva form e non pulisce la bozza', async () => {
@@ -289,6 +281,6 @@ describe('NewTenantPage draft integration', () => {
         await user.click(screen.getByRole('button', { name: 'Salva' }));
         expect(await screen.findByText('Creazione fallita')).toBeTruthy();
         expect(screen.getByDisplayValue('Ada')).toBeTruthy();
-        expect(clearDraft).not.toHaveBeenCalled();
+        expect(repository.delete).not.toHaveBeenCalled();
     });
 });
