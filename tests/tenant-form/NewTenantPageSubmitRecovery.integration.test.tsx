@@ -137,6 +137,7 @@ function RealLogout() {
 function renderPage(
     draft: DraftRecord<TenantFormData> | null = null,
     initialEntries = ['/tenants/new'],
+    strictMode = false,
 ) {
     repository = makeRepository(draft);
     const router = createMemoryRouter([
@@ -169,11 +170,12 @@ function renderPage(
         },
         { path: '/tenants', element: <p>tenants</p> },
     ], { initialEntries });
-    render(
+    const app = (
         <AuthProvider>
             <RouterProvider router={router} />
-        </AuthProvider>,
+        </AuthProvider>
     );
+    render(strictMode ? <React.StrictMode>{app}</React.StrictMode> : app);
     return router;
 }
 
@@ -186,6 +188,10 @@ async function fillAndSubmit() {
 afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.mocked(createTenant).mockImplementation(() => {
+        events.push('create');
+        return { id: 'tenant-original' };
+    });
     events.length = 0;
     logoutMount.mockClear();
     clearSession();
@@ -194,6 +200,110 @@ afterEach(() => {
 });
 
 describe('NewTenantPage submit recovery', () => {
+    it.each([true, false])(
+        'Strict Mode completa submit non dirty con delete %s',
+        async (deleted) => {
+            initializeAccounts();
+            writeSession('user-001');
+            vi.mocked(createTenant).mockReturnValue({
+                id: 'tenant-strict-success',
+            } as never);
+            const router = renderPage(
+                validDraft(),
+                ['/tenants/new'],
+                true,
+            );
+            vi.mocked(repository.delete).mockResolvedValue(deleted);
+            await userEvent.click(await screen.findByRole('button', {
+                name: 'Riprendi bozza',
+            }));
+            await userEvent.click(screen.getByRole('button', {
+                name: 'Salva',
+            }));
+            await waitFor(() => expect(router.state.location.pathname)
+                .toBe('/tenants/tenant-strict-success'));
+            expect(createTenant).toHaveBeenCalledOnce();
+            expect(repository.delete).toHaveBeenCalledOnce();
+            expect(repository.delete).toHaveBeenCalledWith({
+                formType: 'tenant',
+                mode: 'create',
+                entityId: null,
+            });
+            expect(await screen.findByText('detail')).toBeTruthy();
+            expect(screen.queryByText('Salvataggio...')).toBeNull();
+            expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+            expect(screen.queryByText(
+                'Inquilino creato, pulizia incompleta',
+            )).toBeNull();
+        },
+    );
+
+    it('Strict Mode mantiene recovery e retry esegue soltanto delete', async () => {
+        initializeAccounts();
+        writeSession('user-001');
+        vi.mocked(createTenant).mockReturnValue({
+            id: 'tenant-strict-recovery',
+        } as never);
+        const router = renderPage(validDraft(), ['/tenants/new'], true);
+        vi.mocked(repository.delete)
+            .mockRejectedValueOnce(new Error('storage'))
+            .mockResolvedValueOnce(true);
+        await userEvent.click(await screen.findByRole('button', {
+            name: 'Riprendi bozza',
+        }));
+        await userEvent.click(screen.getByRole('button', { name: 'Salva' }));
+        expect(await screen.findByText(
+            'Inquilino creato, pulizia incompleta',
+        )).toBeTruthy();
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Riprova pulizia',
+        }));
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/tenants/tenant-strict-recovery'));
+        expect(createTenant).toHaveBeenCalledOnce();
+        expect(repository.delete).toHaveBeenCalledTimes(2);
+        expect(screen.queryByText('Continua comunque')).toBeNull();
+    });
+
+    it('Strict Mode ignora delete risolta dopo unmount reale', async () => {
+        initializeAccounts();
+        writeSession('user-001');
+        const pending = deferred<boolean>();
+        const router = renderPage(validDraft(), ['/tenants/new'], true);
+        vi.mocked(repository.delete).mockReturnValue(pending.promise);
+        await userEvent.click(await screen.findByRole('button', {
+            name: 'Riprendi bozza',
+        }));
+        await userEvent.click(screen.getByRole('button', { name: 'Salva' }));
+        await waitFor(() => expect(repository.delete).toHaveBeenCalledOnce());
+        cleanup();
+        await act(() => {
+            pending.resolve(true);
+            return pending.promise;
+        });
+        expect(router.state.location.pathname).toBe('/tenants/new');
+    });
+
+    it('Strict Mode serializza click e submit concorrenti', async () => {
+        initializeAccounts();
+        writeSession('user-001');
+        vi.mocked(createTenant).mockReturnValue({
+            id: 'tenant-strict-concurrent',
+        } as never);
+        const router = renderPage(validDraft(), ['/tenants/new'], true);
+        await userEvent.click(await screen.findByRole('button', {
+            name: 'Riprendi bozza',
+        }));
+        const submit = screen.getByRole('button', { name: 'Salva' });
+        fireEvent.click(submit);
+        fireEvent.click(submit);
+        fireEvent.submit(document.getElementById('tenant-form')!);
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/tenants/tenant-strict-concurrent'));
+        expect(createTenant).toHaveBeenCalledOnce();
+        expect(repository.delete).toHaveBeenCalledOnce();
+    });
+
     it('create fallita non elimina e consente retry create', async () => {
         const router = renderPage();
         vi.mocked(createTenant)
