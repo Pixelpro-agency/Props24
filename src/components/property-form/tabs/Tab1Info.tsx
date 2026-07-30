@@ -158,7 +158,6 @@ export function Tab1Info() {
                             { value: 'BA', label: 'Bosnia Erzegovina' },
                             { value: 'BW', label: 'Botswana' },
                             { value: 'BR', label: 'Brasile' },
-                            { value: 'IO', label: 'British Antarctic Territory' },
                             { value: 'BN', label: 'Brunei' },
                             { value: 'BG', label: 'Bulgaria' },
                             { value: 'BF', label: 'Burkina Faso' },
