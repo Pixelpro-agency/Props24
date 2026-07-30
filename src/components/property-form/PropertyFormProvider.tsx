@@ -15,6 +15,8 @@ import {
     DuplicatePropertyIdentifierError,
     DuplicatePropertyLocationError,
 } from '../../db/databaseErrors';
+import { UnsavedChangesDialog } from '../../navigation/UnsavedChangesDialog';
+import { useUnsavedChangesGuard } from '../../navigation/useUnsavedChangesGuard';
 import { PropertyDraftRestoreDialog } from './PropertyDraftRestoreDialog';
 import type { PropertyTabId } from './PropertyFormTabs';
 import {
@@ -80,19 +82,34 @@ export function PropertyFormProvider({
     });
     const draft = usePropertyDraftController(methods);
     const { clearDraft } = useFormPersistence();
+    const isSubmitting = methods.formState.isSubmitting;
+    const requiresNavigationProtection =
+        methods.formState.isDirty || isSubmitting;
+    const guard = useUnsavedChangesGuard({
+        enabled: draft.phase === 'ready',
+        isDirty: requiresNavigationProtection,
+        isSubmitting,
+        isSavingDraft: draft.isSavingDraft,
+        saveDraft: draft.saveDraft,
+        discardChanges: draft.discardChanges,
+    });
     const busy = draft.phase !== 'ready'
         || draft.isSavingDraft
-        || draft.isDeletingDraft;
+        || draft.isDeletingDraft
+        || isSubmitting
+        || guard.state.phase !== 'idle';
 
     useEffect(() => {
         onFormBusyChange?.(busy);
     }, [busy, onFormBusyChange]);
 
     const handleFormSubmit = async (data: PropertyFormData) => {
+        guard.allowNextNavigation();
         try {
             await onSubmit(data);
             clearDraft();
         } catch (error) {
+            guard.resetGuard();
             if (error instanceof DuplicatePropertyIdentifierError) {
                 const message = "Esiste gia un'unita con questo identificativo.";
                 methods.setError('PropertyTitle', {
@@ -179,6 +196,19 @@ export function PropertyFormProvider({
                         void draft.deleteAndRestart().catch(() => undefined);
                     }}
                     onRetry={draft.retryLoad}
+                />
+                <UnsavedChangesDialog
+                    open={guard.isDialogOpen}
+                    phase={guard.state.phase}
+                    error={guard.state.error}
+                    actionsDisabled={guard.actionsDisabled}
+                    onStay={guard.stay}
+                    onDiscard={() => {
+                        void guard.discardAndProceed();
+                    }}
+                    onSave={() => {
+                        void guard.saveAndProceed();
+                    }}
                 />
             </FormProvider>
         </PropertyFormContext.Provider>
