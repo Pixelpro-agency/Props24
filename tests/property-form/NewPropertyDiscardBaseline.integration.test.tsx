@@ -3,6 +3,7 @@
 import React from 'react';
 import {
     cleanup,
+    fireEvent,
     render,
     screen,
     waitFor,
@@ -118,7 +119,11 @@ function mountNewProperty() {
         initialEntries: ['/properties/new'],
     });
     const view = render(<RouterProvider router={router} />);
-    return { router, unmount: view.unmount };
+    return {
+        router,
+        unmount: view.unmount,
+        dispose: () => router.dispose(),
+    };
 }
 
 afterEach(() => {
@@ -133,38 +138,41 @@ describe('NewProperty discard baseline round-trip', () => {
         const MODIFIED = `${BASE}-MOD`;
         const state = makeStatefulRepository();
         repository = state.repository;
+        const user = userEvent.setup();
         const consoleError = vi.spyOn(console, 'error').mockImplementation(
             () => undefined,
         );
 
         const first = mountNewProperty();
         const firstInput = await screen.findByLabelText(/Identificativo/);
-        await userEvent.type(firstInput, BASE);
-        await userEvent.click(screen.getByRole('button', {
+        fireEvent.change(firstInput, { target: { value: BASE } });
+        expect((firstInput as HTMLInputElement).value).toBe(BASE);
+        await user.click(screen.getByRole('button', {
             name: 'Salva bozza',
         }));
         await screen.findByText('Bozza salvata.');
         expect(repository.save).toHaveBeenCalledOnce();
         expect(state.read()?.payload.PropertyTitle).toBe(BASE);
         first.unmount();
+        first.dispose();
 
         const second = mountNewProperty();
-        await userEvent.click(await screen.findByRole('button', {
+        await user.click(await screen.findByRole('button', {
             name: 'Riprendi bozza',
         }));
         const resumedInput = await screen.findByLabelText(/Identificativo/);
         expect((resumedInput as HTMLInputElement).value).toBe(BASE);
 
-        await userEvent.clear(resumedInput);
-        await userEvent.type(resumedInput, MODIFIED);
-        await userEvent.click(screen.getByRole('link', { name: 'Sidebar' }));
-        await userEvent.click(await screen.findByRole('button', {
+        fireEvent.change(resumedInput, { target: { value: MODIFIED } });
+        expect((resumedInput as HTMLInputElement).value).toBe(MODIFIED);
+        await user.click(screen.getByRole('link', { name: 'Sidebar' }));
+        await user.click(await screen.findByRole('button', {
             name: 'Resta',
         }));
         expect((resumedInput as HTMLInputElement).value).toBe(MODIFIED);
 
-        await userEvent.click(screen.getByRole('link', { name: 'Sidebar' }));
-        await userEvent.click(await screen.findByRole('button', {
+        await user.click(screen.getByRole('link', { name: 'Sidebar' }));
+        await user.click(await screen.findByRole('button', {
             name: 'Abbandona',
         }));
         await waitFor(() => expect(second.router.state.location.pathname)
@@ -173,15 +181,16 @@ describe('NewProperty discard baseline round-trip', () => {
         expect(repository.delete).not.toHaveBeenCalled();
         expect(state.read()?.payload.PropertyTitle).toBe(BASE);
         second.unmount();
+        second.dispose();
 
         const third = mountNewProperty();
-        await userEvent.click(await screen.findByRole('button', {
+        await user.click(await screen.findByRole('button', {
             name: 'Riprendi bozza',
         }));
         const finalInput = await screen.findByLabelText(/Identificativo/);
         expect((finalInput as HTMLInputElement).value).toBe(BASE);
 
-        await userEvent.click(screen.getByRole('link', { name: 'Sidebar' }));
+        await user.click(screen.getByRole('link', { name: 'Sidebar' }));
         await waitFor(() => expect(third.router.state.location.pathname)
             .toBe('/sidebar'));
         expect(screen.queryByText('Modifiche non salvate')).toBeNull();
@@ -194,5 +203,7 @@ describe('NewProperty discard baseline round-trip', () => {
             PropertyTitle: BASE,
         });
         expect(consoleError).not.toHaveBeenCalled();
+        third.unmount();
+        third.dispose();
     });
 });
