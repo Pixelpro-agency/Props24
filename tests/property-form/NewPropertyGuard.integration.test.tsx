@@ -713,8 +713,13 @@ describe('NewProperty unsaved changes guard', () => {
             .toBe('/properties/units/property-1'));
         expect(createProperty).toHaveBeenCalledOnce();
         expect(repository.save).not.toHaveBeenCalled();
-        expect(repository.delete).not.toHaveBeenCalled();
-        expect(legacyClear).toHaveBeenCalledOnce();
+        expect(repository.delete).toHaveBeenCalledOnce();
+        expect(repository.delete).toHaveBeenCalledWith({
+            formType: 'property',
+            mode: 'create',
+            entityId: null,
+        });
+        expect(legacyClear).not.toHaveBeenCalled();
         expect(screen.queryByText('Modifiche non salvate')).toBeNull();
     });
 

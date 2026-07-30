@@ -1,7 +1,10 @@
 import {
     createContext,
+    useCallback,
     useContext,
     useEffect,
+    useRef,
+    useState,
     type ReactNode,
 } from 'react';
 import {
@@ -18,6 +21,7 @@ import {
 import { UnsavedChangesDialog } from '../../navigation/UnsavedChangesDialog';
 import { useUnsavedChangesGuard } from '../../navigation/useUnsavedChangesGuard';
 import { PropertyDraftRestoreDialog } from './PropertyDraftRestoreDialog';
+import { PropertySubmitRecoveryDialog } from './PropertySubmitRecoveryDialog';
 import type { PropertyTabId } from './PropertyFormTabs';
 import {
     defaultPropertyValues,
@@ -28,7 +32,9 @@ import {
     usePropertyDraftController,
     type PropertyDraftPhase,
 } from './hooks/usePropertyDraftController';
-import { useFormPersistence } from './hooks/useFormPersistence';
+
+const PROPERTY_CLEANUP_ERROR =
+    'Non è stato possibile eliminare la bozza locale. Riprova la pulizia.';
 
 interface PropertyFormContextProps {
     activeTab: string;
@@ -36,6 +42,8 @@ interface PropertyFormContextProps {
     draftPhase: PropertyDraftPhase;
     isSavingDraft: boolean;
     isDeletingDraft: boolean;
+    isSubmitting: boolean;
+    isSubmitRecovery: boolean;
     draftError: string | null;
     draftSuccess: string | null;
     saveDraft(): Promise<void>;
@@ -56,11 +64,18 @@ export function usePropertyFormContext() {
     return context;
 }
 
+interface CreatedProperty {
+    id: string;
+}
+
 interface PropertyFormProviderProps {
     children: ReactNode;
     activeTab: string;
     setActiveTab: (tabId: PropertyTabId | string) => void;
-    onSubmit: (data: PropertyFormData) => Promise<void>;
+    onCreateProperty(
+        data: PropertyFormData,
+    ): CreatedProperty | Promise<CreatedProperty>;
+    onPropertyCreated(property: CreatedProperty): void;
     onSubmitError?: (message: string) => void;
     onExitDraft(): void;
     onFormBusyChange?: (busy: boolean) => void;
@@ -70,7 +85,8 @@ export function PropertyFormProvider({
     children,
     activeTab,
     setActiveTab,
-    onSubmit,
+    onCreateProperty,
+    onPropertyCreated,
     onSubmitError,
     onExitDraft,
     onFormBusyChange,
@@ -81,8 +97,20 @@ export function PropertyFormProvider({
         mode: 'onChange',
     });
     const draft = usePropertyDraftController(methods);
-    const { clearDraft } = useFormPersistence();
-    const isSubmitting = methods.formState.isSubmitting;
+    const [isCleaningDraft, setIsCleaningDraft] = useState(false);
+    const [recoveryError, setRecoveryError] = useState<string | null>(null);
+    const [isRetryingCleanup, setIsRetryingCleanup] = useState(false);
+    const [isCompletingCreation, setIsCompletingCreation] = useState(false);
+    const submitLockRef = useRef(false);
+    const retryLockRef = useRef(false);
+    const createdPropertyIdRef = useRef<string | null>(null);
+    const pendingCompletionIdRef = useRef<string | null>(null);
+    const mountedRef = useRef(true);
+    const isSubmitRecovery = recoveryError !== null;
+    const isSubmitting = methods.formState.isSubmitting
+        || isCleaningDraft
+        || isSubmitRecovery
+        || isCompletingCreation;
     const requiresNavigationProtection =
         methods.formState.isDirty || isSubmitting;
     const guard = useUnsavedChangesGuard({
@@ -100,16 +128,47 @@ export function PropertyFormProvider({
         || guard.state.phase !== 'idle';
 
     useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
+
+    useEffect(() => {
         onFormBusyChange?.(busy);
     }, [busy, onFormBusyChange]);
 
-    const handleFormSubmit = async (data: PropertyFormData) => {
-        guard.allowNextNavigation();
-        try {
-            await onSubmit(data);
-            clearDraft();
-        } catch (error) {
+    const finishCreatedProperty = useCallback((id: string) => {
+        setIsCompletingCreation(true);
+        setIsCleaningDraft(false);
+        setIsRetryingCleanup(false);
+        setRecoveryError(null);
+        methods.reset(methods.getValues());
+        pendingCompletionIdRef.current = id;
+    }, [methods]);
+
+    useEffect(() => {
+        const id = pendingCompletionIdRef.current;
+        if (!id) return;
+        if (guard.state.phase !== 'idle') {
             guard.resetGuard();
+            return;
+        }
+        pendingCompletionIdRef.current = null;
+        guard.allowNextNavigation();
+        onPropertyCreated({ id });
+    }, [guard, guard.state.phase, onPropertyCreated]);
+
+    const handleFormSubmit = async (data: PropertyFormData) => {
+        if (submitLockRef.current) return;
+        submitLockRef.current = true;
+        onSubmitError?.('');
+        let created: CreatedProperty;
+        try {
+            created = await onCreateProperty(data);
+            createdPropertyIdRef.current = created.id;
+        } catch (error) {
+            submitLockRef.current = false;
             if (error instanceof DuplicatePropertyIdentifierError) {
                 const message = "Esiste gia un'unita con questo identificativo.";
                 methods.setError('PropertyTitle', {
@@ -143,8 +202,38 @@ export function PropertyFormProvider({
                     ? error.message
                     : 'Errore durante il salvataggio della nuova unita.',
             );
+            return;
+        }
+
+        setIsCleaningDraft(true);
+        try {
+            await draft.deletePersistedDraft();
+            if (!mountedRef.current) return;
+            finishCreatedProperty(created.id);
+        } catch {
+            if (!mountedRef.current) return;
+            setIsCleaningDraft(false);
+            setRecoveryError(PROPERTY_CLEANUP_ERROR);
         }
     };
+
+    const retryCleanup = useCallback(async () => {
+        const id = createdPropertyIdRef.current;
+        if (!id || retryLockRef.current) return;
+        retryLockRef.current = true;
+        setIsRetryingCleanup(true);
+        try {
+            await draft.deletePersistedDraft();
+            if (!mountedRef.current) return;
+            finishCreatedProperty(id);
+        } catch {
+            if (!mountedRef.current) return;
+            setRecoveryError(PROPERTY_CLEANUP_ERROR);
+            setIsRetryingCleanup(false);
+        } finally {
+            retryLockRef.current = false;
+        }
+    }, [draft, finishCreatedProperty]);
 
     const contextValue: PropertyFormContextProps = {
         activeTab,
@@ -152,6 +241,8 @@ export function PropertyFormProvider({
         draftPhase: draft.phase,
         isSavingDraft: draft.isSavingDraft,
         isDeletingDraft: draft.isDeletingDraft,
+        isSubmitting,
+        isSubmitRecovery,
         draftError: draft.draftError,
         draftSuccess: draft.draftSuccess,
         saveDraft: draft.saveDraft,
@@ -198,7 +289,7 @@ export function PropertyFormProvider({
                     onRetry={draft.retryLoad}
                 />
                 <UnsavedChangesDialog
-                    open={guard.isDialogOpen}
+                    open={guard.isDialogOpen && !isSubmitRecovery}
                     phase={guard.state.phase}
                     error={guard.state.error}
                     actionsDisabled={guard.actionsDisabled}
@@ -208,6 +299,14 @@ export function PropertyFormProvider({
                     }}
                     onSave={() => {
                         void guard.saveAndProceed();
+                    }}
+                />
+                <PropertySubmitRecoveryDialog
+                    open={isSubmitRecovery}
+                    error={recoveryError ?? PROPERTY_CLEANUP_ERROR}
+                    isRetrying={isRetryingCleanup}
+                    onRetry={() => {
+                        void retryCleanup();
                     }}
                 />
             </FormProvider>

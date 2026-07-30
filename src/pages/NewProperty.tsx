@@ -27,20 +27,18 @@ import { createProperty } from '../db/propertyRepository';
 
 interface PropertyFormContentProps {
     activeTab: PropertyTabId;
-    isSubmitting: boolean;
     submitError: string | null;
 }
 
 function PropertyFormContent({
     activeTab,
-    isSubmitting,
     submitError,
 }: PropertyFormContentProps) {
     const navigate = useNavigate();
     const draft = usePropertyFormContext();
     const operationsPending =
-        isSubmitting || draft.isSavingDraft || draft.isDeletingDraft;
-    const toast = draft.draftError
+        draft.isSubmitting || draft.isSavingDraft || draft.isDeletingDraft;
+    const toast = !draft.isSubmitRecovery && draft.draftError
         ? {
             variant: 'error' as const,
             title: 'Errore bozza',
@@ -106,7 +104,7 @@ function PropertyFormContent({
                                 disabled={operationsPending}
                                 className="inline-flex min-w-[100px] items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {isSubmitting ? 'Salvataggio...' : (
+                                {draft.isSubmitting ? 'Salvataggio...' : (
                                     <>
                                         <Save className="w-4 h-4 ml-[-4px]" />
                                         Salva
@@ -126,7 +124,6 @@ export function NewProperty() {
     const [activeTab, setActiveTabId] = useState<PropertyTabId>(
         PROPERTY_TABS[0].id,
     );
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFormBusy, setIsFormBusy] = useState(true);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -134,22 +131,14 @@ export function NewProperty() {
         setActiveTabId(id as PropertyTabId);
     };
 
-    const handleSubmit = async (data: PropertyFormData) => {
-        setIsSubmitting(true);
+    const handleCreateProperty = (data: PropertyFormData) => {
         setSubmitError(null);
-        try {
-            const record = createProperty(data);
-            navigate(`/properties/units/${record.id}`);
-        } catch (error) {
-            setSubmitError(
-                error instanceof Error
-                    ? error.message
-                    : 'Errore durante il salvataggio della nuova unita.',
-            );
-            throw error;
-        } finally {
-            setIsSubmitting(false);
-        }
+        const record = createProperty(data);
+        return { id: record.id };
+    };
+
+    const handlePropertyCreated = ({ id }: { id: string }) => {
+        navigate(`/properties/units/${id}`);
     };
 
     return (
@@ -161,7 +150,7 @@ export function NewProperty() {
                             type="button"
                             aria-label="Indietro"
                             onClick={() => navigate(-1)}
-                            disabled={isFormBusy || isSubmitting}
+                            disabled={isFormBusy}
                             className="p-2 hover:bg-gray-100 rounded-md transition-colors text-gray-500 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             <ArrowLeft className="w-5 h-5" />
@@ -175,14 +164,14 @@ export function NewProperty() {
             <PropertyFormProvider
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                onSubmit={handleSubmit}
+                onCreateProperty={handleCreateProperty}
+                onPropertyCreated={handlePropertyCreated}
                 onSubmitError={setSubmitError}
                 onExitDraft={() => navigate(-1)}
                 onFormBusyChange={setIsFormBusy}
             >
                 <PropertyFormContent
                     activeTab={activeTab}
-                    isSubmitting={isSubmitting}
                     submitError={submitError}
                 />
             </PropertyFormProvider>

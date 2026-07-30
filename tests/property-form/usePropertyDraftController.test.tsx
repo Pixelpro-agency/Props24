@@ -144,6 +144,22 @@ function Harness({
     );
 }
 
+async function waitForCapturedController(
+    readController: () => PropertyDraftController | undefined,
+    expectedPhase: PropertyDraftController['phase'],
+): Promise<PropertyDraftController> {
+    await waitFor(() => {
+        expect(readController()?.phase).toBe(expectedPhase);
+    });
+    const captured = readController();
+    if (!captured) {
+        throw new Error(
+            'Controller non disponibile dopo la sincronizzazione.',
+        );
+    }
+    return captured;
+}
+
 afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
@@ -274,7 +290,7 @@ describe('usePropertyDraftController', () => {
         error,
         message,
     ) => {
-        let controller!: PropertyDraftController;
+        let controller: PropertyDraftController | undefined;
         repository = makeRepository();
         vi.mocked(repository.save)
             .mockRejectedValueOnce(error)
@@ -285,16 +301,20 @@ describe('usePropertyDraftController', () => {
             controller = value;
         }} />);
         await screen.findByText('ready');
+        const readyController = await waitForCapturedController(
+            () => controller,
+            'ready',
+        );
         await userEvent.click(screen.getByRole('button', { name: 'modifica' }));
-        await expect(controller.saveDraft()).rejects.toThrow(message);
+        await expect(readyController.saveDraft()).rejects.toThrow(message);
         expect(screen.getByTestId('title').textContent).toBe('Modificato');
         expect(screen.getByTestId('dirty').textContent).toBe('true');
-        await controller.saveDraft();
+        await readyController.saveDraft();
         expect(repository.save).toHaveBeenCalledTimes(2);
     });
 
     it('serializza save e deletePersistedDraft concorrenti', async () => {
-        let controller!: PropertyDraftController;
+        let controller: PropertyDraftController | undefined;
         const savePending = deferred<DraftRecord<PropertyFormData>>();
         const deletePending = deferred<boolean>();
         repository = makeRepository();
@@ -304,13 +324,17 @@ describe('usePropertyDraftController', () => {
             controller = value;
         }} />);
         await screen.findByText('ready');
-        const firstSave = controller.saveDraft();
-        const secondSave = controller.saveDraft();
+        const readyController = await waitForCapturedController(
+            () => controller,
+            'ready',
+        );
+        const firstSave = readyController.saveDraft();
+        const secondSave = readyController.saveDraft();
         expect(repository.save).toHaveBeenCalledOnce();
         savePending.resolve(record({}));
         await Promise.all([firstSave, secondSave]);
-        const firstDelete = controller.deletePersistedDraft();
-        const secondDelete = controller.deletePersistedDraft();
+        const firstDelete = readyController.deletePersistedDraft();
+        const secondDelete = readyController.deletePersistedDraft();
         expect(firstDelete).toBe(secondDelete);
         expect(repository.delete).toHaveBeenCalledOnce();
         deletePending.resolve(true);
@@ -342,7 +366,7 @@ describe('usePropertyDraftController', () => {
     });
 
     it('ignora il completamento save dopo unmount e libera il lock', async () => {
-        let controller!: PropertyDraftController;
+        let controller: PropertyDraftController | undefined;
         const pending = deferred<DraftRecord<PropertyFormData>>();
         const onReset = vi.fn();
         const consoleError = vi.spyOn(console, 'error')
@@ -356,8 +380,12 @@ describe('usePropertyDraftController', () => {
             }}
         />);
         await screen.findByText('ready');
+        const readyController = await waitForCapturedController(
+            () => controller,
+            'ready',
+        );
         onReset.mockClear();
-        const operation = controller.saveDraft();
+        const operation = readyController.saveDraft();
         expect(repository.save).toHaveBeenCalledOnce();
         view.unmount();
         pending.resolve(record({ PropertyTitle: 'Tardiva' }));
@@ -367,7 +395,7 @@ describe('usePropertyDraftController', () => {
     });
 
     it('ignora il completamento deleteAndRestart dopo unmount', async () => {
-        let controller!: PropertyDraftController;
+        let controller: PropertyDraftController | undefined;
         const pending = deferred<boolean>();
         const onReset = vi.fn();
         const consoleError = vi.spyOn(console, 'error')
@@ -381,7 +409,11 @@ describe('usePropertyDraftController', () => {
             }}
         />);
         await screen.findByText('choice_required');
-        const operation = controller.deleteAndRestart();
+        const choiceController = await waitForCapturedController(
+            () => controller,
+            'choice_required',
+        );
+        const operation = choiceController.deleteAndRestart();
         expect(repository.delete).toHaveBeenCalledOnce();
         view.unmount();
         pending.resolve(true);
@@ -391,7 +423,7 @@ describe('usePropertyDraftController', () => {
     });
 
     it('mappa la validazione payload reale e permette un retry valido', async () => {
-        let controller!: PropertyDraftController;
+        let controller: PropertyDraftController | undefined;
         let methods!: UseFormReturn<PropertyFormData>;
         repository = makeRepository();
         render(<Harness
@@ -403,12 +435,16 @@ describe('usePropertyDraftController', () => {
             }}
         />);
         await screen.findByText('ready');
+        const readyController = await waitForCapturedController(
+            () => controller,
+            'ready',
+        );
         act(() => methods.setValue(
             'PropertyPhotos',
             [{ ...file, size: 'invalid' }] as unknown as PropertyFormData['PropertyPhotos'],
             { shouldDirty: true },
         ));
-        await expect(controller.saveDraft()).rejects.toThrow(
+        await expect(readyController.saveDraft()).rejects.toThrow(
             'I dati della bozza non sono validi. Controlla i campi compilati.',
         );
         expect(repository.save).not.toHaveBeenCalled();
@@ -418,12 +454,12 @@ describe('usePropertyDraftController', () => {
         act(() => methods.setValue('PropertyPhotos', [file], {
             shouldDirty: true,
         }));
-        await controller.saveDraft();
+        await readyController.saveDraft();
         expect(repository.save).toHaveBeenCalledOnce();
     });
 
     it('deletePersistedDraft libera la Promise fallita e ritenta', async () => {
-        let controller!: PropertyDraftController;
+        let controller: PropertyDraftController | undefined;
         const first = deferred<boolean>();
         repository = makeRepository();
         vi.mocked(repository.delete)
@@ -433,11 +469,16 @@ describe('usePropertyDraftController', () => {
             controller = value;
         }} />);
         await screen.findByText('ready');
-        const attempt = controller.deletePersistedDraft();
-        expect(controller.deletePersistedDraft()).toBe(attempt);
+        const readyController = await waitForCapturedController(
+            () => controller,
+            'ready',
+        );
+        const attempt = readyController.deletePersistedDraft();
+        expect(readyController.deletePersistedDraft()).toBe(attempt);
         first.reject(new DraftStorageError());
         await expect(attempt).rejects.toBeInstanceOf(DraftStorageError);
-        await expect(controller.deletePersistedDraft()).resolves.toBeUndefined();
+        await expect(readyController.deletePersistedDraft())
+            .resolves.toBeUndefined();
         expect(repository.delete).toHaveBeenCalledTimes(2);
         expect(screen.getByTestId('phase').textContent).toBe('ready');
     });
@@ -506,7 +547,7 @@ describe('usePropertyDraftController', () => {
     });
 
     it('salva e ripristina il payload annidato completo senza rigenerare ID', async () => {
-        let controller!: PropertyDraftController;
+        let controller: PropertyDraftController | undefined;
         let methods!: UseFormReturn<PropertyFormData>;
         const nested = {
             PropertyCadastreDocument: file,
@@ -538,6 +579,10 @@ describe('usePropertyDraftController', () => {
             }}
         />);
         await screen.findByText('ready');
+        const readyController = await waitForCapturedController(
+            () => controller,
+            'ready',
+        );
         act(() => {
             for (const [key, value] of Object.entries(nested)) {
                 methods.setValue(
@@ -547,7 +592,7 @@ describe('usePropertyDraftController', () => {
                 );
             }
         });
-        await controller.saveDraft();
+        await readyController.saveDraft();
         const savedPayload = vi.mocked(repository.save).mock.calls[0]?.[1]
             .payload as PropertyFormData;
         expect(savedPayload).toMatchObject(nested);
@@ -556,7 +601,7 @@ describe('usePropertyDraftController', () => {
         act(() => methods.setValue('PropertyPhotos', [], {
             shouldDirty: true,
         }));
-        act(() => controller.discardChanges());
+        act(() => readyController.discardChanges());
         expect(methods.getValues()).toMatchObject(nested);
         expect(methods.getValues('PropertyKeys')[0]?.id).toBe('key-1');
         expect(repository.save).toHaveBeenCalledOnce();
@@ -587,17 +632,25 @@ describe('usePropertyDraftController', () => {
     });
 
     it('clear feedback non altera valori o fase', async () => {
-        let controller!: PropertyDraftController;
+        let controller: PropertyDraftController | undefined;
         repository = makeRepository();
         vi.mocked(repository.save).mockRejectedValue(new DraftStorageQuotaError());
         render(<Harness onController={(value) => {
             controller = value;
         }} />);
         await screen.findByText('ready');
-        await expect(controller.saveDraft()).rejects.toThrow();
+        const readyController = await waitForCapturedController(
+            () => controller,
+            'ready',
+        );
+        await expect(readyController.saveDraft()).rejects.toThrow();
         await waitFor(() => expect(screen.getByTestId('draft-error').textContent)
             .toContain('Spazio locale esaurito'));
-        act(() => controller.clearDraftFeedback());
+        const latestReadyController = await waitForCapturedController(
+            () => controller,
+            'ready',
+        );
+        act(() => latestReadyController.clearDraftFeedback());
         expect(screen.getByTestId('draft-error').textContent).toBe('');
         expect(screen.getByTestId('phase').textContent).toBe('ready');
     });
