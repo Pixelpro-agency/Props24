@@ -12,15 +12,19 @@ import type { LeaseDraftPayload } from '../../src/landlord/leases/drafts/leaseDr
 let repository: DraftRepository;
 vi.mock('../../src/drafts/DraftRepositoryContext', () => ({ useDraftRepository: () => repository }));
 
-function record(title = 'Persistita', activeTab: LeaseDraftPayload['activeTab'] = 'contract'): DraftRecord<LeaseDraftPayload> {
-    return { id: 'd1', accountId: 'user-001', formType: 'lease', mode: 'create', entityId: null, schemaVersion: 1, createdAt: 'x', updatedAt: 'x', payload: { formData: { ...defaultLeaseValues, LeaseIdentificativo: title }, activeTab } };
+function record(title = 'Persistita', activeTab: LeaseDraftPayload['activeTab'] = 'contract', formData: Partial<LeaseFormData> = {}): DraftRecord<LeaseDraftPayload> {
+    return { id: 'd1', accountId: 'user-001', formType: 'lease', mode: 'create', entityId: null, schemaVersion: 1, createdAt: 'x', updatedAt: 'x', payload: { formData: { ...defaultLeaseValues, LeaseIdentificativo: title, ...formData }, activeTab } };
 }
 
 function fake(initial: DraftRecord<LeaseDraftPayload> | null = null): DraftRepository {
     let current = initial;
     return {
         get: vi.fn(async () => current), list: vi.fn(async () => current ? [current] : []),
-        save: vi.fn(async (_definition, input) => { current = record((input.payload as LeaseDraftPayload).formData.LeaseIdentificativo, (input.payload as LeaseDraftPayload).activeTab); return current; }),
+        save: vi.fn(async (_definition, input) => {
+            const payload = input.payload as LeaseDraftPayload;
+            current = record(payload.formData.LeaseIdentificativo, payload.activeTab, payload.formData);
+            return current;
+        }),
         delete: vi.fn(async () => { current = null; return true; }),
     };
 }
@@ -31,6 +35,7 @@ function Probe() {
     return <div>
         <label>Identificativo<input aria-label="Identificativo" {...methods.register('LeaseIdentificativo')} /></label>
         <output data-testid="tab">{draft.activeTab}</output><output data-testid="dirty">{String(methods.formState.isDirty)}</output>
+        <output data-testid="references">{JSON.stringify({ property: methods.watch('PropertyID'), tenants: methods.watch('LeaseTenantIds'), guarantors: methods.watch('LeaseGarantIds'), insurance: methods.watch('LeaseInsuranceContracts') })}</output>
         <button type="button" onClick={() => draft.setActiveTab('contract')}>Contratto</button>
         <button type="button" disabled={draft.isSavingDraft} onClick={() => { void draft.saveDraft().catch(() => undefined); }}>Salva bozza</button>
         <span>{draft.draftSuccess}</span>{draft.draftError ? <span role="alert">{draft.draftError}</span> : null}
@@ -108,5 +113,30 @@ describe('LeaseCreateDraftProvider integration', () => {
     it('Strict Mode esegue un solo load e nessuna scrittura', async () => {
         repository = fake(); render(<StrictMode><LeaseCreateDraftProvider onExitDraft={vi.fn()}><Probe /></LeaseCreateDraftProvider></StrictMode>);
         await screen.findByLabelText('Identificativo'); await waitFor(() => expect(repository.get).toHaveBeenCalledOnce()); expect(repository.save).not.toHaveBeenCalled();
+    });
+
+    it('choice, Riprendi e save manuale conservano riferimenti non risolti senza autosave', async () => {
+        const references = {
+            PropertyID: 'property-missing',
+            LeaseTenantIds: ['tenant-missing', 'tenant-missing'],
+            LeaseGarantIds: ['guarantor-missing'],
+            LeaseInsuranceContracts: [{ LeaseInsuranceType: 'locativa' as const, LeaseInsuranceDescription: 'QA', LeaseInsuranceStartDate: '', LeaseInsuranceEndDate: '', LeaseInsuranceDocumentId: 'document-missing' }],
+        };
+        repository = fake(record('Con riferimenti', 'guarantors', references));
+        render(<LeaseCreateDraftProvider onExitDraft={vi.fn()}><Probe /></LeaseCreateDraftProvider>);
+        expect(await screen.findByRole('heading', { name: 'Bozza locazione disponibile' })).toBeTruthy();
+        expect(screen.queryByTestId('references')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Riprendi bozza' }));
+        await screen.findByDisplayValue('Con riferimenti');
+        expect(JSON.parse(screen.getByTestId('references').textContent || '{}')).toEqual({
+            property: references.PropertyID,
+            tenants: references.LeaseTenantIds,
+            guarantors: references.LeaseGarantIds,
+            insurance: references.LeaseInsuranceContracts,
+        });
+        expect(repository.save).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: 'Salva bozza' }));
+        await screen.findByText('Bozza salvata.');
+        expect((vi.mocked(repository.save).mock.calls[0][1].payload as LeaseDraftPayload).formData).toMatchObject(references);
     });
 });

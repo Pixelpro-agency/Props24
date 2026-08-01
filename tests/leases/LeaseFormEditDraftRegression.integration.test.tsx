@@ -27,6 +27,8 @@ describe('LeaseForm edit draft regression', () => {
         expect(screen.getByDisplayValue('Edit esistente')).toBeTruthy();
         expect(screen.queryByRole('button', { name: 'Salva bozza' })).toBeNull();
         expect(screen.queryByText('Bozza locazione disponibile')).toBeNull();
+        expect(screen.queryByText(/salvata nella bozza/)).toBeNull();
+        expect(screen.queryByText(/Riferimento conservato/)).toBeNull();
         expect(screen.getByText('Modifica locazione')).toBeTruthy();
     });
 

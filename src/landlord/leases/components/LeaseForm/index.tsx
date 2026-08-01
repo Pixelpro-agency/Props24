@@ -12,7 +12,7 @@ import { LeaseDocumentsTab } from '../../../../components/lease-detail/LeaseDocu
 import { LeaseContractTab } from '../../../../components/lease-detail/LeaseContractTab';
 import { LeaseSignatureTab } from '../../../../components/lease-detail/LeaseSignatureTab';
 import { getJsonDb, subscribeJsonDb } from '../../../../db/jsonDb';
-import type { ContactRecord, PropertyRecord, TenantRecord } from '../../../../db/database.types';
+import type { PropertyRecord, TenantRecord } from '../../../../db/database.types';
 import { StatusToast, type StatusToastState } from '../../../../components/ui/StatusToast';
 import {
     calculateLeaseEndDate,
@@ -30,6 +30,11 @@ import { ISTAT_INDEX_OPTIONS } from '../../data/istatIndexOptions';
 import { useContactList } from '../../../../contacts/useContactList';
 import { normalizeLeaseFormTab, type LeaseFormTab } from '../../drafts/leaseDraftDefinition';
 import { useLeaseCreateDraftContext, type LeaseCreateDraftContextValue } from '../../drafts/LeaseCreateDraftProvider';
+import {
+    reconcileGuarantorReferences,
+    reconcilePropertyReference,
+    reconcileTenantReferences,
+} from '../../drafts/leaseDraftReferenceReconciliation';
 
 const inputClass = 'w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#337ab7] focus:outline-none focus:ring-2 focus:ring-[#337ab7]/30';
 const errorClass = 'mt-1 text-xs text-red-600';
@@ -37,8 +42,8 @@ const errorClass = 'mt-1 text-xs text-red-600';
 function activeLeaseDataSnapshot() {
     const db = getJsonDb();
     return {
-        properties: db.properties.filter((property) => !property.archived),
-        tenants: db.tenants.filter((tenant) => !tenant.archived),
+        properties: db.properties,
+        tenants: db.tenants,
     };
 }
 
@@ -300,17 +305,36 @@ const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', le
     const insuranceFieldArray = useFieldArray({ control, name: 'LeaseInsuranceContracts' });
 
     const values = watch();
+    const watchedPropertyId = watch('PropertyID');
     const watchedTenantIds = watch('LeaseTenantIds');
     const watchedGuarantorIds = watch('LeaseGarantIds');
     const selectedTenantIds = useMemo(() => watchedTenantIds || [], [watchedTenantIds]);
     const selectedGuarantorIds = useMemo(() => watchedGuarantorIds || [], [watchedGuarantorIds]);
-    const selectedTenants = useMemo(() => selectedTenantIds
-        .map((id: string) => snapshot.tenants.find((tenant: TenantRecord) => tenant.id === id))
-        .filter((tenant): tenant is TenantRecord => Boolean(tenant)), [selectedTenantIds, snapshot.tenants]);
-    const selectedGuarantors = useMemo(() => selectedGuarantorIds
-        .map((id: string) => contacts.find((contact: ContactRecord) => contact.id === id))
-        .filter((contact): contact is ContactRecord => Boolean(contact)), [contacts, selectedGuarantorIds]);
-    const selectedProperty = snapshot.properties.find((property) => property.id === watch('PropertyID'));
+    const activeProperties = useMemo(
+        () => snapshot.properties.filter((property) => !property.archived),
+        [snapshot.properties],
+    );
+    const selectedPropertyReference = useMemo(
+        () => reconcilePropertyReference(watchedPropertyId, snapshot.properties),
+        [snapshot.properties, watchedPropertyId],
+    );
+    const selectedTenantReferences = useMemo(
+        () => reconcileTenantReferences(selectedTenantIds, snapshot.tenants),
+        [selectedTenantIds, snapshot.tenants],
+    );
+    const selectedGuarantorReferences = useMemo(
+        () => reconcileGuarantorReferences(selectedGuarantorIds, contacts, contactListStatus),
+        [contacts, contactListStatus, selectedGuarantorIds],
+    );
+    const selectedTenants = useMemo(
+        () => selectedTenantReferences.flatMap((reference) => reference.record ? [reference.record] : []),
+        [selectedTenantReferences],
+    );
+    const selectedGuarantors = useMemo(
+        () => selectedGuarantorReferences.flatMap((reference) => reference.record ? [reference.record] : []),
+        [selectedGuarantorReferences],
+    );
+    const selectedProperty = selectedPropertyReference?.record ?? null;
     const selectedBillingPeriod = watch('LeaseBillingPeriod');
     const editableLeaseDetail = isEditMode && leaseId ? getLeaseDetail(leaseId) : null;
     const persistedLeaseFormData = editableLeaseDetail ? normalizeLeaseFormData(editableLeaseDetail.lease.formData) : null;
@@ -405,8 +429,9 @@ const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', le
         if (!current.includes(tenantId)) setValue('LeaseTenantIds', [...current, tenantId], { shouldDirty: true, shouldValidate: true });
     };
 
-    const removeTenantId = (tenantId: string) => {
-        setValue('LeaseTenantIds', getValues('LeaseTenantIds').filter((id) => id !== tenantId), { shouldDirty: true, shouldValidate: true });
+    const removeTenantId = (index: number) => {
+        const current = getValues('LeaseTenantIds');
+        setValue('LeaseTenantIds', current.filter((_, itemIndex) => itemIndex !== index), { shouldDirty: true, shouldValidate: true });
     };
 
     const addGuarantorId = (contactId: string) => {
@@ -414,8 +439,9 @@ const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', le
         if (!current.includes(contactId)) setValue('LeaseGarantIds', [...current, contactId], { shouldDirty: true, shouldValidate: true });
     };
 
-    const removeGuarantorId = (contactId: string) => {
-        setValue('LeaseGarantIds', getValues('LeaseGarantIds').filter((id) => id !== contactId), { shouldDirty: true, shouldValidate: true });
+    const removeGuarantorId = (index: number) => {
+        const current = getValues('LeaseGarantIds');
+        setValue('LeaseGarantIds', current.filter((_, itemIndex) => itemIndex !== index), { shouldDirty: true, shouldValidate: true });
     };
 
     const onSubmit = form.handleSubmit((data) => {
@@ -460,10 +486,23 @@ const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', le
                         }}
                     >
                         <option value="">Seleziona proprietà</option>
-                        {snapshot.properties.map((property) => <option key={property.id} value={property.id}>{propertyLabel(property)}</option>)}
+                        {selectedPropertyReference && selectedPropertyReference.status !== 'active' && (
+                            <option value={selectedPropertyReference.id}>
+                                {selectedPropertyReference.record
+                                    ? `${propertyLabel(selectedPropertyReference.record)} — proprietà archiviata`
+                                    : `${selectedPropertyReference.id} — proprietà non disponibile`}
+                            </option>
+                        )}
+                        {activeProperties.map((property) => <option key={property.id} value={property.id}>{propertyLabel(property)}</option>)}
                     </select>
                     {errors.PropertyID && <p className={errorClass}>{errors.PropertyID.message}</p>}
                 </div>
+                {!isEditMode && selectedPropertyReference?.status === 'archived' && (
+                    <p role="alert" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">La proprietà salvata nella bozza è archiviata. Seleziona una proprietà attiva prima di creare la locazione.</p>
+                )}
+                {!isEditMode && selectedPropertyReference?.status === 'missing' && (
+                    <p role="alert" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">La proprietà salvata nella bozza non è più disponibile. Il riferimento è stato conservato: {selectedPropertyReference.id}.</p>
+                )}
                 {selectedProperty && (
                     <p className="rounded bg-gray-50 px-3 py-2 text-sm text-gray-600">{propertyLabel(selectedProperty)}</p>
                 )}
@@ -878,17 +917,21 @@ const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', le
                 </button>
             </div>
             {errors.LeaseTenantIds && <p className={errorClass}>{errors.LeaseTenantIds.message}</p>}
-            {selectedTenants.length === 0 ? (
+            {selectedTenantIds.length === 0 ? (
                 <div className="rounded border border-dashed border-gray-300 bg-gray-50 py-10 text-center text-sm text-gray-500">Nessun inquilino aggiunto.</div>
             ) : (
                 <div className="grid gap-3 md:grid-cols-2">
-                    {selectedTenants.map((tenant: TenantRecord) => (
-                        <div key={tenant.id} className="flex items-center justify-between rounded border border-gray-200 bg-white p-4">
+                    {selectedTenantReferences.map((reference) => (
+                        <div key={`${reference.id}-${reference.index}`} className="flex items-center justify-between rounded border border-gray-200 bg-white p-4">
                             <div>
-                                <p className="font-medium text-gray-800">{tenantName(tenant)}</p>
-                                <p className="text-sm text-gray-500">{tenant.email || 'Nessuna email'} {tenant.mobilePhone || tenant.phone ? `- ${tenant.mobilePhone || tenant.phone}` : ''}</p>
+                                <p className="font-medium text-gray-800">{reference.record ? tenantName(reference.record) : 'Inquilino non disponibile'}</p>
+                                {reference.record ? (
+                                    <p className="text-sm text-gray-500">{reference.record.email || 'Nessuna email'} {reference.record.mobilePhone || reference.record.phone ? `- ${reference.record.mobilePhone || reference.record.phone}` : ''}{reference.status === 'archived' ? ' - archiviato' : ''}</p>
+                                ) : (
+                                    <p className="text-sm text-amber-700">Riferimento conservato: {reference.id}</p>
+                                )}
                             </div>
-                            <button type="button" onClick={() => removeTenantId(tenant.id)} className="rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                            <button type="button" aria-label={`Rimuovi riferimento inquilino ${reference.index + 1}`} onClick={() => removeTenantId(reference.index)} className="rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
@@ -911,30 +954,40 @@ const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', le
                 </button>
             </div>
             {errors.LeaseGarantIds && <p className={errorClass}>{errors.LeaseGarantIds.message}</p>}
-            {contactListStatus === 'error' && contacts.length > 0 && (
+            {contactListStatus === 'error' && (contacts.length > 0 || selectedGuarantorIds.length > 0) && (
                 <div className="flex items-center justify-between gap-3 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
                     <span>{contactLoadError}</span>
                     <button type="button" onClick={() => void refreshContacts()} className="rounded border border-amber-400 px-3 py-1 font-medium hover:bg-amber-100">Riprova</button>
                 </div>
             )}
-            {isInitialContactLoading ? (
+            {isInitialContactLoading && selectedGuarantorIds.length === 0 ? (
                 <div className="rounded border border-gray-200 bg-gray-50 py-10 text-center text-sm text-gray-500">Caricamento dei garanti...</div>
-            ) : isContactListUnavailable ? (
+            ) : isContactListUnavailable && selectedGuarantorIds.length === 0 ? (
                 <div className="space-y-3 rounded border border-red-300 bg-red-50 p-4 text-sm text-red-700">
                     <p>{contactLoadError}</p>
                     <button type="button" onClick={() => void refreshContacts()} className="rounded border border-red-400 px-3 py-1 font-medium hover:bg-red-100">Riprova</button>
                 </div>
-            ) : selectedGuarantors.length === 0 ? (
+            ) : selectedGuarantorIds.length === 0 ? (
                 <div className="rounded border border-dashed border-gray-300 bg-gray-50 py-10 text-center text-sm text-gray-500">Nessun garante aggiunto.</div>
             ) : (
                 <div className="grid gap-3 md:grid-cols-2">
-                    {selectedGuarantors.map((contact) => (
-                        <div key={contact.id} className="flex items-center justify-between rounded border border-gray-200 bg-white p-4">
+                    {selectedGuarantorReferences.map((reference) => (
+                        <div key={`${reference.id}-${reference.index}`} className="flex items-center justify-between rounded border border-gray-200 bg-white p-4">
                             <div>
-                                <p className="font-medium text-gray-800">{contact.type === 'company' ? contact.companyName : `${contact.firstName} ${contact.lastName}`.trim()}</p>
-                                <p className="text-sm text-gray-500">{contact.email || contact.phone || 'Nessun contatto'}{contact.archived ? ' - archiviato' : ''}</p>
+                                <p className="font-medium text-gray-800">{reference.record
+                                    ? (reference.record.type === 'company' ? reference.record.companyName : `${reference.record.firstName} ${reference.record.lastName}`.trim())
+                                    : reference.status === 'pending' ? 'Verifica del garante in corso'
+                                        : reference.status === 'unverified' ? 'Garante non verificabile'
+                                            : 'Garante non disponibile'}</p>
+                                {reference.record ? (
+                                    <p className="text-sm text-gray-500">{reference.record.email || reference.record.phone || 'Nessun contatto'}{reference.status === 'archived' ? ' - archiviato' : ''}</p>
+                                ) : reference.status === 'unverified' ? (
+                                    <p className="text-sm text-amber-700">Il caricamento dei contatti non è riuscito. Il riferimento {reference.id} è stato conservato.</p>
+                                ) : (
+                                    <p className="text-sm text-amber-700">Riferimento conservato: {reference.id}</p>
+                                )}
                             </div>
-                            <button type="button" onClick={() => removeGuarantorId(contact.id)} className="rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                            <button type="button" aria-label={`Rimuovi riferimento garante ${reference.index + 1}`} onClick={() => removeGuarantorId(reference.index)} className="rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
