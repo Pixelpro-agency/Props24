@@ -24,10 +24,10 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 9a931f74ff957d9065bf34b456833bec3342767d
+SHA applicativo esaminato: c0f14d0e34d7aedd9758965c54563eaa9bfdedbd
 ```
 
-La chiusura tecnica di D2C e il pilot del repository contatti, inclusa la migrazione dei consumer dei garanti, sono stati verificati sul codice pubblicato e nei collaudi dedicati. Il resto del codice applicativo non è stato riesaminato integralmente a questo SHA; le altre task devono essere riverificate prima di diventare prompt esecutivi.
+La chiusura tecnica di D2C, il pilot del repository contatti e le integrazioni F3.1/F3.2 sono stati verificati sul codice pubblicato e nei collaudi dedicati. Le altre task devono essere riverificate prima di diventare prompt esecutivi.
 
 ## Mappa dei documenti
 
@@ -140,9 +140,11 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 F1 — repository condiviso delle bozze manuali — e F2 — guard condiviso delle
 modifiche non salvate — sono completate. L’allineamento di prodotto su ruoli,
 inviti e workspace è documentato, ma nessuna funzione è stata implementata.
-F3.1 — Nuovo inquilino resta la prossima task tecnica. Inviti, portale
-inquilino, contesto professionista, visure e KPI non entrano in F3.1: la task
-deve soltanto evitare modelli incompatibili con le decisioni future.
+F3.1 — Nuovo inquilino — e F3.2 — Nuova unità — sono completate e collaudate.
+F3 resta aperta e F3.3 — Nuova locazione — è la prossima task tecnica, previa
+verifica pre-esecutiva. F3.4 resta dipendente dal Blocco A; F4 non può iniziare
+prima delle integrazioni residue. Inviti, portale inquilino, workspace
+professionali, visure e KPI restano futuri e non sono stati implementati.
 
 Classificazione complessiva:
 
@@ -408,6 +410,9 @@ Verificare:
 ## TASK B5 — Bozza unità
 
 **Dipendenze:** F1 — Repository condiviso delle bozze manuali; F2 — Guard condiviso.
+
+**Stato:** COMPLETATA con F3.2. Restano fuori scope la modifica e il lifecycle
+completo dell’unità, trattati da B6, e il collaudo dell’intero blocco B9.
 
 **Obiettivo:**
 
@@ -907,8 +912,8 @@ Scenari:
 **Stato:** COMPLETATA.
 
 L’infrastruttura condivisa e account-scoped del repository bozze è completata.
-L’integrazione nei form e la sostituzione degli autosalvataggi esistenti restano
-attività successive.
+L’integrazione è conclusa in Nuovo inquilino e Nuova unità; resta da applicare
+a Nuova locazione e, dopo il Blocco A, a Nuovo edificio.
 
 ### F1A — Contratto e operazioni pure — COMPLETATA
 
@@ -957,11 +962,9 @@ La verifica conclusiva F1 ha registrato 74 test mirati e 218 test complessivi
 passati, senza test falliti o saltati; ESLint, build e `git diff --check` sono
 risultati positivi.
 
-**Fuori dal perimetro completato:** integrazione del repository nei form React,
-sostituzione e rimozione degli autosalvataggi legacy, restore e cancellazione
-delle bozze nei form, UX di avviso/ripristino, debounce o hook di autosave e
-test end-to-end dei form. Nessuna pagina, componente o UI è stata modificata e
-non è stato deciso quale form integrare per primo.
+**Fuori dal perimetro F1:** le integrazioni nei singoli form restano task F3.
+F3.1 e F3.2 sono concluse; F3.3 e F3.4 restano aperte. Il contratto approvato
+prevede salvataggio manuale e nessun debounce o autosave.
 
 ## TASK F2 — Guard condiviso
 
@@ -1018,29 +1021,45 @@ specifici F2. La suite complessiva comprende 21 file e 342 test passati, con
 positivi. Lo smoke browser è positivo. Restano non bloccanti il warning Vite
 sulla dimensione del chunk e gli avvisi LF→CRLF.
 
-**Fuori dal perimetro completato:** F2 non ha integrato il guard nei form
-reali, collegato il repository bozze ai form, rimosso gli autosalvataggi
-legacy, implementato restore o cancellazione delle bozze nei form, collaudato
-interattivamente il guard dentro i form reali, né completato F3 o F4. Il guard
-condiviso è disponibile per F3, ma non è ancora attivo nei form.
+**Fuori dal perimetro F2:** le integrazioni nei singoli form restano task F3.
+Il guard è ora attivo e collaudato in Nuovo inquilino e Nuova unità; Nuova
+locazione e Nuovo edificio restano da integrare. F3 e F4 non sono completate.
 
 ## TASK F3 — Integrazioni
 
-**Dipendenze tecniche:** F1 e F2 sono soddisfatte. F3 resta aperta e nessuna
-integrazione è iniziata.
+**Dipendenze tecniche:** F1 e F2 sono soddisfatte. F3 resta aperta.
 
 Mantenere task separate per form:
 
-1. inquilino;
-2. unità;
-3. locazione;
-4. edificio, dopo il Blocco A.
+1. **F3.1 — Nuovo inquilino — COMPLETATA.** Repository condiviso e controller
+   account-scoped, salvataggio esclusivamente manuale, restore/cancellazione,
+   baseline dirty, guard di navigazione e logout, history browser, submit con
+   cleanup e recovery sono integrati. Strict Mode e destinazione sospesa dopo
+   `Salva bozza` sono coperti; collaudo tecnico e browser conclusi.
+2. **F3.2 — Nuova unità — COMPLETATA.** Definition e controller Property,
+   restore con `Riprendi`, `Elimina e ricomincia` e `Annulla`, guard di sidebar,
+   header Indietro, footer Annulla, browser back e logout sono integrati. `Resta`
+   non scrive; `Abbandona` ripristina la baseline persistita; `Salva bozza`
+   conserva la destinazione. Submit singolo, cleanup atomico e recovery evitano
+   duplicazioni; duplicati, focus errori, account scope e responsive sono
+   verificati. `useFormPersistence.ts` legacy è eliminato. Le condizioni del
+   guard sono sincronizzate con `useLayoutEffect` prima delle navigazioni
+   imperative del commit corrente; reducer, bypass e `navigate(-1)` restano
+   invariati. Il round-trip `Resta → Abbandona → remount → Riprendi` è coperto.
+   Collaudo finale: 38 file, 549 test, 20/20 scenari browser, build e lint PASS,
+   nessun errore console e nessun fallimento di rete osservato.
+3. **F3.3 — Nuova locazione — APERTA / PROSSIMA TASK TECNICA.** F1 e F2 sono
+   soddisfatte; serve ancora l’audit tecnico pre-esecutivo. Nessuna integrazione
+   viene dichiarata completata.
+4. **F3.4 — Nuovo edificio — APERTA.** Resta dipendente dal Blocco A.
 
 Non unire le integrazioni se modificano form complessi diversi.
 
 ## TASK F4 — Collaudo trasversale
 
-**Dipendenze:** F2 e F3.
+**Stato:** APERTA; non avviabile ora.
+
+**Dipendenze:** completamento di F3.3 e F3.4, oltre alla baseline F2 già soddisfatta.
 
 Verificare create/edit, route, back, annulla, logout, refresh, bozza, abbandona, resta, submit riuscito e fallito.
 

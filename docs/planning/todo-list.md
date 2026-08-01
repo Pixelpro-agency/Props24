@@ -14,30 +14,31 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 4
+- Completate integralmente: 5
 - Parzialmente completate: 4
-- Non concluse: 64
+- Non concluse: 63
 - Domande professionali aperte: 26
-- Prossimo punto: F3.1 — Nuovo inquilino
+- Prossimo punto: F3.3 — Nuova locazione
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 64 task non concluse e non vanno sommati nuovamente. D1A/D1B e D2A–D2D sono sottopunti e non aumentano il numero delle 72 task principali.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 63 task non concluse e non vanno sommati nuovamente. D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
 
 ## Percorso operativo immediato
 
 > - [x] F1 — Repository condiviso delle bozze manuali — **COMPLETATA**
 > - [x] F2 — Guard condiviso delle modifiche non salvate — **COMPLETATA**
 > - [x] PRODUCT-ALIGNMENT-DOC-1 — Allineamento prodotto documentato — **COMPLETATO; nessuna funzione implementata**
-> - [ ] F3.1 — Integrazione in Nuovo inquilino — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
-> - [ ] F3.2 — Integrazione in Nuova unità — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
-> - [ ] F3.3 — Integrazione in Nuova locazione — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
+> - [x] F3.1 — Integrazione in Nuovo inquilino — **COMPLETATA**
+> - [x] F3.2 — Integrazione in Nuova unità — **COMPLETATA**
+> - [ ] F3.3 — Integrazione in Nuova locazione — **PROSSIMA TASK TECNICA; audit ancora necessario**
+> - [ ] F3.4 — Integrazione in Nuovo edificio — **APERTA; dipende dal Blocco A**
 > - [ ] A1/A2 — Repository e form Nuovo edificio — **IN ATTESA delle decisioni indicate**
 > - [ ] A4–A7 — Lista, lifecycle e collaudo edifici — **APERTO**
 > - [ ] K1/K2 — Audit e collaudo trasversale dei quattro CRUD — **FINALE**
 
 Questa sezione è un percorso sintetico e non sostituisce le voci complete dei blocchi.
-La prossima task tecnica è F3.1 — Nuovo inquilino. Inviti, portale inquilino,
-professionista, visure e KPI sono esclusi da F3.1; il form deve soltanto evitare
-modelli incompatibili con le decisioni future.
+La prossima task tecnica è F3.3 — Nuova locazione. F3 resta aperta fino alle
+integrazioni residue; F4 non può iniziare prima di F3.3 e F3.4. Inviti, portale
+inquilino, workspace professionali, visure e KPI restano attività future.
 
 ## Baseline trasversale già raggiunta
 
@@ -58,6 +59,8 @@ modelli incompatibili con le decisioni future.
 - [x] Pianificazione aggiornata dopo il pilot
 - [x] F1 — Infrastruttura condivisa e account-scoped del repository bozze
 - [x] F2 — Data Router, macchina a stati, hook, dialog accessibile e gate logout
+- [x] F3.1 — Bozza manuale e guard integrati e collaudati in Nuovo inquilino
+- [x] F3.2 — Bozza manuale e guard integrati e collaudati in Nuova unità
 
 Questa baseline non rientra nel conteggio delle 72 task principali.
 
@@ -78,7 +81,7 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 - [ ] B2 — Duplicati unità — **APERTO; influenzato da UN-04**
 - [ ] B3 — Campi placeholder — **IN ATTESA: UN-01, UN-02, UN-03**
 - [ ] B4 — ID annidati canonici — **APERTO**
-- [ ] B5 — Bozza unità — **APERTO; dipende da F1, F2**
+- [x] B5 — Bozza unità — **COMPLETATA; repository condiviso, salvataggio manuale, restore, guard e cleanup verificati**
 - [ ] B6 — Modifica e lifecycle unità — **APERTO**
 - [ ] B7 — Import ed export unità — **RINVIATO**
 - [ ] B8 — Analisi catastale futura — **FUTURO — BACKEND**
@@ -149,15 +152,15 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] F2C-FIX1 — Compatibilità reale con React Strict Mode
   - [x] F2D — Integrazione logout e gate finale
 - [ ] F3 — Integrazioni — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
-  - [ ] F3.1 — Nuovo inquilino — **PROSSIMA TASK TECNICA**
-  - [ ] F3.2 — Nuova unità — **APERTO**
-  - [ ] F3.3 — Nuova locazione — **APERTO**
+  - [x] F3.1 — Nuovo inquilino — **COMPLETATA**
+  - [x] F3.2 — Nuova unità — **COMPLETATA**
+  - [ ] F3.3 — Nuova locazione — **PROSSIMA TASK TECNICA; audit ancora necessario**
   - [ ] F3.4 — Nuovo edificio, dopo il Blocco A — **APERTO**
-  - [ ] Sostituire gli autosalvataggi legacy e integrare restore/cancellazione
-        delle bozze nei form — **APERTO**
-  - [ ] Definire eventuale UX bozza, debounce e hook di autosave — **APERTO**
+  - [ ] Sostituire i flussi legacy residui e integrare restore/cancellazione
+        delle bozze in Nuova locazione e Nuovo edificio — **APERTO**
+  - [ ] Applicare ai form residui il contratto manuale senza debounce o autosave — **APERTO**
   - [ ] Test end-to-end dei form — **APERTO**
-- [ ] F4 — Collaudo trasversale — **APERTO; dipende da F2, F3**
+- [ ] F4 — Collaudo trasversale — **APERTO; non avviabile prima di F3.3 e F3.4**
 
 ## Blocco G — Azioni simulate, mock e route
 
@@ -216,7 +219,7 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] Integrazione auth/logout del guard
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di F2: 21 file, 342 test passati, 0 falliti, 0 saltati.
+Baseline verificata al termine di F3.2: 38 file, 549 test passati, 0 falliti, 0 saltati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**

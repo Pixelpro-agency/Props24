@@ -50,11 +50,16 @@ Un form vuoto e mai modificato può essere abbandonato senza modale. Un form dir
 
 Il guard condiviso dovrà coprire sidebar, navbar, menu Aggiungi, link e route interne, browser back, Annulla, logout, cambio pagina e cambio di scheda interna quando comporta perdita di dati.
 
+Quando la navigazione è già sospesa, `Resta` non scrive; `Abbandona` ripristina
+soltanto la baseline dell’ultimo salvataggio manuale; `Salva bozza` esegue una
+sola scrittura e prosegue verso la destinazione originaria. La destinazione
+resta conservata anche durante il salvataggio asincrono.
+
 Per refresh e chiusura della scheda si usa `beforeunload`: il browser può mostrare soltanto l'avviso nativo e non va promessa una modale CSS personalizzata.
 
 ### Submit definitivo
 
-Dopo submit riuscito si crea o aggiorna il record definitivo, si elimina la bozza associata e si naviga alla destinazione prevista. Dopo submit fallito non si eliminano bozza o dati correnti e non si dichiara successo.
+Dopo submit riuscito si crea o aggiorna il record definitivo, si elimina la bozza associata e si naviga alla destinazione prevista. La cancellazione avviene soltanto dopo la creazione riuscita; se il cleanup fallisce, il recovery non ripete la creazione definitiva. Dopo submit fallito non si eliminano bozza o dati correnti e non si dichiara successo. Il logout usa lo stesso guard delle altre navigazioni applicative.
 
 ## 4. Modifiche delle locazioni e storico
 
@@ -123,19 +128,21 @@ Nella fase locale i relativi controlli rispettano la convenzione gialla e disabi
 
 L'audit del confine repository locale è concluso. Il pilot contacts comprende porta e adapter, isolamento account, provider e hook asincrono, oltre alla migrazione e al collaudo dei consumer dei garanti. Questa baseline non implica che tutti i domini o consumer siano già migrati.
 
-Dopo l'audit del confine repository e il pilot contacts già conclusi, l'ordine è:
+Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato è:
 
-1. repository condiviso delle bozze manuali;
-2. guard condiviso delle modifiche non salvate;
-3. integrazione bozza e guard nel form Nuovo inquilino;
-4. integrazione nel form Nuova unità;
-5. integrazione nel form Nuova locazione;
-6. repository edifici;
-7. form Nuovo edificio;
-8. lista, lifecycle e collaudo edifici;
-9. completamento e collaudo trasversale dei quattro CRUD.
+1. repository condiviso delle bozze manuali — implementato;
+2. guard condiviso delle modifiche non salvate — implementato;
+3. Nuovo inquilino — integrato e collaudato;
+4. Nuova unità — integrata e collaudata;
+5. Nuova locazione — prossima integrazione tecnica;
+6. repository edifici — da implementare dopo le decisioni del Blocco A;
+7. Nuovo edificio — da integrare dopo il Blocco A;
+8. lista, lifecycle e collaudo edifici — da completare;
+9. collaudo trasversale dei quattro CRUD — non avviabile prima delle integrazioni residue.
 
-Le integrazioni dei form complessi restano task separate.
+Il comportamento manuale è già attivo nei primi due form e resta da applicare
+agli altri due. `Elimina e ricomincia` cancella esplicitamente la bozza
+persistita. Le integrazioni dei form complessi restano task separate.
 
 ## Decisioni approvate, futuro e questioni aperte
 

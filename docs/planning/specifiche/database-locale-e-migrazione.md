@@ -67,6 +67,19 @@ updatedAt
 
 Caricare una bozza non crea entità definitive. La bozza è aggiornata soltanto manualmente, resta dopo l'abbandono di modifiche non salvate, viene eliminata dopo submit riuscito ed è eliminabile esplicitamente all'apertura del form. Gli allegati futuri non devono far crescere senza limiti il JSON locale.
 
+Il repository condiviso è implementato con contratto asincrono e adapter locale
+account-scoped. Usa chiavi logiche per form, modalità ed eventuale entità,
+schema canonico versionato e migrazione delle forme legacy; non dipende da una
+singola chiave globale. I payload restano specifici per ciascun form e vengono
+validati dalla relativa definition. La baseline persistita è clonata e non
+viene mutata dalle modifiche dirty del form.
+
+Nuovo inquilino e Nuova unità usano il repository condiviso, il caricamento
+iniziale con ripresa o cancellazione, save manuale, delete esplicita e cleanup
+post-submit. Se il record definitivo è stato creato ma il cleanup fallisce, il
+recovery completa la cancellazione senza ripetere la creazione. Nuova locazione
+e Nuovo edificio restano da integrare; non esiste alcuna bozza globale.
+
 ## 6. Storico append-only
 
 L'archivio eventi di audit è separato e usa concettualmente:
@@ -118,7 +131,7 @@ I metadati risiedono nel database; i binari in storage dedicato. IndexedDB può 
 
 ## 10. Migrazione verso Supabase/PostgreSQL
 
-La migrazione sostituirà l'implementazione dei repository senza riscrivere i form. Il pilot contacts è la prima verifica concreta di questo confine, ma non costituisce un'implementazione Supabase e non rende ancora ogni form indipendente da `jsonDb`. La migrazione dovrà prevedere mapping dei record locali, migrazioni versionate, validazione prima dell'import, report degli scarti, idempotenza, isolamento account, transazioni, vincoli univoci, foreign key, Row Level Security, storage separato e rollback.
+La migrazione sostituirà l'implementazione dei repository senza riscrivere i form. Il pilot contacts e il repository bozze condiviso sono verifiche concrete di questo confine, ma non costituiscono un'implementazione Supabase e non rendono ancora ogni form indipendente da `jsonDb`. La migrazione dovrà prevedere mapping dei record locali, migrazioni versionate, validazione prima dell'import, report degli scarti, idempotenza, isolamento account, transazioni, vincoli univoci, foreign key, Row Level Security, storage separato e rollback.
 
 Supabase non viene implementato in questa task.
 
