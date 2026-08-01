@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
     cleanup,
@@ -121,6 +121,71 @@ afterEach(() => {
 });
 
 describe('useUnsavedChangesGuard', () => {
+    it('sincronizza le condizioni dirty prima di una navigazione richiesta nei layout effect', async () => {
+        const renders: boolean[] = [];
+        const layoutNavigations: boolean[] = [];
+        const phases: string[] = [];
+
+        function LayoutNavigationHarness() {
+            const [isDirty, setIsDirty] = useState(false);
+            const [requestNavigation, setRequestNavigation] = useState(false);
+            const navigate = useNavigate();
+            const guard = useUnsavedChangesGuard({
+                enabled: true,
+                isDirty,
+                isSubmitting: false,
+                isSavingDraft: false,
+                saveDraft: async () => undefined,
+                discardChanges: () => undefined,
+            });
+
+            renders.push(isDirty);
+            phases.push(guard.state.phase);
+
+            useLayoutEffect(() => {
+                if (!isDirty || !requestNavigation) return;
+                layoutNavigations.push(true);
+                navigate('/destination');
+            }, [isDirty, navigate, requestNavigation]);
+
+            return (
+                <>
+                    <output data-testid="lifecycle-dirty">
+                        {String(isDirty)}
+                    </output>
+                    <output data-testid="lifecycle-phase">
+                        {guard.state.phase}
+                    </output>
+                    <button onClick={() => {
+                        setIsDirty(true);
+                        setRequestNavigation(true);
+                    }}>
+                        Rendi dirty e richiedi navigazione
+                    </button>
+                </>
+            );
+        }
+
+        const router = createMemoryRouter([
+            { path: '/source', element: <LayoutNavigationHarness /> },
+            { path: '/destination', element: <p>Destinazione</p> },
+        ], { initialEntries: ['/source'] });
+        render(<RouterProvider router={router} />);
+
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Rendi dirty e richiedi navigazione',
+        }));
+
+        expect(renders).toContain(true);
+        expect(layoutNavigations).toHaveLength(1);
+        await waitFor(() => expect(router.state.location.pathname)
+            .toBe('/source'));
+        expect(phases).toContain('blocked');
+        expect(screen.getByTestId('lifecycle-dirty').textContent).toBe('true');
+        expect(screen.getByTestId('lifecycle-phase').textContent)
+            .toBe('blocked');
+    });
+
     it('preserva la navigazione BrowserRouter se save rende il form clean', async () => {
         window.history.replaceState(null, '', '/form');
         const pending = deferred();

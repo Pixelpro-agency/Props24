@@ -1,6 +1,7 @@
 import {
     useCallback,
     useEffect,
+    useLayoutEffect,
     useReducer,
     useRef,
 } from 'react';
@@ -62,7 +63,7 @@ export function useUnsavedChangesGuard(
     const operationPendingRef = useRef(false);
     const mountedRef = useRef(true);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         stateRef.current = state;
         conditionsRef.current = options;
         saveDraftRef.current = options.saveDraft;

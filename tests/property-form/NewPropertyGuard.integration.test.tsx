@@ -276,6 +276,39 @@ describe('NewProperty unsaved changes guard', () => {
         expect(router.state.location.pathname).toBe('/properties/new');
     });
 
+    it('header Indietro protegge il form dirty dopo il commit React', async () => {
+        repository = makeRepository();
+        const addListener = vi.spyOn(window, 'addEventListener');
+        const router = renderPage();
+        const input = await screen.findByLabelText(/Identificativo/);
+        const beforeUnload = addListener.mock.calls.find(
+            ([type]) => type === 'beforeunload',
+        )?.[1] as EventListener;
+
+        fireEvent.change(input, {
+            target: { value: 'Dirty dopo commit React' },
+        });
+        expect((input as HTMLInputElement).value)
+            .toBe('Dirty dopo commit React');
+        await waitFor(() => {
+            const committedDirty = new Event('beforeunload', {
+                cancelable: true,
+            });
+            beforeUnload.call(window, committedDirty);
+            expect(committedDirty.defaultPrevented).toBe(true);
+        });
+
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Indietro',
+        }));
+
+        expect(await screen.findByText('Modifiche non salvate')).toBeTruthy();
+        expect(router.state.location.pathname).toBe('/properties/new');
+        expect((input as HTMLInputElement).value)
+            .toBe('Dirty dopo commit React');
+        addListener.mockRestore();
+    });
+
     it('beforeunload dirty viene bloccato', async () => {
         repository = makeRepository();
         const addListener = vi.spyOn(window, 'addEventListener');
