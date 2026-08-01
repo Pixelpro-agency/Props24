@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { LeaseForm } from '../components/LeaseForm';
 import { getJsonDb, subscribeJsonDb } from '../../../db/jsonDb';
+import { LeaseCreateDraftProvider } from '../drafts/LeaseCreateDraftProvider';
 
 function activePropertyCount(): number {
     return getJsonDb().properties.filter((property) => !property.archived).length;
 }
 
 export const NewLeasePage: React.FC = () => {
+    const navigate = useNavigate();
     const [propertyCount, setPropertyCount] = useState(() => activePropertyCount());
 
     useEffect(() => {
@@ -36,7 +38,9 @@ export const NewLeasePage: React.FC = () => {
                     </Link>
                 </div>
             ) : (
-                <LeaseForm />
+                <LeaseCreateDraftProvider onExitDraft={() => navigate('/leases')}>
+                    <LeaseForm />
+                </LeaseCreateDraftProvider>
             )}
         </div>
     );

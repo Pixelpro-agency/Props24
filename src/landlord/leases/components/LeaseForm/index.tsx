@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, Calculator, CheckCircle, Info, Paperclip, Plus, Save, ShieldCheck, Trash2, UserPlus, X } from 'lucide-react';
+import { AlertTriangle, Calculator, Info, Paperclip, Plus, Save, ShieldCheck, Trash2, UserPlus, X } from 'lucide-react';
 import { LeaseTabs } from './LeaseTabs';
 import { AddTenantModal } from '../Modals/AddTenantModal';
 import { AddGuarantorModal } from '../Modals/AddGuarantorModal';
@@ -11,7 +11,7 @@ import { createLease, getLeaseDetail, updateLease } from '../../../../db/leaseRe
 import { LeaseDocumentsTab } from '../../../../components/lease-detail/LeaseDocumentsTab';
 import { LeaseContractTab } from '../../../../components/lease-detail/LeaseContractTab';
 import { LeaseSignatureTab } from '../../../../components/lease-detail/LeaseSignatureTab';
-import { getDraft, getJsonDb, setDraft, subscribeJsonDb } from '../../../../db/jsonDb';
+import { getJsonDb, subscribeJsonDb } from '../../../../db/jsonDb';
 import type { ContactRecord, PropertyRecord, TenantRecord } from '../../../../db/database.types';
 import { StatusToast, type StatusToastState } from '../../../../components/ui/StatusToast';
 import {
@@ -20,7 +20,6 @@ import {
     calculateFirstBillProrata,
     defaultLeaseValues,
     leaseFormSchema,
-    normalizeLeaseDraft,
     normalizeLeaseFormData,
     PAYMENT_GENERATION_OFFSETS,
     proposeFirstBillEndDate,
@@ -29,6 +28,8 @@ import {
 import { TenantLeaseConflictError } from '../../../../db/databaseErrors';
 import { ISTAT_INDEX_OPTIONS } from '../../data/istatIndexOptions';
 import { useContactList } from '../../../../contacts/useContactList';
+import { normalizeLeaseFormTab, type LeaseFormTab } from '../../drafts/leaseDraftDefinition';
+import { useLeaseCreateDraftContext, type LeaseCreateDraftContextValue } from '../../drafts/LeaseCreateDraftProvider';
 
 const inputClass = 'w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[#337ab7] focus:outline-none focus:ring-2 focus:ring-[#337ab7]/30';
 const errorClass = 'mt-1 text-xs text-red-600';
@@ -52,8 +53,6 @@ function tenantName(tenant: TenantRecord): string {
         ? tenant.companyName || 'Società'
         : `${tenant.firstName} ${tenant.lastName}`.replace(/\s+/g, ' ').trim() || 'Inquilino';
 }
-
-type LeaseFormTab = 'general' | 'tenants' | 'guarantors' | 'receipts' | 'settings' | 'insurance' | 'documents' | 'contract' | 'signature';
 
 interface LeaseErrorTarget {
     rootField: string;
@@ -227,31 +226,40 @@ export interface LeaseFormProps {
     initialValues?: LeaseFormData;
 }
 
-function buildLeaseDraftSignature(formData: LeaseFormData, activeTab: string): string {
-    try {
-        return JSON.stringify({
-            formData: normalizeLeaseFormData(formData),
-            activeTab,
-        });
-    } catch {
-        return JSON.stringify({
-            formData,
-            activeTab,
-        });
-    }
+interface LeaseFormContentProps extends LeaseFormProps {
+    form: UseFormReturn<LeaseFormData>;
+    activeTab: LeaseFormTab;
+    setActiveTab(tab: LeaseFormTab): void;
+    draft?: Pick<LeaseCreateDraftContextValue, 'isSavingDraft' | 'isDeletingDraft' | 'draftError' | 'draftSuccess' | 'saveDraft'>;
 }
 
-export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, initialValues }) => {
+function CreateLeaseForm() {
+    const draft = useLeaseCreateDraftContext();
+    return <LeaseFormContent form={draft.methods} activeTab={draft.activeTab} setActiveTab={draft.setActiveTab} draft={draft} />;
+}
+
+function EditLeaseForm({ leaseId, initialValues }: LeaseFormProps) {
+    const form = useForm<LeaseFormData>({
+        resolver: zodResolver(leaseFormSchema) as never,
+        defaultValues: initialValues ? normalizeLeaseFormData(initialValues) : defaultLeaseValues,
+        mode: 'onSubmit',
+    });
+    const [activeTab, setActiveTab] = useState<LeaseFormTab>('general');
+    return <LeaseFormContent mode="edit" leaseId={leaseId} initialValues={initialValues} form={form} activeTab={activeTab} setActiveTab={setActiveTab} />;
+}
+
+export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, initialValues }) => mode === 'edit'
+    ? <EditLeaseForm mode={mode} leaseId={leaseId} initialValues={initialValues} />
+    : <CreateLeaseForm />;
+
+const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', leaseId, initialValues, form, activeTab, setActiveTab, draft }) => {
     const isEditMode = mode === 'edit';
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<LeaseFormTab>('general');
     const [tenantModalOpen, setTenantModalOpen] = useState(false);
     const [guarantorModalOpen, setGuarantorModalOpen] = useState(false);
     const [snapshot, setSnapshot] = useState(activeLeaseDataSnapshot);
     const [pendingPropertyId, setPendingPropertyId] = useState<string | null>(null);
     const [toast, setToast] = useState<StatusToastState | null>(null);
-    const [isSavingDraft, setIsSavingDraft] = useState(false);
-    const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
     const {
         contacts,
         status: contactListStatus,
@@ -283,28 +291,19 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
      * persistente, così da non perdere informazioni utili per audit o fix
      * successivi.
      */
-    const restoredDraftRef = useRef(false);
-    const draftHydratedRef = useRef(false);
     const editHydratedLeaseIdRef = useRef<string | null>(null);
-    const draftTimerRef = useRef<number | null>(null);
-    const lastSavedSignatureRef = useRef('');
-    const isCreatingLeaseRef = useRef(false);
     const endDateEditedRef = useRef(false);
     const renewEditedRef = useRef(false);
 
-    const form = useForm<LeaseFormData>({
-        resolver: zodResolver(leaseFormSchema) as never,
-        defaultValues: initialValues ? normalizeLeaseFormData(initialValues) : defaultLeaseValues,
-        mode: 'onSubmit',
-    });
     const { register, control, watch, setValue, getValues, reset, formState: { errors, isSubmitting } } = form;
     const { fields, append, remove } = useFieldArray({ control, name: 'PaymentItems' });
     const insuranceFieldArray = useFieldArray({ control, name: 'LeaseInsuranceContracts' });
 
     const values = watch();
-    const draftSignature = buildLeaseDraftSignature(values, activeTab);
-    const selectedTenantIds = watch('LeaseTenantIds') || [];
-    const selectedGuarantorIds = watch('LeaseGarantIds') || [];
+    const watchedTenantIds = watch('LeaseTenantIds');
+    const watchedGuarantorIds = watch('LeaseGarantIds');
+    const selectedTenantIds = useMemo(() => watchedTenantIds || [], [watchedTenantIds]);
+    const selectedGuarantorIds = useMemo(() => watchedGuarantorIds || [], [watchedGuarantorIds]);
     const selectedTenants = useMemo(() => selectedTenantIds
         .map((id: string) => snapshot.tenants.find((tenant: TenantRecord) => tenant.id === id))
         .filter((tenant): tenant is TenantRecord => Boolean(tenant)), [selectedTenantIds, snapshot.tenants]);
@@ -334,38 +333,6 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
     }, []);
 
     useEffect(() => {
-        if (isEditMode) return;
-        if (contactListStatus !== 'ready') return;
-        if (restoredDraftRef.current) return;
-        try {
-            const draft = normalizeLeaseDraft(getDraft('leaseForm'));
-            restoredDraftRef.current = true;
-            if (!draft) {
-                lastSavedSignatureRef.current = buildLeaseDraftSignature(getValues(), activeTab);
-                draftHydratedRef.current = true;
-                return;
-            }
-            const nextActiveTab: LeaseFormTab = ['tenants', 'guarantors', 'receipts', 'settings', 'insurance', 'documents', 'contract', 'signature'].includes(draft.activeTab) ? draft.activeTab as LeaseFormTab : 'general';
-            const next = normalizeLeaseFormData({
-                ...draft.formData,
-                PropertyID: snapshot.properties.some((property) => property.id === draft.formData.PropertyID) ? draft.formData.PropertyID : '',
-                LeaseTenantIds: (draft.formData.LeaseTenantIds || []).filter((id: string) => snapshot.tenants.some((tenant: TenantRecord) => tenant.id === id)),
-                LeaseGarantIds: (draft.formData.LeaseGarantIds || []).filter((id: string) => contacts.some((contact: ContactRecord) => contact.id === id)),
-            });
-            endDateEditedRef.current = Boolean(next.LeaseEndDate);
-            reset(next);
-            setActiveTab(nextActiveTab);
-            lastSavedSignatureRef.current = buildLeaseDraftSignature(next, nextActiveTab);
-            draftHydratedRef.current = true;
-        } catch {
-            restoredDraftRef.current = true;
-            lastSavedSignatureRef.current = buildLeaseDraftSignature(getValues(), activeTab);
-            draftHydratedRef.current = true;
-            setToast({ variant: 'error', title: 'Bozza', message: 'Una parte della bozza non era più valida ed è stata ignorata.' });
-        }
-    }, [activeTab, contactListStatus, contacts, getValues, isEditMode, reset, snapshot.properties, snapshot.tenants]);
-
-    useEffect(() => {
         if (!isEditMode || !leaseId || !initialValues) return;
         if (editHydratedLeaseIdRef.current === leaseId) return;
 
@@ -374,9 +341,7 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
         endDateEditedRef.current = true;
         reset(next);
         setActiveTab('general');
-        lastSavedSignatureRef.current = buildLeaseDraftSignature(next, 'general');
-        draftHydratedRef.current = true;
-    }, [initialValues, isEditMode, leaseId, reset]);
+    }, [initialValues, isEditMode, leaseId, reset, setActiveTab]);
 
     useEffect(() => {
         const next = calculateLeasePeriodicAmount(values);
@@ -409,39 +374,6 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
         if (!nextEndDate || nextEndDate === getValues('LeaseEndDate')) return;
         setValue('LeaseEndDate', nextEndDate, { shouldDirty: true, shouldValidate: true });
     }, [getValues, isEditMode, setValue, values.LeaseStartDate, values.LeaseType]);
-
-    useEffect(() => {
-        if (isEditMode) return undefined;
-        if (!draftHydratedRef.current || isCreatingLeaseRef.current) return undefined;
-        if (draftSignature === lastSavedSignatureRef.current) return undefined;
-        if (draftTimerRef.current !== null) window.clearTimeout(draftTimerRef.current);
-
-        draftTimerRef.current = window.setTimeout(() => {
-            setIsSavingDraft(true);
-            try {
-                const formData = normalizeLeaseFormData(getValues());
-                setDraft('leaseForm', {
-                    formData,
-                    activeTab,
-                    updatedAt: new Date().toISOString(),
-                });
-                setLastSavedAt(new Date().toLocaleTimeString());
-                lastSavedSignatureRef.current = buildLeaseDraftSignature(formData, activeTab);
-            } catch {
-                setToast({ variant: 'error', title: 'Bozza', message: 'Non è stato possibile salvare la bozza.' });
-            } finally {
-                setIsSavingDraft(false);
-                draftTimerRef.current = null;
-            }
-        }, 1000);
-
-        return () => {
-            if (draftTimerRef.current !== null) {
-                window.clearTimeout(draftTimerRef.current);
-                draftTimerRef.current = null;
-            }
-        };
-    }, [activeTab, draftSignature, getValues, isEditMode]);
 
     const applyProperty = (propertyId: string) => {
         const property = snapshot.properties.find((item) => item.id === propertyId);
@@ -486,31 +418,8 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
         setValue('LeaseGarantIds', getValues('LeaseGarantIds').filter((id) => id !== contactId), { shouldDirty: true, shouldValidate: true });
     };
 
-    const saveDraftNow = () => {
-        if (isEditMode) return;
-        if (draftTimerRef.current !== null) {
-            window.clearTimeout(draftTimerRef.current);
-            draftTimerRef.current = null;
-        }
-
-        try {
-            const formData = normalizeLeaseFormData(getValues());
-            setDraft('leaseForm', { formData, activeTab, updatedAt: new Date().toISOString() });
-            lastSavedSignatureRef.current = buildLeaseDraftSignature(formData, activeTab);
-            setLastSavedAt(new Date().toLocaleTimeString());
-            setToast({ variant: 'success', title: 'Bozza', message: 'La bozza è stata salvata.' });
-        } catch {
-            setToast({ variant: 'error', title: 'Bozza', message: 'Non è stato possibile salvare la bozza.' });
-        }
-    };
-
     const onSubmit = form.handleSubmit((data) => {
         try {
-            isCreatingLeaseRef.current = true;
-            if (draftTimerRef.current !== null) {
-                window.clearTimeout(draftTimerRef.current);
-                draftTimerRef.current = null;
-            }
             const savedLease = isEditMode && leaseId ? updateLease(leaseId, data) : createLease(data);
             navigate(isEditMode ? `/leases/${savedLease.id}` : '/leases', {
                 state: {
@@ -518,7 +427,6 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
                 },
             });
         } catch (error) {
-            isCreatingLeaseRef.current = false;
             setToast({ variant: 'error', title: 'Errore', message: toastFromError(error) });
         }
     }, (invalid) => {
@@ -1159,25 +1067,27 @@ export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, 
     return (
         <>
             <form onSubmit={onSubmit}>
-                <LeaseTabs activeTab={activeTab} onTabChange={(tabId) => setActiveTab(tabId as LeaseFormTab)}>
+                <LeaseTabs activeTab={activeTab} onTabChange={(tabId) => setActiveTab(normalizeLeaseFormTab(tabId))}>
+                    {/* Il rendering delle schede legge ref di dominio solo per calcoli sincroni già esistenti. */}
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     {renderActiveTab()}
                 </LeaseTabs>
 
                 <div className="mt-8 flex flex-col gap-4 border-t border-gray-200 pt-6 md:flex-row md:items-center md:justify-between">
                     <div className="text-sm text-gray-500">
-                        {isEditMode ? 'Modifica locazione' : isSavingDraft ? 'Salvataggio bozza...' : lastSavedAt ? (
-                            <span className="inline-flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Bozza aggiornata alle {lastSavedAt}</span>
-                        ) : 'Bozza non ancora salvata'}
+                        {isEditMode ? 'Modifica locazione' : draft?.isSavingDraft ? 'Salvataggio bozza...' : draft?.draftError ? (
+                            <span role="alert" className="text-red-700">{draft.draftError}</span>
+                        ) : draft?.draftSuccess || 'Bozza non ancora salvata'}
                     </div>
                     <div className="flex justify-end gap-3">
                         {isSignatureLocked && <p className="max-w-md text-xs text-amber-700">La procedura di firma locale blocca il salvataggio delle condizioni contrattuali. Puoi annullarla dalla scheda Firma.</p>}
                         <Link to="/leases" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Annulla</Link>
                         {!isEditMode && (
-                            <button type="button" onClick={saveDraftNow} className="flex items-center gap-2 rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <button type="button" disabled={draft?.isSavingDraft || draft?.isDeletingDraft || isSubmitting} onClick={() => { void draft?.saveDraft().catch(() => undefined); }} className="flex items-center gap-2 rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60">
                                 <Save className="h-4 w-4" /> Salva bozza
                             </button>
                         )}
-                        <button type="submit" disabled={isSubmitting || (isEditMode && isSignatureLocked)} title={isSignatureLocked ? 'Annulla la procedura di firma prima di modificare il contratto.' : undefined} className="rounded bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60">
+                        <button type="submit" disabled={isSubmitting || draft?.isSavingDraft || draft?.isDeletingDraft || (isEditMode && isSignatureLocked)} title={isSignatureLocked ? 'Annulla la procedura di firma prima di modificare il contratto.' : undefined} className="rounded bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60">
                             {isSubmitting ? (isEditMode ? 'Salvataggio...' : 'Creazione...') : (isEditMode ? 'Salva modifiche' : 'Crea locazione')}
                         </button>
                     </div>
