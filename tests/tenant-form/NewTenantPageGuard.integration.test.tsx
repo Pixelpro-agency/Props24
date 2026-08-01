@@ -560,7 +560,9 @@ describe('NewTenantPage guard integration', () => {
         }));
         await waitFor(() => expect(router.state.location.pathname)
             .toBe('/dashboard'));
-        expect(screen.getByTestId('account').textContent).toBe('none');
+        await screen.findByText('dashboard browser');
+        await waitFor(() => expect(screen.getByTestId('account').textContent)
+            .toBe('none'));
         expect(logoutMount).toHaveBeenCalledOnce();
         expect(repository.save).toHaveBeenCalledOnce();
         expect(repository.delete).not.toHaveBeenCalled();
@@ -586,7 +588,9 @@ describe('NewTenantPage guard integration', () => {
         await userEvent.click(screen.getByRole('button', { name: action }));
         await waitFor(() => expect(router.state.location.pathname)
             .toBe('/dashboard'));
-        expect(screen.getByTestId('account').textContent).toBe('none');
+        await screen.findByText('dashboard');
+        await waitFor(() => expect(screen.getByTestId('account').textContent)
+            .toBe('none'));
         expect(logoutMount).toHaveBeenCalledOnce();
         expect(repository.save).toHaveBeenCalledTimes(saves ? 1 : 0);
         expect(repository.delete).not.toHaveBeenCalled();

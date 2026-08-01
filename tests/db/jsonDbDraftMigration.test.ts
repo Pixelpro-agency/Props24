@@ -9,6 +9,7 @@ import {
   MemoryStorage,
   uninstallJsonDbWindow,
 } from './jsonDbStorageHarness';
+import { defaultLeaseValues } from '../../src/landlord/leases/schema/leaseFormSchema';
 
 const ACCOUNT_ID = 'user-001';
 const ACCOUNT_KEY = 'props24.localDb.user-001';
@@ -493,9 +494,6 @@ describe('jsonDb draft schema migration', () => {
   it('cancella atomicamente solo la bozza lease durante createLease', async () => {
     const storage = new MemoryStorage();
     const jsonDb = await loadJsonDb(storage);
-    const { defaultLeaseValues } = await import(
-      '../../src/landlord/leases/schema/leaseFormSchema'
-    );
     const { createLease } = await import('../../src/db/leaseRepository');
     const input = {
       ...defaultLeaseValues,
@@ -527,9 +525,6 @@ describe('jsonDb draft schema migration', () => {
   it('preserva la bozza lease se il salvataggio di createLease fallisce', async () => {
     const storage = new MemoryStorage();
     const jsonDb = await loadJsonDb(storage);
-    const { defaultLeaseValues } = await import(
-      '../../src/landlord/leases/schema/leaseFormSchema'
-    );
     const { createLease } = await import('../../src/db/leaseRepository');
     const input = {
       ...defaultLeaseValues,

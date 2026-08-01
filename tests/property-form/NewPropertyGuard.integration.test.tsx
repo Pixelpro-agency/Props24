@@ -242,6 +242,25 @@ async function makeDirty(value = 'Modificato') {
     return input as HTMLInputElement;
 }
 
+async function commitDirtyForBrowserBack(
+    value: string,
+    addListener: ReturnType<typeof vi.spyOn>,
+) {
+    const input = await screen.findByLabelText(/Identificativo/);
+    fireEvent.change(input, { target: { value } });
+    expect((input as HTMLInputElement).value).toBe(value);
+    await waitFor(() => {
+        const beforeUnload = addListener.mock.calls.find(
+            ([type]) => type === 'beforeunload',
+        )?.[1] as EventListener | undefined;
+        expect(beforeUnload).toBeDefined();
+        const event = new Event('beforeunload', { cancelable: true });
+        beforeUnload?.call(window, event);
+        expect(event.defaultPrevented).toBe(true);
+    });
+    return input as HTMLInputElement;
+}
+
 afterEach(() => {
     cleanup();
     browserRouters.splice(0).forEach((router) => router.dispose());
@@ -423,11 +442,15 @@ describe('NewProperty unsaved changes guard', () => {
         'BrowserRouter reale back + %s rispetta la scelta',
         async (action) => {
             repository = makeRepository();
+            const addListener = vi.spyOn(window, 'addEventListener');
             const router = renderBrowserPage(action === 'Resta');
             await userEvent.click(await screen.findByRole('link', {
                 name: 'Nuova unità',
             }));
-            const input = await makeDirty();
+            const input = await commitDirtyForBrowserBack(
+                'Modificato',
+                addListener,
+            );
             window.history.back();
             await screen.findByText('Modifiche non salvate');
             await userEvent.click(screen.getByRole('button', { name: action }));
@@ -443,6 +466,7 @@ describe('NewProperty unsaved changes guard', () => {
             }
             expect(repository.save).not.toHaveBeenCalled();
             expect(repository.delete).not.toHaveBeenCalled();
+            addListener.mockRestore();
         },
     );
 

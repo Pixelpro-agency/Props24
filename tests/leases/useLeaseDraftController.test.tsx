@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import React, { StrictMode, useEffect, useState } from 'react';
+import React, { StrictMode, useLayoutEffect, useState } from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { useForm, useWatch, type UseFormReturn } from 'react-hook-form';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -64,12 +64,21 @@ function Harness({ repositoryOverride, initialValues, initialTab = 'general' }: 
     const title = useWatch({ control: form.control, name: 'LeaseIdentificativo' });
     // Il test deve catturare l'ultima istanza dopo ogni render del controller.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => {
+    useLayoutEffect(() => {
         latest = controller;
         methods = form;
         setTabExternal = setTab;
     });
     return <><output data-testid="phase">{controller.phase}</output><output data-testid="dirty">{String(form.formState.isDirty)}</output><output data-testid="title">{title}</output><output data-testid="tab">{tab}</output><output data-testid="success">{controller.draftSuccess}</output><output data-testid="draft-error">{controller.draftError}</output><output data-testid="load-error">{controller.loadError}</output><output data-testid="operation-error">{controller.operationError}</output></>;
+}
+
+async function waitForControllerPhase(phase: LeaseDraftController['phase']) {
+    await waitFor(() => {
+        expect(screen.getByTestId('phase').textContent).toBe(phase);
+        expect(latest?.phase).toBe(phase);
+        expect(methods).toBeDefined();
+        expect(setTabExternal).toBeDefined();
+    });
 }
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); latest = undefined; methods = undefined; setTabExternal = undefined; });
@@ -155,16 +164,16 @@ describe('useLeaseDraftController', () => {
     it('elimina e ricomincia una sola volta o conserva choice su errore', async () => {
         const pending = deferred<boolean>(); repository = makeRepository(record({ LeaseIdentificativo: 'X' }));
         vi.mocked(repository.delete).mockReturnValue(pending.promise);
-        render(<Harness />); await screen.findByText('choice_required');
+        render(<Harness />); await waitForControllerPhase('choice_required');
         act(() => { void latest?.deleteAndRestart(); void latest?.deleteAndRestart(); });
         expect(repository.delete).toHaveBeenCalledOnce();
         expect(repository.delete).toHaveBeenCalledWith({ formType: 'lease', mode: 'create', entityId: null });
         pending.resolve(true); await act(async () => { await pending.promise; });
-        await screen.findByText('ready');
+        await waitForControllerPhase('ready');
         expect(screen.getByTestId('tab').textContent).toBe('general');
 
         cleanup(); repository = makeRepository(record()); vi.mocked(repository.delete).mockRejectedValueOnce(new Error('x'));
-        render(<Harness />); await screen.findByText('choice_required');
+        render(<Harness />); await waitForControllerPhase('choice_required');
         await act(async () => { await latest?.deleteAndRestart(); });
         expect(screen.getByTestId('phase').textContent).toBe('choice_required');
         expect(screen.getByTestId('operation-error').textContent).toContain('Riprova');
@@ -201,8 +210,10 @@ describe('useLeaseDraftController', () => {
         vi.mocked(repositoryA.get).mockReturnValue(oldLoad.promise);
         const repositoryB = makeRepository(null);
         const view = render(<Harness repositoryOverride={repositoryA} initialTab="insurance" />);
+        await waitFor(() => expect(repositoryA.get).toHaveBeenCalledOnce());
         view.rerender(<Harness repositoryOverride={repositoryB} initialTab="insurance" />);
-        await screen.findByText('ready');
+        await waitFor(() => expect(repositoryB.get).toHaveBeenCalledOnce());
+        await waitForControllerPhase('ready');
         const snapshot = {
             phase: latest?.phase, values: methods?.getValues(), tab: screen.getByTestId('tab').textContent,
             loadError: latest?.loadError, operationError: latest?.operationError,
