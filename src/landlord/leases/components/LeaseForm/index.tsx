@@ -229,6 +229,7 @@ export interface LeaseFormProps {
     mode?: 'create' | 'edit';
     leaseId?: string;
     initialValues?: LeaseFormData;
+    onBeforeCreateNavigation?: () => void;
 }
 
 interface LeaseFormContentProps extends LeaseFormProps {
@@ -238,9 +239,9 @@ interface LeaseFormContentProps extends LeaseFormProps {
     draft?: Pick<LeaseCreateDraftContextValue, 'isSavingDraft' | 'isDeletingDraft' | 'draftError' | 'draftSuccess' | 'saveDraft'>;
 }
 
-function CreateLeaseForm() {
+function CreateLeaseForm({ onBeforeCreateNavigation }: LeaseFormProps) {
     const draft = useLeaseCreateDraftContext();
-    return <LeaseFormContent form={draft.methods} activeTab={draft.activeTab} setActiveTab={draft.setActiveTab} draft={draft} />;
+    return <LeaseFormContent form={draft.methods} activeTab={draft.activeTab} setActiveTab={draft.setActiveTab} draft={draft} onBeforeCreateNavigation={onBeforeCreateNavigation} />;
 }
 
 function EditLeaseForm({ leaseId, initialValues }: LeaseFormProps) {
@@ -253,11 +254,11 @@ function EditLeaseForm({ leaseId, initialValues }: LeaseFormProps) {
     return <LeaseFormContent mode="edit" leaseId={leaseId} initialValues={initialValues} form={form} activeTab={activeTab} setActiveTab={setActiveTab} />;
 }
 
-export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, initialValues }) => mode === 'edit'
+export const LeaseForm: React.FC<LeaseFormProps> = ({ mode = 'create', leaseId, initialValues, onBeforeCreateNavigation }) => mode === 'edit'
     ? <EditLeaseForm mode={mode} leaseId={leaseId} initialValues={initialValues} />
-    : <CreateLeaseForm />;
+    : <CreateLeaseForm onBeforeCreateNavigation={onBeforeCreateNavigation} />;
 
-const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', leaseId, initialValues, form, activeTab, setActiveTab, draft }) => {
+const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', leaseId, initialValues, form, activeTab, setActiveTab, draft, onBeforeCreateNavigation }) => {
     const isEditMode = mode === 'edit';
     const navigate = useNavigate();
     const [tenantModalOpen, setTenantModalOpen] = useState(false);
@@ -447,6 +448,7 @@ const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', le
     const onSubmit = form.handleSubmit((data) => {
         try {
             const savedLease = isEditMode && leaseId ? updateLease(leaseId, data) : createLease(data);
+            if (!isEditMode) onBeforeCreateNavigation?.();
             navigate(isEditMode ? `/leases/${savedLease.id}` : '/leases', {
                 state: {
                     toast: { variant: 'success', title: 'Successo', message: isEditMode ? 'La locazione è stata aggiornata.' : 'La locazione è stata creata.' },

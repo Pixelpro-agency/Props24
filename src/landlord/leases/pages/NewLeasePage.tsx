@@ -4,6 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import { LeaseForm } from '../components/LeaseForm';
 import { getJsonDb, subscribeJsonDb } from '../../../db/jsonDb';
 import { LeaseCreateDraftProvider } from '../drafts/LeaseCreateDraftProvider';
+import { LeaseCreateNavigationGuard } from '../drafts/LeaseCreateNavigationGuard';
 
 function activePropertyCount(): number {
     return getJsonDb().properties.filter((property) => !property.archived).length;
@@ -39,7 +40,11 @@ export const NewLeasePage: React.FC = () => {
                 </div>
             ) : (
                 <LeaseCreateDraftProvider onExitDraft={() => navigate('/leases')}>
-                    <LeaseForm />
+                    <LeaseCreateNavigationGuard>
+                        {({ allowNextNavigation }) => (
+                            <LeaseForm onBeforeCreateNavigation={allowNextNavigation} />
+                        )}
+                    </LeaseCreateNavigationGuard>
                 </LeaseCreateDraftProvider>
             )}
         </div>
