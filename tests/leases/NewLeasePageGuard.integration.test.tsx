@@ -109,7 +109,7 @@ function GuardHarness() {
     const navigate = useNavigate();
     return (
         <LeaseCreateNavigationGuard>
-            {({ allowNextNavigation }) => (
+            {({ completeCreatedLease }) => (
                 <>
                     <Pathname />
                     <label>
@@ -126,8 +126,7 @@ function GuardHarness() {
                     <button type="button" onClick={() => draft.setActiveTab('contract')}>Contratto</button>
                     <button type="button" onClick={() => { void draft.saveDraft().catch(() => undefined); }}>Salva manuale</button>
                     <button type="button" onClick={() => {
-                        allowNextNavigation();
-                        navigate('/leases');
+                        void completeCreatedLease({ id: 'lease-created' });
                     }}>Create riuscita</button>
                     <button type="button" onClick={() => navigate('/leases')}>Create fallita</button>
                     <button type="button" onClick={() => undefined}>Apri e chiudi modal</button>
@@ -197,9 +196,9 @@ function renderRealSubmit() {
             path: '/leases/new',
             element: <LeaseCreateDraftProvider onExitDraft={() => undefined}>
                 <LeaseCreateNavigationGuard>
-                    {({ allowNextNavigation }) => <>
+                    {({ completeCreatedLease }) => <>
                         <SubmitSeeder />
-                        <LeaseForm onBeforeCreateNavigation={allowNextNavigation} />
+                        <LeaseForm onCreateLeaseCreated={completeCreatedLease} />
                     </>}
                 </LeaseCreateNavigationGuard>
             </LeaseCreateDraftProvider>,
@@ -281,13 +280,17 @@ describe('Lease create navigation guard', () => {
         fireEvent.click(screen.getByRole('link', { name: 'Logout' }));
         await dialog();
         fireEvent.click(screen.getByRole('button', { name: 'Resta' }));
-        expect(router.state.location.pathname).toBe('/leases/new');
-        expect(input.value).toBe('Logout resta');
-        expect(screen.getByTestId('tab').textContent).toBe('contract');
-        expect(screen.getByTestId('account').textContent).toBe('user-001');
-        expect(logoutMount).not.toHaveBeenCalled();
-        expect(repository.save).not.toHaveBeenCalled();
-        expect(repository.delete).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/leases/new');
+            expect(input.value).toBe('Logout resta');
+            expect(screen.getByTestId('tab').textContent).toBe('contract');
+            expect(screen.getByTestId('account').textContent).toBe('user-001');
+            expect(readSession()?.accountId).toBe('user-001');
+            expect(logoutMount).not.toHaveBeenCalled();
+            expect(repository.save).not.toHaveBeenCalled();
+            expect(repository.delete).not.toHaveBeenCalled();
+            expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+        });
     });
 
     it('logout reale dirty + Abbandona monta LogoutPage una volta e chiude la sessione', async () => {
@@ -296,12 +299,15 @@ describe('Lease create navigation guard', () => {
         fireEvent.click(screen.getByRole('link', { name: 'Logout' }));
         await dialog();
         fireEvent.click(screen.getByRole('button', { name: 'Abbandona' }));
-        await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard'));
-        expect(logoutMount).toHaveBeenCalledOnce();
-        expect(readSession()).toBeNull();
-        expect(screen.getByTestId('account').textContent).toBe('none');
-        expect(repository.save).not.toHaveBeenCalled();
-        expect(repository.delete).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/dashboard');
+            expect(logoutMount).toHaveBeenCalledOnce();
+            expect(readSession()).toBeNull();
+            expect(screen.getByTestId('account').textContent).toBe('none');
+            expect(repository.save).not.toHaveBeenCalled();
+            expect(repository.delete).not.toHaveBeenCalled();
+            expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+        });
     });
 
     it('logout reale dirty + Salva bozza salva una volta e chiude la sessione', async () => {
@@ -310,11 +316,15 @@ describe('Lease create navigation guard', () => {
         fireEvent.click(screen.getByRole('link', { name: 'Logout' }));
         await dialog();
         fireEvent.click(screen.getByRole('button', { name: 'Salva bozza' }));
-        await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard'));
-        expect(repository.save).toHaveBeenCalledOnce();
-        expect(logoutMount).toHaveBeenCalledOnce();
-        expect(readSession()).toBeNull();
-        expect(repository.delete).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/dashboard');
+            expect(screen.getByTestId('account').textContent).toBe('none');
+            expect(repository.save).toHaveBeenCalledOnce();
+            expect(logoutMount).toHaveBeenCalledOnce();
+            expect(readSession()).toBeNull();
+            expect(repository.delete).not.toHaveBeenCalled();
+            expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+        });
     });
 
     it('logout reale con save fallita conserva sessione e consente retry', async () => {
@@ -325,12 +335,25 @@ describe('Lease create navigation guard', () => {
         await dialog();
         fireEvent.click(screen.getByRole('button', { name: 'Salva bozza' }));
         await screen.findByRole('alert');
-        expect(router.state.location.pathname).toBe('/leases/new');
-        expect(readSession()?.accountId).toBe('user-001');
-        expect(logoutMount).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/leases/new');
+            expect(readSession()?.accountId).toBe('user-001');
+            expect(screen.getByTestId('account').textContent).toBe('user-001');
+            expect(logoutMount).not.toHaveBeenCalled();
+            expect(repository.save).toHaveBeenCalledOnce();
+            expect((screen.getByRole('button', {
+                name: 'Salva bozza',
+            }) as HTMLButtonElement).disabled).toBe(false);
+        });
         fireEvent.click(screen.getByRole('button', { name: 'Salva bozza' }));
-        await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard'));
-        expect(repository.save).toHaveBeenCalledTimes(2);
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/dashboard');
+            expect(readSession()).toBeNull();
+            expect(screen.getByTestId('account').textContent).toBe('none');
+            expect(logoutMount).toHaveBeenCalledOnce();
+            expect(repository.save).toHaveBeenCalledTimes(2);
+            expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+        });
     });
 
     it('submit LeaseForm reale riuscito attraversa il bypass e naviga senza dialog', async () => {
@@ -341,7 +364,7 @@ describe('Lease create navigation guard', () => {
         await waitFor(() => expect(router.state.location.pathname).toBe('/leases'));
         expect(createLease).toHaveBeenCalledOnce();
         expect(screen.queryByText('Modifiche non salvate')).toBeNull();
-        expect(repository.delete).not.toHaveBeenCalled();
+        expect(repository.delete).toHaveBeenCalledOnce();
     });
 
     it('submit LeaseForm reale fallito non lascia bypass residuo', async () => {
@@ -643,13 +666,13 @@ describe('Lease create navigation guard', () => {
         expect(screen.queryByText('Modifiche non salvate')).toBeNull();
     });
 
-    it('allowNextNavigation consente una sola navigazione create riuscita', async () => {
+    it('completeCreatedLease pulisce la bozza e consente una sola navigazione', async () => {
         const router = renderPage();
         await dirty('Create');
         fireEvent.click(screen.getByRole('button', { name: 'Create riuscita' }));
         await waitFor(() => expect(router.state.location.pathname).toBe('/leases'));
         expect(screen.queryByText('Modifiche non salvate')).toBeNull();
-        expect(repository.delete).not.toHaveBeenCalled();
+        expect(repository.delete).toHaveBeenCalledOnce();
     });
 
     it('create fallita senza bypass lascia la navigazione successiva protetta', async () => {

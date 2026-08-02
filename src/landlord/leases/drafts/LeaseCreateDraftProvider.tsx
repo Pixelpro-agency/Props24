@@ -19,6 +19,7 @@ export interface LeaseCreateDraftContextValue {
     draftError: string | null;
     draftSuccess: string | null;
     saveDraft(): Promise<void>;
+    deletePersistedDraft(): Promise<void>;
     discardChanges(): void;
     clearDraftFeedback(): void;
 }
@@ -45,7 +46,9 @@ export function LeaseCreateDraftProvider({ children, onExitDraft }: { children: 
         isSavingDraft: draft.isSavingDraft, isDeletingDraft: draft.isDeletingDraft,
         loadError: draft.loadError, operationError: draft.operationError,
         draftError: draft.draftError, draftSuccess: draft.draftSuccess,
-        saveDraft: draft.saveDraft, discardChanges: draft.discardChanges,
+        saveDraft: draft.saveDraft,
+        deletePersistedDraft: draft.deletePersistedDraft,
+        discardChanges: draft.discardChanges,
         clearDraftFeedback: draft.clearDraftFeedback,
     }), [activeTab, draft, methods]);
 

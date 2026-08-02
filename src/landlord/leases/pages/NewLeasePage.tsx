@@ -41,8 +41,8 @@ export const NewLeasePage: React.FC = () => {
             ) : (
                 <LeaseCreateDraftProvider onExitDraft={() => navigate('/leases')}>
                     <LeaseCreateNavigationGuard>
-                        {({ allowNextNavigation }) => (
-                            <LeaseForm onBeforeCreateNavigation={allowNextNavigation} />
+                        {({ completeCreatedLease }) => (
+                            <LeaseForm onCreateLeaseCreated={completeCreatedLease} />
                         )}
                     </LeaseCreateNavigationGuard>
                 </LeaseCreateDraftProvider>

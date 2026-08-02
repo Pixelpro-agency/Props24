@@ -1,5 +1,4 @@
 import {
-    clearDraftFromDatabase,
     generateId,
     getJsonDb,
     saveJsonDb,
@@ -184,7 +183,6 @@ export function createLease(input: LeaseInput): LeaseRecord {
             return generated;
         })()],
     };
-    nextDb = clearDraftFromDatabase(nextDb, 'leaseForm');
     nextDb = ensureLeaseDepositPayment(nextDb, record, todayIso());
     nextDb = rebuildLeaseRelations(nextDb);
 

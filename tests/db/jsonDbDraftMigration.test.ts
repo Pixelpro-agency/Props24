@@ -491,7 +491,7 @@ describe('jsonDb draft schema migration', () => {
     expect(jsonDb.getDraft('propertyForm')).toBeNull();
   });
 
-  it('cancella atomicamente solo la bozza lease durante createLease', async () => {
+  it('createLease conserva la bozza lease fino al cleanup F1 esplicito', async () => {
     const storage = new MemoryStorage();
     const jsonDb = await loadJsonDb(storage);
     const { createLease } = await import('../../src/db/leaseRepository');
@@ -513,13 +513,32 @@ describe('jsonDb draft schema migration', () => {
     jsonDb.setDraft('tenantForm', { firstName: 'Preserve' });
     storage.resetOperationLogs();
 
-    createLease(input);
+    const created = createLease(input);
 
     expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(1);
+    expect(jsonDb.getDraft('leaseForm')).not.toBeNull();
+    expect(jsonDb.getDraft('tenantForm')).toEqual({
+      firstName: 'Preserve',
+    });
+
+    const { createLocalDraftRepository } = await import(
+      '../../src/db/localDraftRepository'
+    );
+    const repository = createLocalDraftRepository({ accountId: ACCOUNT_ID });
+    await repository.delete({
+      formType: 'lease',
+      mode: 'create',
+      entityId: null,
+    });
+
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(2);
     expect(jsonDb.getDraft('leaseForm')).toBeNull();
     expect(jsonDb.getDraft('tenantForm')).toEqual({
       firstName: 'Preserve',
     });
+    expect(jsonDb.getJsonDb().leases.filter((lease) => (
+      lease.id === created.id
+    ))).toHaveLength(1);
   });
 
   it('preserva la bozza lease se il salvataggio di createLease fallisce', async () => {
