@@ -33,6 +33,7 @@ import { LogoutPage } from '../../src/auth/LogoutPage';
 import {
     clearSession,
     initializeAccounts,
+    readSession,
     writeSession,
 } from '../../src/auth/authStorage';
 
@@ -168,8 +169,12 @@ function AuthState() {
 function renderAuthenticatedPage() {
     const logoutMount = vi.fn();
     function RealLogout() {
+        const recorded = useRef(false);
         useEffect(() => {
-            logoutMount();
+            if (!recorded.current) {
+                recorded.current = true;
+                logoutMount();
+            }
         }, []);
         return <LogoutPage />;
     }
@@ -250,9 +255,9 @@ async function commitDirtyForBrowserBack(
     fireEvent.change(input, { target: { value } });
     expect((input as HTMLInputElement).value).toBe(value);
     await waitFor(() => {
-        const beforeUnload = addListener.mock.calls.find(
+        const beforeUnload = addListener.mock.calls.filter(
             ([type]) => type === 'beforeunload',
-        )?.[1] as EventListener | undefined;
+        ).at(-1)?.[1] as EventListener | undefined;
         expect(beforeUnload).toBeDefined();
         const event = new Event('beforeunload', { cancelable: true });
         beforeUnload?.call(window, event);
@@ -410,11 +415,15 @@ describe('NewProperty unsaved changes guard', () => {
         const consoleError = vi.spyOn(console, 'error').mockImplementation(
             () => undefined,
         );
+        const addListener = vi.spyOn(window, 'addEventListener');
         const router = renderBrowserPage(true);
         await userEvent.click(await screen.findByRole('link', {
             name: 'Nuova unità',
         }));
-        const input = await makeDirty();
+        const input = await commitDirtyForBrowserBack(
+            'Modificato',
+            addListener,
+        );
         window.history.back();
         expect(await screen.findByText('Modifiche non salvate')).toBeTruthy();
         expect(router.state.location.pathname).toBe('/properties/new');
@@ -436,6 +445,7 @@ describe('NewProperty unsaved changes guard', () => {
         });
         expect(consoleError).not.toHaveBeenCalled();
         consoleError.mockRestore();
+        addListener.mockRestore();
     });
 
     it.each(['Resta', 'Abbandona'])(
@@ -654,12 +664,16 @@ describe('NewProperty unsaved changes guard', () => {
         await userEvent.click(await screen.findByRole('button', {
             name: 'Resta',
         }));
-        expect(router.state.location.pathname).toBe('/properties/new');
-        expect(screen.getByTestId('account').textContent).toBe('user-001');
-        expect(input.value).toBe('Modificato');
-        expect(logoutMount).not.toHaveBeenCalled();
-        expect(repository.save).not.toHaveBeenCalled();
-        expect(repository.delete).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/properties/new');
+            expect(screen.getByTestId('account').textContent).toBe('user-001');
+            expect(readSession()?.accountId).toBe('user-001');
+            expect(input.value).toBe('Modificato');
+            expect(logoutMount).not.toHaveBeenCalled();
+            expect(repository.save).not.toHaveBeenCalled();
+            expect(repository.delete).not.toHaveBeenCalled();
+            expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+        });
     });
 
     it.each([
@@ -679,12 +693,15 @@ describe('NewProperty unsaved changes guard', () => {
         await userEvent.click(await screen.findByRole('button', {
             name: action,
         }));
-        await waitFor(() => expect(router.state.location.pathname)
-            .toBe('/dashboard'));
-        expect(screen.getByTestId('account').textContent).toBe('none');
-        expect(logoutMount).toHaveBeenCalledOnce();
-        expect(repository.save).toHaveBeenCalledTimes(saves ? 1 : 0);
-        expect(repository.delete).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/dashboard');
+            expect(screen.getByTestId('account').textContent).toBe('none');
+            expect(readSession()).toBeNull();
+            expect(logoutMount).toHaveBeenCalledOnce();
+            expect(repository.save).toHaveBeenCalledTimes(saves ? 1 : 0);
+            expect(repository.delete).not.toHaveBeenCalled();
+            expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+        });
         expect(legacyClear).not.toHaveBeenCalled();
     });
 
@@ -708,18 +725,28 @@ describe('NewProperty unsaved changes guard', () => {
             name: 'Salva bozza',
         }));
         expect(await screen.findByRole('alert')).toBeTruthy();
-        expect(router.state.location.pathname).toBe('/properties/new');
-        expect(screen.getByTestId('account').textContent).toBe('user-001');
-        expect(input.value).toBe('Modificato');
-        expect(logoutMount).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/properties/new');
+            expect(screen.getByTestId('account').textContent).toBe('user-001');
+            expect(readSession()?.accountId).toBe('user-001');
+            expect(input.value).toBe('Modificato');
+            expect(logoutMount).not.toHaveBeenCalled();
+            expect(repository.save).toHaveBeenCalledOnce();
+            expect((screen.getByRole('button', {
+                name: 'Salva bozza',
+            }) as HTMLButtonElement).disabled).toBe(false);
+        });
         await userEvent.click(screen.getByRole('button', {
             name: 'Salva bozza',
         }));
-        await waitFor(() => expect(router.state.location.pathname)
-            .toBe('/dashboard'));
-        expect(screen.getByTestId('account').textContent).toBe('none');
-        expect(logoutMount).toHaveBeenCalledOnce();
-        expect(repository.save).toHaveBeenCalledTimes(2);
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/dashboard');
+            expect(screen.getByTestId('account').textContent).toBe('none');
+            expect(readSession()).toBeNull();
+            expect(logoutMount).toHaveBeenCalledOnce();
+            expect(repository.save).toHaveBeenCalledTimes(2);
+            expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+        });
     });
 
     it('BrowserRouter logout + save completa in Strict Mode', async () => {
@@ -739,17 +766,17 @@ describe('NewProperty unsaved changes guard', () => {
         await userEvent.click(await screen.findByRole('button', {
             name: 'Salva bozza',
         }));
-        await waitFor(() => expect(router.state.location.pathname)
-            .toBe('/dashboard'));
-        expect(window.location.pathname).toBe('/dashboard');
-        expect(screen.getByTestId('account').textContent).toBe('none');
-        expect(logoutMount).toHaveBeenCalledOnce();
-        expect(repository.save).toHaveBeenCalledOnce();
-        expect(repository.delete).not.toHaveBeenCalled();
-        await waitFor(() => expect(screen.queryByText(
-            'Modifiche non salvate',
-        )).toBeNull());
-        expect(screen.queryByLabelText(/Identificativo/)).toBeNull();
+        await waitFor(() => {
+            expect(router.state.location.pathname).toBe('/dashboard');
+            expect(window.location.pathname).toBe('/dashboard');
+            expect(screen.getByTestId('account').textContent).toBe('none');
+            expect(readSession()).toBeNull();
+            expect(logoutMount).toHaveBeenCalledOnce();
+            expect(repository.save).toHaveBeenCalledOnce();
+            expect(repository.delete).not.toHaveBeenCalled();
+            expect(screen.queryByText('Modifiche non salvate')).toBeNull();
+            expect(screen.queryByLabelText(/Identificativo/)).toBeNull();
+        });
         expect(consoleError).not.toHaveBeenCalled();
         consoleError.mockRestore();
     });
