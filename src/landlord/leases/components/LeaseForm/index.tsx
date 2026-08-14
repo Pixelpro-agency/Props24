@@ -266,6 +266,7 @@ const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', le
     const [snapshot, setSnapshot] = useState(activeLeaseDataSnapshot);
     const [pendingPropertyId, setPendingPropertyId] = useState<string | null>(null);
     const [toast, setToast] = useState<StatusToastState | null>(null);
+    const createSubmitLockRef = useRef(false);
     const {
         contacts,
         status: contactListStatus,
@@ -445,16 +446,37 @@ const LeaseFormContent: React.FC<LeaseFormContentProps> = ({ mode = 'create', le
         setValue('LeaseGarantIds', current.filter((_, itemIndex) => itemIndex !== index), { shouldDirty: true, shouldValidate: true });
     };
 
+    // Il callback viene eseguito da React Hook Form sull'evento submit, non durante il render.
+    // eslint-disable-next-line react-hooks/refs
     const onSubmit = form.handleSubmit(async (data) => {
+        if (!isEditMode && createSubmitLockRef.current) return;
+
+        if (!isEditMode) createSubmitLockRef.current = true;
+
+        let savedLease: { id: string };
         try {
-            const savedLease = isEditMode && leaseId ? updateLease(leaseId, data) : createLease(data);
-            if (!isEditMode) {
+            savedLease = isEditMode && leaseId
+                ? updateLease(leaseId, data)
+                : createLease(data);
+        } catch (error) {
+            if (!isEditMode) createSubmitLockRef.current = false;
+            setToast({ variant: 'error', title: 'Errore', message: toastFromError(error) });
+            return;
+        }
+
+        if (!isEditMode) {
+            try {
                 await onCreateLeaseCreated?.(savedLease);
-                return;
+            } catch (error) {
+                setToast({ variant: 'error', title: 'Errore', message: toastFromError(error) });
             }
-            navigate(isEditMode ? `/leases/${savedLease.id}` : '/leases', {
+            return;
+        }
+
+        try {
+            navigate(`/leases/${savedLease.id}`, {
                 state: {
-                    toast: { variant: 'success', title: 'Successo', message: isEditMode ? 'La locazione è stata aggiornata.' : 'La locazione è stata creata.' },
+                    toast: { variant: 'success', title: 'Successo', message: 'La locazione è stata aggiornata.' },
                 },
             });
         } catch (error) {
