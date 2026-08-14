@@ -18,7 +18,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: repository e form edificio.
 - Checklist collegata: A1, A2
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: si
 - Data validazione: —
 
 ### ED-02
@@ -29,7 +29,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: repository edifici.
 - Checklist collegata: A1
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: no, vanno collegati in base al civico
 - Data validazione: —
 
 ### ED-06
@@ -40,7 +40,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: criteri di ripartizione.
 - Checklist collegata: A2
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: eliminiamo dal progetto questa logica
 - Data validazione: —
 
 ### ED-07
@@ -51,7 +51,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: schema edificio.
 - Checklist collegata: A2
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: idem come sopra
 - Data validazione: —
 
 ### UN-01
@@ -62,7 +62,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: campi unità.
 - Checklist collegata: B3
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: risultanze catastali(foglio, particella, subalterno, rendita catastale, categoria catastale)
 - Data validazione: —
 
 ### UN-02
@@ -73,7 +73,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: campi unità e locazioni.
 - Checklist collegata: B3, I10
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: mensile, trimestrale, semestrale, annuale
 - Data validazione: —
 
 ### UN-03
@@ -84,7 +84,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: campi unità.
 - Checklist collegata: B3
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: nessun caso speciale
 - Data validazione: —
 
 ### UN-04
@@ -95,7 +95,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: repository unità.
 - Checklist collegata: B2
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: unita estera eliminiamo la logica dal progetto, privi di dati catastali completi=
 - Data validazione: —
 
 ### CT-03
@@ -106,7 +106,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: form e repository inquilini.
 - Checklist collegata: C1, C3, C4, C10
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: ci sono identificativi che riguardano la burocrazia (spiegare meglio)
 - Data validazione: —
 
 ### CT-04
@@ -117,7 +117,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: repository inquilini.
 - Checklist collegata: C1, C3, C4, C10
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: no, ultima verifica il codice fiscale
 - Data validazione: —
 
 ### KPI-01 — Valori e redditività delle unità
@@ -128,7 +128,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: card KPI unità.
 - Checklist collegata: B9A
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: la fonte è il proprietario e/o saranno esterne al progetto
 - Data validazione: —
 
 ### KPI-02 — Tasso di occupazione
@@ -139,7 +139,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: card KPI unità.
 - Checklist collegata: B9A
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: valido solo per affitti brevi, oppure segnalere tasso di occupaziona ma riferito ad affitti(non brevi)
 - Data validazione: —
 
 ### KPI-03 — KPI delle locazioni
@@ -150,7 +150,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: card KPI locazioni.
 - Checklist collegata: D3A
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: devi spiegarmela meglio
 - Data validazione: —
 
 ## Commercialista o consulente
@@ -163,7 +163,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: conferma pagamento.
 - Checklist collegata: D2
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: è una sezione del progetto non sviluppata (vedere sezione finanze/registra un pagamento)
 - Data validazione: —
 
 ### PA-02
@@ -174,7 +174,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: allegati e documenti pagamento.
 - Checklist collegata: I4
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: lo facciamo piu avanti nel progetto, cmq ricevuta 
 - Data validazione: —
 
 ### PA-03
@@ -185,7 +185,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: pagamenti successivi alla prima fase.
 - Checklist collegata: D2D, I5
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: copiamo rentila (sezione finanze)
 - Data validazione: —
 
 ### PA-04
@@ -196,7 +196,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: generazione ricevute.
 - Checklist collegata: I4
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: avere dati locatore e conduttore, importo e data e tipologia di pagamento
 - Data validazione: —
 
 ### PA-05
@@ -207,7 +207,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: documenti pagamento.
 - Checklist collegata: I4
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: se proprietario fa ricevuta, se societa fa fattura (spiegamela meglio)
 - Data validazione: —
 
 ### PA-06
@@ -218,7 +218,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: override data finale.
 - Checklist collegata: D1B, D3
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: spiegamela meglio
 - Data validazione: —
 
 ### PA-07
@@ -229,7 +229,7 @@ Il registro contiene le domande complete e resta l’unico luogo in cui registra
 - Task bloccate o influenzate: storico append-only.
 - Checklist collegata: D1B, K1
 - Stato: aperta
-- Risposta: non ancora fornita
+- Risposta: teniamole a tempo indefinito
 - Data validazione: —
 
 ### PA-08
