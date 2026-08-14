@@ -113,6 +113,7 @@ createdAt
 ```
 
 Gli eventi sono immutabili, cronologici, contengono snapshot precedente e successivo, non includono dati sensibili non necessari e supportano inizialmente le locazioni, con estensione futura ad altri domini.
+Sono conservati a tempo indefinito e non hanno scadenza automatica.
 
 ## 7. Unicità delle unità
 
@@ -120,12 +121,7 @@ Ogni unità ha sempre un UUID interno. Quando i dati catastali ufficiali sono co
 
 La normalizzazione gestisce spazi e maiuscole/minuscole, conserva gli zeri significativi, distingue i campi assenti e viene verificata in create ed edit escludendo il record corrente. Indirizzo, piano e interno non costituiscono identità catastale ufficiale.
 
-Senza chiave catastale completa si usa un fingerprint operativo:
-
-- con edificio: `accountId + buildingId + scala + piano + interno`, normalizzati;
-- senza edificio: `accountId + indirizzo + CAP + scala + piano + interno`, normalizzati.
-
-Il fingerprint segnala un potenziale duplicato; l'indirizzo da solo non definisce un duplicato.
+Senza dati sufficienti per costruire la chiave catastale completa non si esegue alcun controllo duplicati alternativo basato su indirizzo, edificio, scala, piano, interno o fingerprint.
 
 ## 8. Edifici e unità
 
@@ -136,7 +132,7 @@ unit.relations.buildingId
 building.unitsCount derivato
 ```
 
-Non si duplicano oggetti edificio nelle unità. `unitsCount` deriva dai dati reali e viene ricalcolato dopo il lifecycle delle unità. L'eliminazione dell'edificio è bloccata con relazioni non gestite. L'unicità dell'identificativo edificio resta da validare.
+Non si duplicano oggetti edificio nelle unità. `unitsCount` deriva dai dati reali e viene ricalcolato dopo il lifecycle delle unità. L'eliminazione dell'edificio è bloccata con relazioni non gestite. L'identificativo edificio è univoco per account. Nello stesso account, stesso indirizzo completo e stesso civico identificano lo stesso edificio; il suffisso è parte del civico e le divisioni interne non producono nuovi edifici.
 
 ## 9. Allegati e storage futuro
 

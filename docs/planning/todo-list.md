@@ -17,7 +17,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Completate integralmente: 5
 - Parzialmente completate: 4
 - Non concluse: 63
-- Domande professionali aperte: 26
+- Domande professionali aperte: 13
 - Prossimo punto tecnico: da rivalutare dopo l’allineamento documentale; F3.3 è completata e F3.4 resta aperta, dipendente dal Blocco A
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 63 task non concluse e non vanno sommati nuovamente. D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
@@ -31,7 +31,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 > - [x] F3.2 — Integrazione in Nuova unità — **COMPLETATA**
 > - [x] F3.3 — Integrazione in Nuova locazione — **COMPLETATA**
 > - [ ] F3.4 — Integrazione in Nuovo edificio — **APERTA; dipende dal Blocco A**
-> - [ ] A1/A2 — Repository e form Nuovo edificio — **IN ATTESA delle decisioni indicate**
+> - [ ] A1/A2 — Repository e form Nuovo edificio — **APERTI; decisioni edificio validate, restano dipendenze tecniche e PA-08/PA-09**
 > - [ ] A4–A7 — Lista, lifecycle e collaudo edifici — **APERTO**
 > - [ ] K1/K2 — Audit e collaudo trasversale dei quattro CRUD — **FINALE**
 
@@ -69,8 +69,8 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 ## Blocco A — Edifici
 
 - [x] A0 — Specifica Nuovo edificio — **COMPLETATA**
-- [ ] A1 — Repository edifici — **IN ATTESA: ED-01, ED-02**
-- [ ] A2 — Form Nuovo edificio — **IN ATTESA: ED-06, ED-07, PA-08, PA-09; ED-04 validata; dipende da A1, F1, F2**
+- [ ] A1 — Repository edifici — **APERTO; ED-01 ed ED-02 validate**
+- [ ] A2 — Form Nuovo edificio — **APERTO; ED-04, ED-06 ed ED-07 validate; PA-08 e PA-09 aperte; dipende da A1, F1, F2**
 - [ ] A3 — Route e accessi edificio — **APERTO; ED-03 validata; dipende da A2**
 - [ ] A4 — Lista edifici reale — **APERTO; dipende da A1, A3**
 - [ ] A5 — Azioni edificio — **APERTO; ED-05 validata; dipende da A4**
@@ -80,19 +80,19 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 ## Blocco B — Unità
 
 - [ ] B1 — Relazione unità–edificio — **APERTO; dipende da A1**
-- [ ] B2 — Duplicati unità — **APERTO; influenzato da UN-04**
-- [ ] B3 — Campi placeholder — **IN ATTESA: UN-01, UN-02, UN-03**
+- [ ] B2 — Duplicati unità — **APERTO; UN-04 validata**
+- [ ] B3 — Campi placeholder — **APERTO; UN-01, UN-02 e UN-03 validate**
 - [ ] B4 — ID annidati canonici — **APERTO**
 - [x] B5 — Bozza unità — **COMPLETATA; repository condiviso, salvataggio manuale, restore, guard e cleanup verificati**
 - [ ] B6 — Modifica e lifecycle unità — **APERTO**
 - [ ] B7 — Import ed export unità — **RINVIATO**
 - [ ] B8 — Analisi catastale futura — **FUTURO — BACKEND**
 - [ ] B9 — Collaudo unità — **APERTO; dipende dal completamento delle task precedenti del blocco**
-  - [ ] B9A — Sei card unità: Affittate, Valore locativo, Valore patrimoniale, Redditività lorda, Redditività netta e Tasso di occupazione — **FUTURO; in attesa di KPI-01 e KPI-02**
+  - [ ] B9A — Card unità: Affittate, Valore locativo, Valore patrimoniale, Guadagno lordo e Guadagno netto; Tasso di occupazione solo per futuri affitti brevi e Copertura locativa soprattutto aggregata — **FUTURO; KPI-01 e KPI-02 validate**
 
 ## Blocco C — Inquilini e contatti
 
-- [ ] C1 — Garanti e rubrica — **PARZIALE; CT-01, CT-02 e CT-05 validate; CT-03 e CT-04 aperte**
+- [ ] C1 — Garanti e rubrica — **PARZIALE; CT-01–CT-05 validate e riallineate**
   - [x] Porta asincrona `ContactRepository`
   - [x] Adapter locale
   - [x] Binding immutabile all’account
@@ -109,10 +109,9 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [ ] Completare rubrica e lifecycle dei contatti — **APERTO**
   - [ ] Consolidare il modello canonico tra inquilini e locazioni — **APERTO**
   - [ ] Gestire contatti di emergenza, duplicati e record orfani — **APERTO**
-  - [ ] Integrare CT-01, CT-02 e CT-05 — **DECISIONI VALIDATE**
-  - [ ] Definire casi esteri e politica duplicati — **IN ATTESA: CT-03, CT-04**
+  - [ ] Integrare CT-01–CT-05, casi esteri italiani e hard block account-scoped — **DECISIONI VALIDATE**
 - [ ] C2 — ID annidati — **APERTO**
-- [ ] C3 — Duplicati anagrafici — **IN ATTESA: CT-03, CT-04; CT-01, CT-02 e CT-05 validate**
+- [ ] C3 — Duplicati anagrafici — **APERTO; CT-01–CT-05 validate**
 - [ ] C4 — Creazione atomica — **APERTO; dipende da C1–C3**
 - [ ] C5 — Modifica e lifecycle — **APERTO**
 - [ ] C6 — Azioni lista ancora simulate — **DECISIONE PRODOTTO**
@@ -126,7 +125,7 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 
 - [ ] D1 — Data finale sicura — **PARZIALE**
   - [x] D1A — Calcolo automatico sicuro
-  - [ ] D1B — Override motivato e storico append-only — **APERTO; influenzato da PA-06, PA-07**
+  - [ ] D1B — Override motivato e storico append-only a tempo indefinito — **APERTO; PA-07 validata, PA-06 rinviata**
 - [ ] D2 — Addebito senza incasso automatico — **PARZIALE**
   - [x] D2A — Stato iniziale conservativo delle rate generate
   - [x] D2B — Conferma manuale completa
@@ -189,8 +188,8 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 - [ ] I1 — Indici ISTAT aggiornabili — **FUTURO — BACKEND**
 - [ ] I2 — Generazione programmata e avvisi — **FUTURO — BACKEND**
 - [ ] I3 — Aggiornamento canone — **FUTURO — BACKEND**
-- [ ] I4 — Ricevute, fatture e numerazione — **FUTURO — BACKEND; influenzato da PA-02, PA-04, PA-05, PA-11**
-- [ ] I5 — Riporto saldo, conguagli e riconciliazione — **FUTURO — BACKEND; influenzato da PA-03, PA-10**
+- [ ] I4 — Ricevute, fatture e documenti pagamento — **FUTURO — BACKEND; PA-02, PA-04 e PA-05 rinviate; PA-11 senza risposta**
+- [ ] I5 — Pagamenti parziali, crediti e debiti — **FUTURO — BACKEND; PA-03 rinviata; PA-10 senza risposta**
 - [ ] I6 — Notifiche locazione — **FUTURO — BACKEND**
 - [ ] I7 — Documenti deposito e assicurazioni — **FUTURO — STORAGE**
 - [ ] I8 — Documenti durante creazione locazione — **FUTURO — STORAGE**
@@ -258,32 +257,19 @@ Baseline verificata al termine di F3.2: 38 file, 549 test passati, 0 falliti, 0 
 
 ## Decisioni professionali ancora aperte
 
-- [ ] [ED-01](./decisioni-da-validare.md#ed-01) — Unicità identificativo edificio — **IN ATTESA**
-- [ ] [ED-02](./decisioni-da-validare.md#ed-02) — Edifici distinti allo stesso indirizzo — **IN ATTESA**
-- [ ] [ED-06](./decisioni-da-validare.md#ed-06) — Somma obbligatoria dei millesimi — **IN ATTESA**
-- [ ] [ED-07](./decisioni-da-validare.md#ed-07) — Significato dei millesimi — **IN ATTESA**
-- [ ] [UN-01](./decisioni-da-validare.md#un-01) — Tipi di locazione dell’unità — **IN ATTESA**
-- [ ] [UN-02](./decisioni-da-validare.md#un-02) — Periodicità di pagamento — **IN ATTESA**
-- [ ] [UN-03](./decisioni-da-validare.md#un-03) — Classi energetiche — **IN ATTESA**
-- [ ] [UN-04](./decisioni-da-validare.md#un-04) — Unità estere o senza catasto completo — **IN ATTESA**
-- [ ] [CT-03](./decisioni-da-validare.md#ct-03) — Anagrafiche estere — **IN ATTESA**
-- [ ] [CT-04](./decisioni-da-validare.md#ct-04) — Gestione duplicati anagrafici — **IN ATTESA**
-- [ ] [PA-01](./decisioni-da-validare.md#pa-01) — Catalogo metodi di pagamento — **IN ATTESA**
-- [ ] [PA-02](./decisioni-da-validare.md#pa-02) — Prove ufficiali del pagamento — **IN ATTESA**
-- [ ] [PA-03](./decisioni-da-validare.md#pa-03) — Pagamenti parziali, crediti e debiti — **IN ATTESA**
-- [ ] [PA-04](./decisioni-da-validare.md#pa-04) — Produzione e contenuto ricevuta — **IN ATTESA**
-- [ ] [PA-05](./decisioni-da-validare.md#pa-05) — Tipi di documenti fiscali — **IN ATTESA**
-- [ ] [PA-06](./decisioni-da-validare.md#pa-06) — Motivi override data finale — **IN ATTESA**
-- [ ] [PA-07](./decisioni-da-validare.md#pa-07) — Retention dello storico — **IN ATTESA**
+- [ ] [KPI-03](./decisioni-da-validare.md#kpi-03--kpi-delle-locazioni) — KPI delle locazioni — **RINVIATA**
+- [ ] [PA-01](./decisioni-da-validare.md#pa-01) — Catalogo futuro metodi di pagamento — **RINVIATA**
+- [ ] [PA-02](./decisioni-da-validare.md#pa-02) — Prove documentali — **RINVIATA**
+- [ ] [PA-03](./decisioni-da-validare.md#pa-03) — Pagamenti parziali, crediti e debiti — **RINVIATA**
+- [ ] [PA-04](./decisioni-da-validare.md#pa-04) — Ricevute — **RINVIATA**
+- [ ] [PA-05](./decisioni-da-validare.md#pa-05) — Tipologie documentali — **RINVIATA**
+- [ ] [PA-06](./decisioni-da-validare.md#pa-06) — Motivi override data finale — **RINVIATA**
 - [ ] [PA-08](./decisioni-da-validare.md#pa-08) — Semantica valore IMU — **IN ATTESA**
 - [ ] [PA-09](./decisioni-da-validare.md#pa-09) — Dettaglio prezzo e spese acquisto — **IN ATTESA**
 - [ ] [PA-10](./decisioni-da-validare.md#pa-10) — Affitto prepagato — **IN ATTESA**
 - [ ] [PA-11](./decisioni-da-validare.md#pa-11) — Annullamento ricevute — **IN ATTESA**
 - [ ] [PA-12](./decisioni-da-validare.md#pa-12) — Confirmation precedente — **IN ATTESA**
 - [ ] [PA-13](./decisioni-da-validare.md#pa-13) — Rinnovo locazione — **IN ATTESA**
-- [ ] [KPI-01](./decisioni-da-validare.md#kpi-01--valori-e-redditività-delle-unità) — Valori e redditività delle unità — **IN ATTESA**
-- [ ] [KPI-02](./decisioni-da-validare.md#kpi-02--tasso-di-occupazione) — Tasso di occupazione — **IN ATTESA**
-- [ ] [KPI-03](./decisioni-da-validare.md#kpi-03--kpi-delle-locazioni) — KPI delle locazioni — **IN ATTESA**
 
 ## Decisioni prodotto ancora aperte
 

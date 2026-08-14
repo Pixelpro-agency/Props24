@@ -90,7 +90,7 @@ Il modello è documentato senza implementazione.
 
 ## 11. Codice fiscale
 
-Props24 non calcola né propone automaticamente il codice fiscale: il CF è richiesto all’utente e potrà essere verificato in futuro. Non è necessario per un semplice invito, può essere facoltativo nella prima anagrafica e deve essere richiesto prima della finalizzazione di una locazione italiana quando applicabile, con eccezioni country-aware.
+Per l'account Props24 il CF non è obbligatorio alla registrazione iniziale; se inserito successivamente è globalmente univoco fra account e il riuso è bloccato. Per tenant, contatti e parti, invece, il duplicato fiscale è account-scoped e lo stesso soggetto può esistere in account differenti. Nei flussi italiani una persona estera usa il CF italiano; una società o ente estero usa CF italiano e partita IVA italiana quando applicabile. Non è prevista logica corrente country-by-country.
 
 Il CF non sostituisce la normalizzazione dell’indirizzo e il suo inserimento non avvia automaticamente consultazioni catastali.
 
@@ -112,7 +112,7 @@ Direzione futura: carta d’identità per anagrafiche personali, visura camerale
 
 ## 14. Identificatori francesi
 
-SIREN identifica un’entità legale o impresa francese; SIRET uno specifico stabilimento francese. Gli identificatori sono country-aware: SIREN è richiesto quando applicabile a un’impresa francese; SIRET quando il record rappresenta uno stabilimento specifico e può non essere applicabile altrimenti. Nessun SIRET è richiesto ai soggetti italiani. L’email resta recapito e canale di invito, non identificatore fiscale.
+SIREN e SIRET sono mantenuti esclusivamente come riferimento futuro fuori scope. Non sono implementati nella logica fiscale corrente, non partecipano al controllo duplicati e non sostituiscono gli identificativi italiani. L’email resta recapito e canale di invito e, da sola, non prova un duplicato fiscale.
 
 ## 15. Documenti della locazione
 

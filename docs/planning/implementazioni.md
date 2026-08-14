@@ -90,15 +90,15 @@ Non:
 
 ### 3.1 Nuovo edificio
 
-La specifica consolidata è disponibile in [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md). Le sole decisioni residue — unicità dell'identificativo, indirizzi coincidenti, routing, creazione unità dal form, lifecycle e regole professionali sui millesimi — sono nel registro [Decisioni da validare](./decisioni-da-validare.md).
+La specifica consolidata è disponibile in [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md). ED-01–ED-07 sono validate: identificativo e duplicati sono account-scoped, il post-submit apre il dettaglio, le unità usano il form dedicato, il lifecycle è protetto e Criteri di ripartizione è eliminata. Il campo millesimi esistente resta semplice e facoltativo.
 
 ### 3.2 Duplicati delle unità
 
-Ogni unità usa un UUID interno. Il controllo primario usa una chiave catastale normalizzata account-scoped; quando non è disponibile usa un fingerprint operativo secondario, con regole distinte per unità associate o meno a un edificio. La specifica è in [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md); gli edge case professionali restano in [Decisioni da validare](./decisioni-da-validare.md).
+Ogni unità usa un UUID interno. Il controllo duplicati usa la chiave catastale normalizzata account-scoped solo quando completa; con dati incompleti non usa fingerprint o fallback alternativi.
 
 ### 3.3 Campi unità ancora senza valori
 
-Restano da validare soltanto i cataloghi professionali di:
+Sono validati i cataloghi professionali di:
 
 - tipo di locazione dell’unità;
 - periodicità di pagamento;
@@ -109,13 +109,7 @@ Riferimento: [Decisioni da validare](./decisioni-da-validare.md).
 
 ### 3.4 Duplicati anagrafici
 
-La strategia resta aperta e deve essere validata in [Decisioni da validare](./decisioni-da-validare.md), includendo:
-
-- codice fiscale obbligatorio o facoltativo per persona;
-- partita IVA obbligatoria o facoltativa per società;
-- gestione soggetti esteri;
-- duplicati sempre bloccati oppure ammessi con conferma;
-- ruolo di SIRET ed email come segnali secondari.
+La strategia è validata: identificativi fiscali italiani anche nei flussi italiani con soggetti esteri; duplicato fiscale nello stesso account = blocco senza override; email non probatoria; SIREN/SIRET fuori scope. Il CF dell'account Props24, se presente, è invece globalmente univoco fra account.
 
 ### 3.5 Modifiche non salvate
 
@@ -223,7 +217,7 @@ Non modificare codice.
 
 ## TASK A2 — Form Nuovo edificio
 
-**Dipendenze:** specifica consolidata A0; A1; F1; F2. ED-04 è validata; ED-06, ED-07, PA-08 e PA-09 restano aperte e influenzano il perimetro pertinente senza bloccare necessariamente ogni riga del form.
+**Dipendenze:** specifica consolidata A0; A1; F1; F2. ED-04, ED-06 ed ED-07 sono validate; PA-08 e PA-09 restano aperte.
 
 **Obiettivo:**
 
@@ -234,8 +228,8 @@ Non modificare codice.
 - bozza manuale account-scoped e separata;
 - nessuna scrittura automatica;
 - guard condiviso delle modifiche non salvate;
-- cinque schede attive e tre visibili, gialle e disabilitate;
-- gestione quota;
+- quattro schede attive e tre visibili, gialle e disabilitate;
+- nessun Criterio di ripartizione; millesimi facoltativi senza logica speciale;
 - submit singolo;
 - toast singolo;
 - round-trip di ogni controllo visibile.
@@ -365,6 +359,7 @@ Verificare:
 - bloccare soltanto duplicati secondo la chiave approvata;
 - escludere il record corrente in edit;
 - gestire unità senza edificio;
+- con dati catastali incompleti non applicare fingerprint o altri fallback;
 - produrre errori di dominio.
 
 **Casi obbligatori:**
@@ -488,19 +483,16 @@ Verificare:
 
 ### B9A — Card e KPI unità
 
-Le sei card approvate sono:
+Le card future definite sono:
 
 - Affittate;
 - Valore locativo;
 - Valore patrimoniale;
-- Redditività lorda;
-- Redditività netta;
-- Tasso di occupazione.
+- Guadagno lordo, basato sugli incassi effettivi nel periodo;
+- Guadagno netto, al netto di tasse e costi realmente disponibili.
 
 Affittate = unità non archiviate collegate a una locazione attiva secondo lo
-stato canonico della locazione. Il calcolo non è implementato. Formule, fonti,
-basi temporali e trattamento dei dati mancanti dei cinque KPI restano
-subordinati a KPI-01 e KPI-02.
+stato canonico della locazione. Valore patrimoniale usa il valore di acquisizione; un selettore comune offre Ultimo mese, Anno corrente, Ultimi 12 mesi e Dall'inizio; dati assenti non valgono zero e sono segnalati come incompleti. Il Tasso di occupazione è futuro per affitti brevi; la Copertura locativa è soprattutto aggregata e non è una card standard della singola unità tradizionale. B9A resta futura.
 
 ---
 
@@ -531,7 +523,7 @@ Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale
 - completare rubrica e lifecycle dei contatti;
 - consolidare il modello canonico tra inquilini e locazioni;
 - gestire contatti di emergenza, duplicati e record orfani;
-- integrare CT-01, CT-02 e CT-05 validate; CT-03 e CT-04 restano aperte per casi esteri e politica dei duplicati.
+- integrare CT-01–CT-05 riallineate e validate, inclusi flussi esteri italiani e hard block account-scoped.
 
 ## TASK C2 — ID annidati
 
@@ -544,12 +536,12 @@ Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale
 
 ## TASK C3 — Duplicati anagrafici
 
-**Dipendenza:** CT-01, CT-02 e CT-05 sono validate; CT-03 e CT-04 restano aperte.
+**Dipendenza:** CT-01–CT-05 sono validate e riallineate.
 
 **Obiettivo:**
 
 - regole distinte per persona e società;
-- controllo CF, partita IVA e SIRET secondo decisione;
+- controllo CF e partita IVA secondo decisione; nessun SIREN/SIRET corrente;
 - edit che esclude il record corrente;
 - identificatori vuoti non trattati come duplicati;
 - errori sul campo e scheda corretta;
@@ -717,6 +709,7 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
   - `Altro`;
 - spiegazione obbligatoria per `Altro`;
 - storico append-only;
+- conservazione a tempo indefinito, senza scadenza automatica;
 - valore precedente e successivo;
 - campi modificati;
 - autore;
@@ -746,6 +739,7 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 
 - `paid` è raggiungibile dall’interfaccia soltanto mediante conferma esplicita completa;
 - i metodi canonici sono bonifico, contanti, assegno, carta e addebito;
+- PA-01 riguarda soltanto l'eventuale catalogo futuro di Finanze e non riapre D2B;
 - il metodo effettivo è obbligatorio;
 - la data è obbligatoria, ISO valida e non futura;
 - l’importo è obbligatorio, finito, positivo e uguale al totale del pagamento con confronto ai centesimi;
@@ -1325,26 +1319,29 @@ Sono attività future dipendenti dal backend: PDF, OCR, scraping, firme, email, 
 - audit;
 - uso dell’indice versionato.
 
-## TASK I4 — Ricevute, fatture e numerazione
+## TASK I4 — Ricevute, fatture e documenti pagamento
 
 **Origine:** scheda ricevute.
 
-Comprende:
+**Decisioni collegate:** PA-02, PA-04 e PA-05, tutte rinviate; PA-11 resta aperta e non analizzata.
+
+Comprende in futuro:
 
 - generatore documenti;
 - numerazione persistente;
 - ambito locazione/locatore;
 - gestione concorrenza;
 - prefissi e formato;
-- ricevuta e fattura;
+- distinzione fra Ricevuta, Fattura, Quietanza e Allegato del pagamento;
+- per la ricevuta almeno locatore, conduttore, importo, data e metodo/tipologia;
 - SDI e PEC soltanto con servizio reale;
 - stato invio;
 - errori e retry;
 - nessun numero assegnato due volte.
 
-## TASK I5 — Riporto saldo e riconciliazione
+## TASK I5 — Pagamenti parziali, crediti e debiti
 
-Prima di automatizzare definire:
+PA-03 rinvia alla sezione Finanze pagamenti parziali, crediti e debiti; Rentila sarà soltanto riferimento funzionale da analizzare. PA-10 resta aperta e non analizzata. Prima di automatizzare definire:
 
 - pagamenti parziali;
 - crediti;
@@ -1585,6 +1582,7 @@ Verificare edificio, unità, inquilino e locazione:
 - round-trip;
 - bozze manuali;
 - storico append-only;
+- conservazione a tempo indefinito, senza scadenza automatica;
 - override data finale motivato;
 - pagamento completo confermato;
 - funzioni future gialle e disabilitate;

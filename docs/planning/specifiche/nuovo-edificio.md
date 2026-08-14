@@ -6,7 +6,7 @@ La specifica deriva dagli screenshot forniti dall'utente, dal sorgente legacy de
 
 ## 2. Obiettivo locale
 
-Il form crea realmente un edificio nel database locale, salva tutti i campi della prima fase, supporta [bozza manuale e modifiche non salvate](./fase-locale-prioritaria.md), collega unità esistenti, consente il salvataggio senza unità solo dopo conferma e produce un record compatibile con il repository futuro.
+Il form crea realmente un edificio nel database locale, salva tutti i campi della prima fase, supporta [bozza manuale e modifiche non salvate](./fase-locale-prioritaria.md) e produce un record compatibile con il repository futuro. Il salvataggio senza unità è il flusso corrente e non richiede una conferma dedicata.
 
 ## 3. Schede
 
@@ -15,13 +15,12 @@ Il form crea realmente un edificio nel database locale, salva tutti i campi dell
 3. Informazioni aggiuntive;
 4. Informazioni finanziarie;
 5. Password e codice;
-6. Criteri di ripartizione;
-7. Foto;
-8. Documenti.
+6. Foto;
+7. Documenti.
 
 ## 4. Stato nella prima fase
 
-Sono attive Informazioni generali, Unità, Informazioni aggiuntive, Informazioni finanziarie e Criteri di ripartizione.
+Sono attive Informazioni generali, Unità, Informazioni aggiuntive e Informazioni finanziarie.
 
 Password e codice, Foto e Documenti restano visibili, gialle e disabilitate: non accettano input, non usano handler fittizi, non dichiarano salvataggi e spiegano la dipendenza da backend o storage sicuro.
 
@@ -43,13 +42,11 @@ Password e codice, Foto e Documenti restano visibili, gialle e disabilitate: non
 | Descrizione | attivo | no |
 | Nota privata | attivo | no |
 
-Sono richieste validazione sul campo, numeri sicuri, nessuna conversione silenziosa, separazione tra descrizione e nota privata e colore canonico. L'unicità dell'identificativo è ancora da validare.
+Sono richieste validazione sul campo, numeri sicuri, nessuna conversione silenziosa, separazione tra descrizione e nota privata e colore canonico. L'identificativo è univoco nello stesso account, non globalmente; in edit il record corrente è escluso dal controllo.
 
 ## 6. Unità
 
-La scheda consente scelta e associazione di più unità esistenti, millesimi di proprietà per associazione, aggiunta e rimozione delle righe. Impedisce la stessa unità ripetuta, esclude unità archiviate e non crea implicitamente unità incomplete.
-
-Se non esistono associazioni, una modale condivisa avverte che nessuna unità è associata e chiede se salvare comunque. `Annulla` torna al form; `Conferma` consente il submit. La mancanza di unità non è un errore assoluto e la conferma non appare con almeno un'associazione valida.
+Non si creano unità inline. Dopo il salvataggio, `Aggiungi unità` apre il normale form Nuova unità con `buildingId` preimpostato e indirizzo edificio precompilato e read-only quando il flusso parte dal dettaglio. La creazione autonoma resta disponibile. La futura associazione di unità esistenti prive di edificio non è funzione corrente. Il campo millesimi già presente nel form unità resta semplice e facoltativo, senza somme, calcoli o validazioni speciali.
 
 ## 7. Informazioni aggiuntive
 
@@ -133,40 +130,36 @@ Sono attivi Data di acquisto, Prezzo d'acquisto, Spese di acquisto e IMU. Le dat
 
 Il legacy contempla descrizione, numero, quantità, detentore, note e fotografie. Nella prima fase la scheda è gialla e disabilitata: non salva dati sensibili o credenziali in chiaro. L'implementazione dipende da backend, autorizzazione e storage sicuro.
 
-## 10. Criteri di ripartizione
-
-Il form gestisce più criteri, ciascuno con identificativo o titolo obbligatorio, una o più unità/proprietà, millesimi per ogni unità/proprietà e righe aggiungibili o rimovibili. Consente modifica ed eliminazione, impedisce ripetizioni e unità archiviate.
-
-Non è definita automaticamente la somma: l'obbligo di 1.000 rispetto a valori liberi resta in [Decisioni da validare](../decisioni-da-validare.md).
-
-## 11. Foto
+## 10. Foto
 
 La scheda resta disabilitata. In futuro comprenderà fotografie multiple, copertina, upload, rimozione, conversione, storage, metadati ed errori. I Data URL persistenti non sono una soluzione definitiva.
 
-## 12. Documenti
+## 11. Documenti
 
 La scheda resta disabilitata. In futuro comprenderà documenti multipli, tipo, descrizione, file nuovo o esistente, condivisione, storage sicuro, permessi, eliminazione coordinata e OCR dopo upload reale. Il catalogo legacy non è un enum definitivo senza normalizzazione.
 
-## 13. Bozza e navigazione
+## 12. Bozza e navigazione
 
 Il form segue [la specifica della fase locale](./fase-locale-prioritaria.md): bozza manuale, ripresa o eliminazione, stato dirty, modale Resta/Abbandona/Salva bozza ed eliminazione soltanto dopo submit riuscito.
 
-## 14. Relazioni e unicità
+## 13. Relazioni e unicità
 
-Secondo [Database locale e migrazione futura](./database-locale-e-migrazione.md), edificio e unità usano UUID e `buildingId`; `unitsCount` è derivato. L'identificativo edificio è obbligatorio ma la sua unicità resta da validare. Lo stesso indirizzo non è automaticamente un duplicato.
+Secondo [Database locale e migrazione futura](./database-locale-e-migrazione.md), edificio e unità usano UUID e `buildingId`; `unitsCount` è derivato. L'identificativo edificio è obbligatorio e univoco per account. Nello stesso account, stesso indirizzo completo e stesso civico identificano lo stesso edificio; `10`, `10 bis` e `10 ter` sono civici distinti. Unità, scala, piano e interno non generano nuovi edifici.
 
-## 15. Destinazione post-submit
+## 14. Destinazione post-submit
 
-Dopo una creazione riuscita si apre la lista Edifici oppure il dettaglio appena creato. La scelta resta da confermare prima della task di routing; non va inventata una route dettaglio inesistente.
+Dopo una creazione riuscita si apre il dettaglio dell'edificio appena creato.
 
-## 16. Criteri di accettazione
+## 15. Criteri di accettazione
 
-- cinque schede attive e tre gialle disabilitate;
+- quattro schede attive e tre gialle disabilitate;
 - obbligatorietà corretta e round-trip di tutti i campi attivi;
 - bozza manuale;
-- salvataggio con unità e conferma senza unità;
-- associazioni senza duplicati;
-- criteri persistiti;
+- salvataggio dell'edificio senza associazioni inline e successiva azione `Aggiungi unità` tramite form dedicato;
+- identificativo univoco per account, con esclusione del record corrente in edit;
+- stesso indirizzo completo e civico bloccato nello stesso account;
+- post-submit al dettaglio e creazione unità tramite form dedicato;
+- lifecycle di modifica, archivio, ripristino ed eliminazione protetta;
 - reload e isolamento account;
 - nessun falso successo;
 - build e lint mirato;

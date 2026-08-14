@@ -74,6 +74,7 @@ Le modifiche alle locazioni producono eventi append-only persistiti nel database
 - stato precedente e successivo.
 
 Lo storico non è sovrascrivibile né ricostruito soltanto dai dati correnti e deve mostrare come i dati erano e come sono diventati.
+È conservato a tempo indefinito e non prevede scadenza automatica.
 
 ## 5. Data finale della locazione
 
@@ -89,6 +90,8 @@ Per `Altro` è obbligatoria una spiegazione. L'evento append-only conserva data 
 ## 6. Pagamenti nella prima fase
 
 La prima versione gestisce soltanto pagamenti completi. Un pagamento diventa `paid` solo dopo conferma esplicita dell'utente, che raccoglie metodo, data, importo e nota facoltativa.
+
+I metodi correnti restano `Bonifico`, `Contanti`, `Assegno`, `Carta` e `Addebito`. L'eventuale catalogo futuro sarà rivalutato soltanto con la sezione Finanze.
 
 Nessun metodo implica automaticamente l'incasso. L'importo deve coincidere con l'intero residuo; i pagamenti parziali non sono accettati silenziosamente. Non vengono prodotti automaticamente ricevute o documenti e nessun pagamento è ufficiale senza conferma.
 
@@ -118,7 +121,7 @@ Sono attività future: pagamenti parziali, crediti, debiti, compensazioni, alleg
 
 ## 7. Funzioni documentali future
 
-Dipendono dal backend: upload e storage definitivo di immagini, conversione immagini, lettura e creazione PDF, OCR di identità, catasto e visure camerali, scraping, firme digitali, verifica documentale, email, automazioni e generazione di ricevute e fatture.
+Dipendono dal backend: upload e storage definitivo di immagini, conversione immagini, lettura e creazione PDF, OCR di identità, catasto e visure camerali, scraping, firme digitali, verifica documentale, email e automazioni. Il futuro sistema distingue almeno Ricevuta, Fattura, Quietanza e Allegato del pagamento. Per la ricevuta sono già noti locatore, conduttore, importo, data e tipologia/metodo di pagamento. Restano rinviati prove definitive, momento di emissione, automatismi, regole fiscali, pagamenti parziali, crediti e debiti.
 
 Nella fase locale i relativi controlli rispettano la convenzione gialla e disabilitata.
 
