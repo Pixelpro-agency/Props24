@@ -59,7 +59,7 @@ Per refresh e chiusura della scheda si usa `beforeunload`: il browser può mostr
 
 ### Submit definitivo
 
-Dopo submit riuscito si crea o aggiorna il record definitivo, si elimina la bozza associata e si naviga alla destinazione prevista. La cancellazione avviene soltanto dopo la creazione riuscita; se il cleanup fallisce, il recovery non ripete la creazione definitiva. Dopo submit fallito non si eliminano bozza o dati correnti e non si dichiara successo. Il logout usa lo stesso guard delle altre navigazioni applicative.
+Dopo submit riuscito si crea o aggiorna il record definitivo, si elimina la bozza associata e si naviga alla destinazione prevista. La cancellazione avviene soltanto dopo la creazione riuscita; se il cleanup fallisce, il recovery non ripete la creazione definitiva. Nella Nuova locazione un lock sincrono create-only impedisce submit concorrenti: un errore di `createLease` rilascia il lock e consente un nuovo tentativo, mentre dopo una create riuscita il lock resta acquisito durante cleanup e recovery. Dopo submit fallito non si eliminano bozza o dati correnti e non si dichiara successo. Il logout usa lo stesso guard delle altre navigazioni applicative.
 
 ## 4. Modifiche delle locazioni e storico
 
@@ -134,15 +134,17 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 2. guard condiviso delle modifiche non salvate — implementato;
 3. Nuovo inquilino — integrato e collaudato;
 4. Nuova unità — integrata e collaudata;
-5. Nuova locazione — prossima integrazione tecnica;
+5. Nuova locazione — integrata e collaudata;
 6. repository edifici — da implementare dopo le decisioni del Blocco A;
 7. Nuovo edificio — da integrare dopo il Blocco A;
 8. lista, lifecycle e collaudo edifici — da completare;
-9. collaudo trasversale dei quattro CRUD — non avviabile prima delle integrazioni residue.
+9. collaudo trasversale dei quattro CRUD — non avviabile prima dell’integrazione residua Nuovo edificio.
 
-Il comportamento manuale è già attivo nei primi due form e resta da applicare
-agli altri due. `Elimina e ricomincia` cancella esplicitamente la bozza
-persistita. Le integrazioni dei form complessi restano task separate.
+Il comportamento manuale è integrato nei primi tre form e resta da applicare a
+Nuovo edificio. `Elimina e ricomincia` cancella esplicitamente la bozza
+persistita. Nuova locazione comprende restore esplicito, riconciliazione dei
+riferimenti, guard, cleanup/recovery e submit lock; le integrazioni dei form
+complessi restano task separate.
 
 ## Decisioni approvate, futuro e questioni aperte
 

@@ -18,7 +18,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Parzialmente completate: 4
 - Non concluse: 63
 - Domande professionali aperte: 26
-- Prossimo punto: F3.3 — Nuova locazione
+- Prossimo punto tecnico: da rivalutare dopo l’allineamento documentale; F3.3 è completata e F3.4 resta aperta, dipendente dal Blocco A
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 63 task non concluse e non vanno sommati nuovamente. D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
 
@@ -29,16 +29,17 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 > - [x] PRODUCT-ALIGNMENT-DOC-1 — Allineamento prodotto documentato — **COMPLETATO; nessuna funzione implementata**
 > - [x] F3.1 — Integrazione in Nuovo inquilino — **COMPLETATA**
 > - [x] F3.2 — Integrazione in Nuova unità — **COMPLETATA**
-> - [ ] F3.3 — Integrazione in Nuova locazione — **PROSSIMA TASK TECNICA; audit ancora necessario**
+> - [x] F3.3 — Integrazione in Nuova locazione — **COMPLETATA**
 > - [ ] F3.4 — Integrazione in Nuovo edificio — **APERTA; dipende dal Blocco A**
 > - [ ] A1/A2 — Repository e form Nuovo edificio — **IN ATTESA delle decisioni indicate**
 > - [ ] A4–A7 — Lista, lifecycle e collaudo edifici — **APERTO**
 > - [ ] K1/K2 — Audit e collaudo trasversale dei quattro CRUD — **FINALE**
 
 Questa sezione è un percorso sintetico e non sostituisce le voci complete dei blocchi.
-La prossima task tecnica è F3.3 — Nuova locazione. F3 resta aperta fino alle
-integrazioni residue; F4 non può iniziare prima di F3.3 e F3.4. Inviti, portale
-inquilino, workspace professionali, visure e KPI restano attività future.
+F3.3 — Nuova locazione — è completata. F3 resta aperta per l’integrazione
+residua Nuovo edificio; F4 non può iniziare prima di F3.4. Questa task
+documentale non assegna una nuova priorità tecnica. Inviti, portale inquilino,
+workspace professionali, visure e KPI restano attività future.
 
 ## Baseline trasversale già raggiunta
 
@@ -61,6 +62,7 @@ inquilino, workspace professionali, visure e KPI restano attività future.
 - [x] F2 — Data Router, macchina a stati, hook, dialog accessibile e gate logout
 - [x] F3.1 — Bozza manuale e guard integrati e collaudati in Nuovo inquilino
 - [x] F3.2 — Bozza manuale e guard integrati e collaudati in Nuova unità
+- [x] F3.3 — Bozza manuale, restore, riconciliazione riferimenti, guard, cleanup/recovery e submit lock integrati e collaudati in Nuova locazione
 
 Questa baseline non rientra nel conteggio delle 72 task principali.
 
@@ -99,7 +101,7 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] Store e hook asincrono
   - [x] Garanti di Nuova locazione migrati
   - [x] Creazione persona e società tramite repository
-  - [x] Protezione degli ID garanti nella bozza legacy di Nuova locazione durante il caricamento asincrono dei contatti
+  - [x] Protezione degli ID garanti nella bozza di Nuova locazione durante il caricamento asincrono dei contatti
   - [x] Collaudo browser
   - [x] Click-through del backdrop corretto
   - [ ] Rimuovere dipendenze residue da `existingContacts` e mock — **APERTO**
@@ -154,13 +156,13 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 - [ ] F3 — Integrazioni — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
   - [x] F3.1 — Nuovo inquilino — **COMPLETATA**
   - [x] F3.2 — Nuova unità — **COMPLETATA**
-  - [ ] F3.3 — Nuova locazione — **PROSSIMA TASK TECNICA; audit ancora necessario**
+  - [x] F3.3 — Nuova locazione — **COMPLETATA**
   - [ ] F3.4 — Nuovo edificio, dopo il Blocco A — **APERTO**
   - [ ] Sostituire i flussi legacy residui e integrare restore/cancellazione
-        delle bozze in Nuova locazione e Nuovo edificio — **APERTO**
-  - [ ] Applicare ai form residui il contratto manuale senza debounce o autosave — **APERTO**
+        delle bozze in Nuovo edificio — **APERTO**
+  - [ ] Applicare al form residuo Nuovo edificio il contratto manuale senza debounce o autosave; Nuovo inquilino, Nuova unità e Nuova locazione sono integrati — **APERTO**
   - [ ] Test end-to-end dei form — **APERTO**
-- [ ] F4 — Collaudo trasversale — **APERTO; non avviabile prima di F3.3 e F3.4**
+- [ ] F4 — Collaudo trasversale — **APERTO; non avviabile prima di F3.4**
 
 ## Blocco G — Azioni simulate, mock e route
 
