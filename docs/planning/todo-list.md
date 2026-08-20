@@ -178,6 +178,7 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
 
 - [ ] H1 — Autenticazione di produzione — **FUTURO — BACKEND**
 - [ ] H2 — Identità, workspace e accessi — **FUTURO — BACKEND**
+  - [x] AC-01 — CF account Props24 facoltativo alla registrazione iniziale e globalmente univoco se valorizzato, con blocco del riuso fra account; regola distinta dai duplicati tenant/contatti account-scoped — **VALIDATA; influenza H1 e H2**
   - [ ] H2A — Portale inquilino invitato
   - [ ] H2B — Account multi-ruolo e workspace
   - [ ] H2C — Gestione professionale e deleghe
