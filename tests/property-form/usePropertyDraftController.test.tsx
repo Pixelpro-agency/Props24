@@ -17,13 +17,14 @@ import type {
     DraftRepository,
 } from '../../src/db/draftRepository.port';
 import {
-    defaultPropertyValues,
-    type PropertyFormData,
+    defaultPropertyFormStateValues,
+    type PropertyFormState,
 } from '../../src/components/property-form/schema';
 import {
     usePropertyDraftController,
     type PropertyDraftController,
 } from '../../src/components/property-form/hooks/usePropertyDraftController';
+import { propertyDraftDefinition } from '../../src/components/property-form/propertyDraftDefinition';
 
 let repository: DraftRepository;
 
@@ -51,29 +52,44 @@ const file = {
 };
 
 function record(
-    payload: Partial<PropertyFormData> = {},
-): DraftRecord<PropertyFormData> {
+    payload: Partial<PropertyFormState> = {},
+): DraftRecord<PropertyFormState> {
     return {
         id: 'draft-1',
         accountId: 'account-1',
         formType: 'property',
         mode: 'create',
         entityId: null,
-        payload: { ...defaultPropertyValues, ...payload } as PropertyFormData,
-        schemaVersion: 1,
+        payload: { ...defaultPropertyFormStateValues, ...payload } as PropertyFormState,
+        schemaVersion: 2,
         createdAt: '2026-07-29T00:00:00.000Z',
         updatedAt: '2026-07-29T00:00:00.000Z',
     };
 }
 
+function legacyRecordV1(
+    payload: Partial<PropertyFormState> = {},
+): DraftRecord<PropertyFormState> {
+    const { PropertyBuildingId: _ignored, ...legacyPayload } = {
+        ...defaultPropertyFormStateValues,
+        ...payload,
+    };
+    void _ignored;
+    return {
+        ...record(),
+        payload: propertyDraftDefinition.parse(legacyPayload, 1),
+        schemaVersion: 1,
+    };
+}
+
 function makeRepository(
-    draft: DraftRecord<PropertyFormData> | null = null,
+    draft: DraftRecord<PropertyFormState> | null = null,
 ): DraftRepository {
     return {
         get: vi.fn().mockResolvedValue(draft),
         list: vi.fn().mockResolvedValue([]),
         save: vi.fn().mockImplementation(async (_definition, input) => (
-            record(input.payload as PropertyFormData)
+            record(input.payload as PropertyFormState)
         )),
         delete: vi.fn().mockResolvedValue(true),
     };
@@ -87,11 +103,11 @@ function Harness({
 }: {
     onController?: (value: PropertyDraftController) => void;
     onReset?: () => void;
-    onMethods?: (value: UseFormReturn<PropertyFormData>) => void;
+    onMethods?: (value: UseFormReturn<PropertyFormState>) => void;
     repositoryOverride?: DraftRepository;
 }) {
-    const methods = useForm<PropertyFormData>({
-        defaultValues: defaultPropertyValues,
+    const methods = useForm<PropertyFormState>({
+        defaultValues: defaultPropertyFormStateValues,
     });
     const controllerMethods = useMemo(() => ({
         ...methods,
@@ -106,6 +122,7 @@ function Harness({
     );
     const title = useWatch({ control: methods.control, name: 'PropertyTitle' });
     const photos = useWatch({ control: methods.control, name: 'PropertyPhotos' });
+    const buildingId = useWatch({ control: methods.control, name: 'PropertyBuildingId' });
 
     useEffect(() => onController?.(controller), [controller, onController]);
     useEffect(() => onMethods?.(methods), [methods, onMethods]);
@@ -118,6 +135,7 @@ function Harness({
             <output data-testid="deleting">{String(controller.isDeletingDraft)}</output>
             <output data-testid="title">{title}</output>
             <output data-testid="photos">{photos?.length ?? 0}</output>
+            <output data-testid="building">{buildingId}</output>
             <output data-testid="load-error">{controller.loadError}</output>
             <output data-testid="operation-error">{controller.operationError}</output>
             <output data-testid="draft-error">{controller.draftError}</output>
@@ -132,6 +150,16 @@ function Harness({
                 [file],
                 { shouldDirty: true },
             )}>allegato</button>
+            <button onClick={() => methods.setValue(
+                'PropertyBuildingId',
+                'building-a',
+                { shouldDirty: true },
+            )}>building a</button>
+            <button onClick={() => methods.setValue(
+                'PropertyBuildingId',
+                'building-b',
+                { shouldDirty: true },
+            )}>building b</button>
             <button onClick={controller.resumeDraft}>riprendi</button>
             <button onClick={() => void controller.deleteAndRestart()}>
                 elimina
@@ -166,6 +194,27 @@ afterEach(() => {
 });
 
 describe('usePropertyDraftController', () => {
+    it('gestisce Building in dirty, save manuale e discard senza autosave', async () => {
+        repository = makeRepository();
+        render(<Harness />);
+        await screen.findByText('ready');
+        expect(screen.getByTestId('building').textContent).toBe('');
+        expect(screen.getByTestId('dirty').textContent).toBe('false');
+        await userEvent.click(screen.getByRole('button', { name: 'building a' }));
+        expect(screen.getByTestId('dirty').textContent).toBe('true');
+        expect(repository.save).not.toHaveBeenCalled();
+        await userEvent.click(screen.getByRole('button', { name: 'salva' }));
+        await screen.findByText('Bozza salvata.');
+        expect(vi.mocked(repository.save).mock.calls[0][0]).toMatchObject({ schemaVersion: 2 });
+        expect(vi.mocked(repository.save).mock.calls[0][1]).toMatchObject({ payload: { PropertyBuildingId: 'building-a' } });
+        expect(screen.getByTestId('dirty').textContent).toBe('false');
+        await userEvent.click(screen.getByRole('button', { name: 'building b' }));
+        expect(screen.getByTestId('building').textContent).toBe('building-b');
+        await userEvent.click(screen.getByRole('button', { name: 'abbandona' }));
+        expect(screen.getByTestId('building').textContent).toBe('building-a');
+        expect(repository.save).toHaveBeenCalledOnce();
+    });
+
     it('carica default clean senza autosalvataggio', async () => {
         repository = makeRepository();
         render(<Harness />);
@@ -197,6 +246,44 @@ describe('usePropertyDraftController', () => {
         expect(screen.getByTestId('dirty').textContent).toBe('false');
         expect(repository.save).not.toHaveBeenCalled();
         expect(repository.delete).not.toHaveBeenCalled();
+    });
+
+    it('riprende Building da una bozza v2 senza write', async () => {
+        repository = makeRepository(record({ PropertyBuildingId: 'building-a' }));
+        render(<Harness />);
+        await screen.findByText('choice_required');
+        await userEvent.click(screen.getByRole('button', { name: 'riprendi' }));
+        expect(screen.getByTestId('building').textContent).toBe('building-a');
+        expect(screen.getByTestId('dirty').textContent).toBe('false');
+        expect(repository.save).not.toHaveBeenCalled();
+        expect(repository.delete).not.toHaveBeenCalled();
+    });
+
+    it('riprende legacy v1 senza autosave e la aggiorna a v2 solo su save esplicito', async () => {
+        repository = makeRepository(legacyRecordV1({ PropertyTitle: 'Legacy' }));
+        render(<Harness />);
+        await screen.findByText('choice_required');
+        await userEvent.click(screen.getByRole('button', { name: 'riprendi' }));
+        expect(screen.getByTestId('building').textContent).toBe('');
+        expect(screen.getByTestId('dirty').textContent).toBe('false');
+        expect(repository.save).not.toHaveBeenCalled();
+        await userEvent.click(screen.getByRole('button', { name: 'salva' }));
+        await screen.findByText('Bozza salvata.');
+        expect(repository.save).toHaveBeenCalledOnce();
+        expect(vi.mocked(repository.save).mock.calls[0][0]).toMatchObject({ schemaVersion: 2 });
+        expect(vi.mocked(repository.save).mock.calls[0][1]).toMatchObject({ payload: { PropertyBuildingId: '' } });
+    });
+
+    it('elimina una bozza v2 Building e riparte vuoto senza save', async () => {
+        repository = makeRepository(record({ PropertyBuildingId: 'building-a' }));
+        render(<Harness />);
+        await screen.findByText('choice_required');
+        await userEvent.click(screen.getByRole('button', { name: 'elimina' }));
+        await screen.findByText('ready');
+        expect(screen.getByTestId('building').textContent).toBe('');
+        expect(screen.getByTestId('dirty').textContent).toBe('false');
+        expect(repository.delete).toHaveBeenCalledOnce();
+        expect(repository.save).not.toHaveBeenCalled();
     });
 
     it.each([true, false])(
@@ -295,7 +382,7 @@ describe('usePropertyDraftController', () => {
         vi.mocked(repository.save)
             .mockRejectedValueOnce(error)
             .mockImplementationOnce(async (_definition, input) => (
-                record(input.payload as PropertyFormData)
+                record(input.payload as PropertyFormState)
             ));
         render(<Harness onController={(value) => {
             controller = value;
@@ -315,7 +402,7 @@ describe('usePropertyDraftController', () => {
 
     it('serializza save e deletePersistedDraft concorrenti', async () => {
         let controller: PropertyDraftController | undefined;
-        const savePending = deferred<DraftRecord<PropertyFormData>>();
+        const savePending = deferred<DraftRecord<PropertyFormState>>();
         const deletePending = deferred<boolean>();
         repository = makeRepository();
         vi.mocked(repository.save).mockReturnValue(savePending.promise);
@@ -349,7 +436,7 @@ describe('usePropertyDraftController', () => {
     });
 
     it('ignora il completamento get dopo unmount', async () => {
-        const getPending = deferred<DraftRecord<PropertyFormData> | null>();
+        const getPending = deferred<DraftRecord<PropertyFormState> | null>();
         repository = makeRepository();
         vi.mocked(repository.get).mockReturnValue(getPending.promise);
         const onReset = vi.fn();
@@ -367,7 +454,7 @@ describe('usePropertyDraftController', () => {
 
     it('ignora il completamento save dopo unmount e libera il lock', async () => {
         let controller: PropertyDraftController | undefined;
-        const pending = deferred<DraftRecord<PropertyFormData>>();
+        const pending = deferred<DraftRecord<PropertyFormState>>();
         const onReset = vi.fn();
         const consoleError = vi.spyOn(console, 'error')
             .mockImplementation(() => undefined);
@@ -424,7 +511,7 @@ describe('usePropertyDraftController', () => {
 
     it('mappa la validazione payload reale e permette un retry valido', async () => {
         let controller: PropertyDraftController | undefined;
-        let methods!: UseFormReturn<PropertyFormData>;
+        let methods!: UseFormReturn<PropertyFormState>;
         repository = makeRepository();
         render(<Harness
             onController={(value) => {
@@ -441,7 +528,7 @@ describe('usePropertyDraftController', () => {
         );
         act(() => methods.setValue(
             'PropertyPhotos',
-            [{ ...file, size: 'invalid' }] as unknown as PropertyFormData['PropertyPhotos'],
+            [{ ...file, size: 'invalid' }] as unknown as PropertyFormState['PropertyPhotos'],
             { shouldDirty: true },
         ));
         await expect(readyController.saveDraft()).rejects.toThrow(
@@ -484,7 +571,7 @@ describe('usePropertyDraftController', () => {
     });
 
     it('ignora la risposta stale dopo cambio repository', async () => {
-        const oldPending = deferred<DraftRecord<PropertyFormData> | null>();
+        const oldPending = deferred<DraftRecord<PropertyFormState> | null>();
         const oldRepository = makeRepository();
         vi.mocked(oldRepository.get).mockReturnValue(oldPending.promise);
         const newRepository = makeRepository(null);
@@ -523,7 +610,7 @@ describe('usePropertyDraftController', () => {
     });
 
     it('discard ripristina la baseline ripresa con allegati', async () => {
-        let methods!: UseFormReturn<PropertyFormData>;
+        let methods!: UseFormReturn<PropertyFormState>;
         repository = makeRepository(record({
             PropertyTitle: 'Persistita',
             PropertyPhotos: [file],
@@ -548,7 +635,7 @@ describe('usePropertyDraftController', () => {
 
     it('salva e ripristina il payload annidato completo senza rigenerare ID', async () => {
         let controller: PropertyDraftController | undefined;
-        let methods!: UseFormReturn<PropertyFormData>;
+        let methods!: UseFormReturn<PropertyFormState>;
         const nested = {
             PropertyCadastreDocument: file,
             PropertyKeys: [{
@@ -568,7 +655,7 @@ describe('usePropertyDraftController', () => {
                 id: 'document-1', type: 'altro', description: 'Documento',
                 releaseDate: '', comments: '', shared: false, file,
             }],
-        } satisfies Partial<PropertyFormData>;
+        } satisfies Partial<PropertyFormState>;
         repository = makeRepository();
         render(<Harness
             onController={(value) => {
@@ -586,7 +673,7 @@ describe('usePropertyDraftController', () => {
         act(() => {
             for (const [key, value] of Object.entries(nested)) {
                 methods.setValue(
-                    key as keyof PropertyFormData,
+                    key as keyof PropertyFormState,
                     value as never,
                     { shouldDirty: true },
                 );
@@ -594,7 +681,7 @@ describe('usePropertyDraftController', () => {
         });
         await readyController.saveDraft();
         const savedPayload = vi.mocked(repository.save).mock.calls[0]?.[1]
-            .payload as PropertyFormData;
+            .payload as PropertyFormState;
         expect(savedPayload).toMatchObject(nested);
         expect(savedPayload.PropertyKeys).not.toBe(nested.PropertyKeys);
         expect(savedPayload.PropertyPhotos[0]?.dataUrl).toBe(file.dataUrl);

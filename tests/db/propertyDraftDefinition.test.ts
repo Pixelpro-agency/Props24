@@ -18,8 +18,8 @@ const file = {
 describe('property draft definition', () => {
     it('dichiara form e versione canonici', () => {
         expect(propertyDraftDefinition.formType).toBe('property');
-        expect(propertyDraftDefinition.schemaVersion).toBe(1);
-        expect(PROPERTY_DRAFT_SCHEMA_VERSION).toBe(1);
+        expect(propertyDraftDefinition.schemaVersion).toBe(2);
+        expect(PROPERTY_DRAFT_SCHEMA_VERSION).toBe(2);
         expect(normalizeDraftKey('property', { mode: 'create' })).toEqual({
             formType: 'property',
             mode: 'create',
@@ -115,8 +115,8 @@ describe('property draft definition', () => {
     });
 
     it('rifiuta versione, allegato e array annidato invalidi', () => {
-        expect(() => propertyDraftDefinition.parse({}, 2))
-            .toThrow('Versione bozza unità non supportata: 2.');
+        expect(() => propertyDraftDefinition.parse({}, 3))
+            .toThrow('Versione bozza unità non supportata: 3.');
         expect(() => propertyDraftDefinition.parse({
             PropertyPhotos: [{ ...file, size: 'invalid' }],
         }, 1)).toThrow();

@@ -19,9 +19,9 @@ import type {
 } from '../../../db/draftRepository.port';
 import { useDraftRepository } from '../../../drafts/DraftRepositoryContext';
 import {
-    defaultPropertyValues,
-    normalizePropertyDraft,
-    type PropertyFormData,
+    defaultPropertyFormStateValues,
+    normalizePropertyDraftState,
+    type PropertyFormState,
 } from '../schema';
 import { propertyDraftDefinition } from '../propertyDraftDefinition';
 
@@ -37,8 +37,8 @@ const PROPERTY_DRAFT_KEY = {
     entityId: null,
 } as const;
 
-function cloneSnapshot(value: unknown): PropertyFormData {
-    return normalizePropertyDraft(structuredClone(value));
+function cloneSnapshot(value: unknown): PropertyFormState {
+    return normalizePropertyDraftState(structuredClone(value));
 }
 
 function loadErrorMessage(error: unknown): string {
@@ -85,7 +85,7 @@ export interface PropertyDraftController {
 }
 
 export function usePropertyDraftController(
-    methods: UseFormReturn<PropertyFormData>,
+    methods: UseFormReturn<PropertyFormState>,
     repositoryOverride?: DraftRepository,
 ): PropertyDraftController {
     const contextRepository = useDraftRepository();
@@ -98,14 +98,14 @@ export function usePropertyDraftController(
     const [draftError, setDraftError] = useState<string | null>(null);
     const [draftSuccess, setDraftSuccess] = useState<string | null>(null);
     const [loadAttempt, setLoadAttempt] = useState(0);
-    const loadedDraftRef = useRef<DraftRecord<PropertyFormData> | null>(null);
-    const lastSavedSnapshotRef = useRef<PropertyFormData>(
-        cloneSnapshot(defaultPropertyValues),
+    const loadedDraftRef = useRef<DraftRecord<PropertyFormState> | null>(null);
+    const lastSavedSnapshotRef = useRef<PropertyFormState>(
+        cloneSnapshot(defaultPropertyFormStateValues),
     );
     const loadRef = useRef<{
         repository: DraftRepository;
         attempt: number;
-        promise: Promise<DraftRecord<PropertyFormData> | null>;
+        promise: Promise<DraftRecord<PropertyFormState> | null>;
     } | null>(null);
     const requestIdRef = useRef(0);
     const savePendingRef = useRef(false);
@@ -152,7 +152,7 @@ export function usePropertyDraftController(
                 setPhase('choice_required');
                 return;
             }
-            const empty = cloneSnapshot(defaultPropertyValues);
+            const empty = cloneSnapshot(defaultPropertyFormStateValues);
             lastSavedSnapshotRef.current = cloneSnapshot(empty);
             methods.reset(empty);
             setPhase('ready');
@@ -193,7 +193,7 @@ export function usePropertyDraftController(
         try {
             await repository.delete(PROPERTY_DRAFT_KEY);
             if (!mountedRef.current) return;
-            const empty = cloneSnapshot(defaultPropertyValues);
+            const empty = cloneSnapshot(defaultPropertyFormStateValues);
             loadedDraftRef.current = null;
             lastSavedSnapshotRef.current = cloneSnapshot(empty);
             methods.reset(empty);
@@ -226,7 +226,7 @@ export function usePropertyDraftController(
         setDraftError(null);
         setDraftSuccess(null);
         try {
-            let payload: PropertyFormData;
+            let payload: PropertyFormState;
             try {
                 payload = propertyDraftDefinition.parse(
                     methods.getValues(),

@@ -131,12 +131,19 @@ export type PropertyContractFormData = z.infer<typeof propertyContractSchema>;
 export type PropertyContactFormData = z.infer<typeof propertyContactSchema>;
 export type PropertyDocumentFormData = z.infer<typeof propertyDocumentSchema>;
 export type PropertyFormData = z.infer<typeof propertySchema>;
+export const propertyFormStateSchema = propertySchema.extend({
+    PropertyBuildingId: z.string(),
+});
+export type PropertyFormState = z.infer<typeof propertyFormStateSchema>;
 export const propertyDraftSchema = propertySchema.extend({
     PropertyTitle: stringField,
     PropertyAddress: stringField,
     PropertyCity: stringField,
     PropertyPostalCode: stringField,
 }).partial();
+export const propertyDraftStateSchema = propertyDraftSchema.extend({
+    PropertyBuildingId: z.string().default(''),
+});
 
 export const defaultPropertyValues: DefaultValues<PropertyFormData> = {
     PropertyTypeID: '',
@@ -205,6 +212,11 @@ export const defaultPropertyValues: DefaultValues<PropertyFormData> = {
     PropertyDocuments: [],
 };
 
+export const defaultPropertyFormStateValues: DefaultValues<PropertyFormState> = {
+    ...defaultPropertyValues,
+    PropertyBuildingId: '',
+};
+
 export function normalizePropertyFormData(data: unknown): PropertyFormData {
     return propertySchema.parse({
         ...defaultPropertyValues,
@@ -217,4 +229,18 @@ export function normalizePropertyDraft(data: unknown): PropertyFormData {
         ...defaultPropertyValues,
         ...(typeof data === 'object' && data !== null ? data : {}),
     }) as PropertyFormData;
+}
+
+export function normalizePropertyFormState(data: unknown): PropertyFormState {
+    return propertyFormStateSchema.parse({
+        ...defaultPropertyFormStateValues,
+        ...(typeof data === 'object' && data !== null ? data : {}),
+    });
+}
+
+export function normalizePropertyDraftState(data: unknown): PropertyFormState {
+    return propertyDraftStateSchema.parse({
+        ...defaultPropertyFormStateValues,
+        ...(typeof data === 'object' && data !== null ? data : {}),
+    }) as PropertyFormState;
 }

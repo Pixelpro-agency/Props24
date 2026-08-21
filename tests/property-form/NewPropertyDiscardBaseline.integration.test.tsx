@@ -19,8 +19,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { NewProperty } from '../../src/pages/NewProperty';
 import {
-    defaultPropertyValues,
+    defaultPropertyFormStateValues,
     type PropertyFormData,
+    type PropertyFormState,
 } from '../../src/components/property-form/schema';
 import type {
     DraftRecord,
@@ -62,7 +63,7 @@ function clone<T>(value: T): T {
     return structuredClone(value);
 }
 
-function makeRecord(payload: PropertyFormData): DraftRecord<PropertyFormData> {
+function makeRecord(payload: PropertyFormState): DraftRecord<PropertyFormState> {
     return {
         id: 'property-create-draft',
         accountId: 'user-001',
@@ -70,14 +71,14 @@ function makeRecord(payload: PropertyFormData): DraftRecord<PropertyFormData> {
         mode: 'create',
         entityId: null,
         payload: clone(payload),
-        schemaVersion: 1,
+        schemaVersion: 2,
         createdAt: '2026-07-30T00:00:00.000Z',
         updatedAt: '2026-07-30T00:00:00.000Z',
     };
 }
 
 function makeStatefulRepository() {
-    let stored: DraftRecord<PropertyFormData> | null = null;
+    let stored: DraftRecord<PropertyFormState> | null = null;
     const stateful: DraftRepository = {
         get: vi.fn().mockImplementation(async () => (
             stored ? clone(stored) : null
@@ -86,7 +87,7 @@ function makeStatefulRepository() {
             stored ? [clone(stored)] : []
         )),
         save: vi.fn().mockImplementation(async (_definition, input) => {
-            stored = makeRecord(input.payload as PropertyFormData);
+            stored = makeRecord(input.payload as PropertyFormState);
             return clone(stored);
         }),
         delete: vi.fn().mockImplementation(async () => {
@@ -199,7 +200,7 @@ describe('NewProperty discard baseline round-trip', () => {
         expect(createProperty).not.toHaveBeenCalled();
         expect(legacyClear).not.toHaveBeenCalled();
         expect(state.read()?.payload).toEqual({
-            ...defaultPropertyValues,
+            ...defaultPropertyFormStateValues,
             PropertyTitle: BASE,
         });
         expect(consoleError).not.toHaveBeenCalled();

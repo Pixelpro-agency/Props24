@@ -24,9 +24,11 @@ import { PropertyDraftRestoreDialog } from './PropertyDraftRestoreDialog';
 import { PropertySubmitRecoveryDialog } from './PropertySubmitRecoveryDialog';
 import type { PropertyTabId } from './PropertyFormTabs';
 import {
-    defaultPropertyValues,
-    propertySchema,
+    defaultPropertyFormStateValues,
+    normalizePropertyFormData,
+    propertyFormStateSchema,
     type PropertyFormData,
+    type PropertyFormState,
 } from './schema';
 import {
     usePropertyDraftController,
@@ -91,9 +93,9 @@ export function PropertyFormProvider({
     onExitDraft,
     onFormBusyChange,
 }: PropertyFormProviderProps) {
-    const methods = useForm<PropertyFormData>({
-        resolver: zodResolver(propertySchema) as Resolver<PropertyFormData>,
-        defaultValues: defaultPropertyValues,
+    const methods = useForm<PropertyFormState>({
+        resolver: zodResolver(propertyFormStateSchema) as Resolver<PropertyFormState>,
+        defaultValues: defaultPropertyFormStateValues,
         mode: 'onChange',
     });
     const draft = usePropertyDraftController(methods);
@@ -159,13 +161,13 @@ export function PropertyFormProvider({
         onPropertyCreated({ id });
     }, [guard, guard.state.phase, onPropertyCreated]);
 
-    const handleFormSubmit = async (data: PropertyFormData) => {
+    const handleFormSubmit = async (data: PropertyFormState) => {
         if (submitLockRef.current) return;
         submitLockRef.current = true;
         onSubmitError?.('');
         let created: CreatedProperty;
         try {
-            created = await onCreateProperty(data);
+            created = await onCreateProperty(normalizePropertyFormData(data));
             createdPropertyIdRef.current = created.id;
         } catch (error) {
             submitLockRef.current = false;
