@@ -5,6 +5,17 @@ import type { LeaseRecord, PropertyRecord, TenantRecord } from './database.types
 import { normalizePropertyFormData, type PropertyFormData } from '../components/property-form/schema';
 import { currentLeasesForProperty, getPropertyFinancialSummary, isLeaseCurrentlyActive, tenantsForLeases } from './dataSelectors';
 import { assertUniquePropertyIdentifier, assertUniquePropertyLocation } from './businessRules';
+import { BuildingNotFoundError, PropertyBuildingArchivedError } from './databaseErrors';
+
+export interface PropertyBuildingRelationInput {
+    buildingId?: string | null;
+}
+
+function requireAvailableBuildingForNewRelation(db: ReturnType<typeof getJsonDb>, buildingId: string): void {
+    const building = db.buildings.find((item) => item.id === buildingId);
+    if (!building) throw new BuildingNotFoundError(buildingId);
+    if (building.archived) throw new PropertyBuildingArchivedError(buildingId);
+}
 
 function numberOrNull(value: number | null): number | null {
     return typeof value === 'number' && Number.isFinite(value) ? value : null;
@@ -192,12 +203,17 @@ export function getPropertyById(id: string): PropertyDetail | null {
     return record ? propertyRecordToDetail(record) : null;
 }
 
-export function createProperty(formDataInput: PropertyFormData): PropertyRecord {
+export function createProperty(
+    formDataInput: PropertyFormData,
+    relationInput: PropertyBuildingRelationInput = {},
+): PropertyRecord {
     const timestamp = new Date().toISOString();
     const formData = normalizePropertyFormData(formDataInput);
     const db = getJsonDb();
     assertUniquePropertyIdentifier(db, formData.PropertyTitle);
     assertUniquePropertyLocation(db, formData);
+    const buildingId = relationInput.buildingId ?? null;
+    if (buildingId !== null) requireAvailableBuildingForNewRelation(db, buildingId);
     const record: PropertyRecord = {
         id: generateId('property'),
         createdAt: timestamp,
@@ -205,7 +221,7 @@ export function createProperty(formDataInput: PropertyFormData): PropertyRecord 
         archived: false,
         formData,
         relations: {
-            buildingId: null,
+            buildingId,
             tenantIds: [],
             leaseIds: [],
         },
@@ -217,15 +233,30 @@ export function createProperty(formDataInput: PropertyFormData): PropertyRecord 
     return saveJsonDb(db).properties.find((property) => property.id === record.id) as PropertyRecord;
 }
 
-export function updateProperty(id: string, formDataInput: PropertyFormData): PropertyRecord | null {
+export function updateProperty(
+    id: string,
+    formDataInput: PropertyFormData,
+    relationPatch: PropertyBuildingRelationInput = {},
+): PropertyRecord | null {
     const db = getJsonDb();
     const existing = db.properties.find((property) => property.id === id) || null;
     if (!existing) return null;
     const formData = normalizePropertyFormData(formDataInput);
     assertUniquePropertyIdentifier(db, formData.PropertyTitle, id);
     assertUniquePropertyLocation(db, formData, id);
-    existing.formData = formData;
-    existing.updatedAt = new Date().toISOString();
+    const hasBuildingPatch = Object.prototype.hasOwnProperty.call(relationPatch, 'buildingId');
+    const requestedBuildingId = hasBuildingPatch ? relationPatch.buildingId : existing.relations.buildingId;
+    const nextBuildingId = requestedBuildingId === undefined ? existing.relations.buildingId : requestedBuildingId;
+    if (nextBuildingId !== null && nextBuildingId !== existing.relations.buildingId) {
+        requireAvailableBuildingForNewRelation(db, nextBuildingId);
+    }
+    const index = db.properties.findIndex((property) => property.id === id);
+    db.properties[index] = {
+        ...existing,
+        formData,
+        relations: { ...existing.relations, buildingId: nextBuildingId },
+        updatedAt: new Date().toISOString(),
+    };
     return saveJsonDb(db).properties.find((property) => property.id === id) || null;
 }
 

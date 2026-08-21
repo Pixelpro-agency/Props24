@@ -54,6 +54,16 @@ export class BuildingDeleteBlockedError extends Error {
     }
 }
 
+export class PropertyBuildingArchivedError extends Error {
+    readonly buildingId: string;
+
+    constructor(buildingId: string) {
+        super("L'edificio selezionato è archiviato. Ripristinalo prima di collegare nuove unità.");
+        this.name = 'PropertyBuildingArchivedError';
+        this.buildingId = buildingId;
+    }
+}
+
 export class DuplicatePropertyLocationError extends Error {
     existingPropertyId: string;
 
