@@ -24,10 +24,10 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 165f9d31bee68dd82425d0010ccc3498e6dd46aa
+SHA applicativo esaminato: 40a77967719bbf4e686e472ea40f27b50b768d4a
 ```
 
-La chiusura tecnica di D2C, il pilot del repository contatti e le integrazioni F3.1/F3.2/F3.3 sono stati verificati sul codice pubblicato e nei collaudi dedicati. Le altre task devono essere riverificate prima di diventare prompt esecutivi.
+Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
 
 ## Mappa dei documenti
 
@@ -131,80 +131,13 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-F1 — repository condiviso delle bozze manuali — e F2 — guard condiviso delle modifiche non salvate — sono completate. L’allineamento di prodotto su ruoli, inviti e workspace è documentato, ma nessuna funzione è stata implementata. F3.1 — Nuovo inquilino —, F3.2 — Nuova unità — e F3.3 — Nuova locazione — sono completate e collaudate. F3 resta aperta; F3.4 resta dipendente dal Blocco A e F4 non può iniziare prima di questa integrazione residua. Inviti, portale inquilino, workspace professionali, visure e KPI restano futuri e non sono stati implementati.
+Il prossimo punto tecnico è B1 — Relazione unità–edificio. A1 è soddisfatta e A2 resta successiva a B1.
 
-Classificazione complessiva:
+Nel Blocco F resta aperta F3.4 — integrazione di Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
-1. Blocco A — Edifici;
-2. Blocco B — Unità;
-3. Blocco C — Inquilini e contatti;
-4. Blocco D — Difetti residui locazioni e pagamenti;
-5. Blocco E — Preferenze account-scoped;
-6. Blocco F — Modifiche non salvate;
-7. Blocco G — Azioni simulate, mock e route;
-8. Blocco H — Sicurezza, backend e storage documentale;
-9. Blocco I — Automazioni locazione e servizi documentali;
-10. Blocco J — Qualità, test e pulizia;
-11. Blocco K — Audit e collaudo conclusivi;
-12. Blocco L — Documentazione tecnica.
-
-Non eseguire in parallelo task che modificano gli stessi repository, form o contratti persistiti.
+Inviti, portale inquilino, workspace professionali, visure, servizi backend e KPI futuri restano fuori dalla fase tecnica immediata.
 
 # BLOCCO A — Edifici
-
-## TASK A0 — Specifica Nuovo edificio
-
-**Stato:** prerequisito documentale soddisfatto.
-
-**Riferimento:** [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md).
-
-**Output:**
-
-- mappa campi;
-- sezioni o schede;
-- obbligatorietà;
-- relazioni;
-- documenti;
-- regole CRUD;
-- navigazione;
-- file da creare o modificare;
-- conferma delle task A1–A7.
-
-Non modificare codice.
-
-## TASK A1 — Repository edifici
-
-**Dipendenze:** specifica consolidata A0; decisioni ED-01 ed ED-02.
-
-**Obiettivo:**
-
-- creare `src/db/buildingRepository.ts`;
-- implementare list, get, create, update, archive, restore e delete;
-- usare ID canonici e timestamp ISO;
-- normalizzare gli input;
-- effettuare una sola `saveJsonDb` per mutazione;
-- derivare `unitsCount`;
-- bloccare eliminazione con unità collegate;
-- applicare la regola duplicati approvata;
-- restituire il record riletto dal database;
-- aggiornare errori e validazione.
-
-**File da verificare:**
-
-- `src/db/buildingRepository.ts`;
-- `src/db/database.types.ts`;
-- `src/db/databaseErrors.ts`;
-- `src/db/databaseValidation.ts`;
-- `src/db/dataSelectors.ts`;
-- `src/types/building.ts`.
-
-**Chiusura:**
-
-- lifecycle completo;
-- nessun dato mock;
-- errori di dominio distinguibili;
-- integrità verificata;
-- build e lint mirato positivi.
 
 ## TASK A2 — Form Nuovo edificio
 
@@ -391,22 +324,6 @@ Verificare:
 - `Tab9Documents.tsx`;
 - `src/db/jsonDb.ts`.
 
-## TASK B5 — Bozza unità
-
-**Dipendenze:** F1 — Repository condiviso delle bozze manuali; F2 — Guard condiviso.
-
-**Stato:** COMPLETATA con F3.2. Restano fuori scope la modifica e il lifecycle completo dell’unità, trattati da B6, e il collaudo dell’intero blocco B9.
-
-**Obiettivo:**
-
-- salvataggio manuale;
-- bozza separata dal record definitivo;
-- nessuna scrittura automatica;
-- gestione quota visibile;
-- nessuna perdita degli allegati;
-- cancellazione soltanto dopo submit riuscito;
-- guard condiviso delle modifiche non salvate.
-
 ## TASK B6 — Modifica e lifecycle unità
 
 **Obiettivo:**
@@ -486,20 +403,6 @@ Affittate = unità non archiviate collegate a una locazione attiva secondo lo st
 Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale e il guard descritti nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
 ## TASK C1 — Garanti e rubrica
-
-**Baseline già completata:**
-
-- porta asincrona `ContactRepository`;
-- adapter locale;
-- binding immutabile all'account;
-- `subscribe` account-scoped con callback di invalidazione senza payload;
-- provider autenticato;
-- store/hook asincrono con loading, error, refresh e protezioni dalle risposte stale;
-- consumer dei garanti di Nuova locazione migrati;
-- creazione di persone e società tramite repository;
-- protezione degli ID garanti nella bozza legacy di Nuova locazione durante il caricamento asincrono dei contatti;
-- collaudo browser dedicato;
-- click-through del backdrop corretto.
 
 **Attività residue:**
 
@@ -653,29 +556,7 @@ Gli stati degli inviti restano documentati nella TASK C7 e non sostituiscono le 
 
 ## TASK D1 — Data finale sicura
 
-**Stato:** calcolo automatico completato; override motivato e storico ancora da implementare.
-
-### D1A — Calcolo automatico completato
-
-- helper unico e testabile;
-- somma mesi con clamp e regola inclusiva;
-- stesso helper nell'effetto automatico e nel cambio tipo;
-- protezione della data modificata manualmente;
-- preservazione della data in edit;
-- protezione della data già presente nella bozza ripristinata;
-- test automatici sui casi limite;
-- verifica manuale dei flussi principali.
-
-Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md) e [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md).
-
-**Casi automatici coperti:**
-
-```txt
-2026-01-01 + 1 mese → 2026-01-31
-2025-01-31 + 1 mese → 2025-02-28
-2024-01-31 + 1 mese → 2024-02-29
-2026-08-31 + 6 mesi → 2027-02-28
-```
+**Stato:** resta da implementare D1B — Override motivato e storico.
 
 ### D1B — Override motivato e storico
 
@@ -702,55 +583,7 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 
 ## TASK D2 — Addebito senza incasso automatico
 
-**Stato:** D2A, D2B e D2C completate; decisioni residue di D2D ancora aperte.
-
-### D2A — Stato iniziale delle rate generate completato
-
-- il metodo contrattuale non determina più l’incasso;
-- rata scaduta non pagata → `late`;
-- rata odierna non pagata → `pending`;
-- rata futura non pagata → `pending`;
-- nessuna `paidDate` automatica;
-- nessuna ricevuta automatica durante la generazione;
-- stessa regola per rata ordinaria e prima rata personalizzata;
-- copertura automatica dei cinque metodi canonici;
-- test con date fisse e senza persistenza.
-
-### D2B — Conferma manuale completa completata
-
-- `paid` è raggiungibile dall’interfaccia soltanto mediante conferma esplicita completa;
-- i metodi canonici sono bonifico, contanti, assegno, carta e addebito;
-- PA-01 riguarda soltanto l'eventuale catalogo futuro di Finanze e non riapre D2B;
-- il metodo effettivo è obbligatorio;
-- la data è obbligatoria, ISO valida e non futura;
-- l’importo è obbligatorio, finito, positivo e uguale al totale del pagamento con confronto ai centesimi;
-- nessun pagamento parziale è ammesso nella prima fase;
-- la nota è facoltativa e normalizzata;
-- la conferma persiste metodo, data, importo, nota e `confirmedAt`;
-- `PaymentRecord.confirmation` resta nullable per i record storici;
-- il record `confirmation` viene normalizzato in modo conservativo al reload;
-- pagamento e attività della locazione sono mutati atomicamente con una sola scrittura del database sul successo;
-- una validazione fallita non produce scritture;
-- nessuna ricevuta o numerazione viene generata automaticamente;
-- i pagamenti manuali vengono creati soltanto `pending` o `late`;
-- il form manuale non contiene più checkbox `Pagato` né campo `Data pagamento`;
-- un pagamento manuale già pagato non è modificabile;
-- il collaudo browser ha verificato persistenza reale dopo reload, creazione, conferma, ritorno a non pagato, modifica ed eliminazione;
-- durante il collaudo finale non sono stati rilevati fallback in memoria né ricevute automatiche.
-
-### D2C — Storico, repair e migrazione completati
-
-- gli status mancanti o sconosciuti vengono normalizzati conservativamente come non pagati e ricondotti a `late` o `pending` secondo la scadenza;
-- il metodo contrattuale, incluso l’addebito, non ricostruisce `paidDate`;
-- gli incassi storici realmente supportati da `paidDate` e, quando presente, da una `confirmation` coerente vengono tutelati;
-- le rate generate duplicate per `leaseId + category + dueDate` vengono selezionate in base all’evidenza, mentre i pagamenti manuali non vengono deduplicati;
-- le cronologie legacy non vuote vengono preservate e normalizzate senza sostituzioni integrali basate sulla forma degli ID o su singole anomalie;
-- le cronologie legacy vuote vengono ricostruite conservativamente con sole rate contrattuali eleggibili `late` o `pending`;
-- migrazione e repair non inventano incassi, spese, `paidDate`, `confirmation` o `receiptNumber`;
-- il repair di un database account viene persistito immediatamente soltanto quando modifica il valore memorizzato, poi riletto e verificato; una seconda inizializzazione non riscrive il database;
-- consumer finanziari e saldi usano una semantica condivisa: la cassa richiede `paid` e `paidDate`, lo scaduto considera soltanto ricavi arrivati alla scadenza;
-- i movimenti con `accountingRole: deposit` restano esclusi dai consumer generali di ricavo e spesa;
-- la copertura dedicata a D2C comprende 31 test. La baseline complessiva corrente è mantenuta nella TASK J1.
+**Stato:** D2A, D2B e D2C sono completate; resta aperta esclusivamente D2D.
 
 ### D2D — Eccezioni ancora da decidere
 
@@ -758,21 +591,9 @@ Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-
 
 - semantica dell’affitto prepagato ancora da validare;
 - politica di conservazione o annullamento del numero ricevuta quando un pagamento torna non pagato;
-- eventuale conservazione, annullamento o invalidazione della `confirmation` precedente dopo il ritorno a non pagato;
-- queste decisioni non devono bloccare D2B, purché D2B non modifichi prepagato o annullamento ricevute.
+- eventuale conservazione, annullamento o invalidazione della `confirmation` precedente dopo il ritorno a non pagato.
 
-Pagamenti parziali e documenti di pagamento sono futuri. Riferimento: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
-
-**Copertura D2B confermata:**
-
-- cinque metodi canonici: bonifico, contanti, assegno, carta e addebito;
-- pagamento manuale scaduto, odierno e futuro creato non pagato;
-- metodo obbligatorio e data non futura;
-- importo completo con rifiuto di importi parziali o superiori;
-- reload dopo la conferma e persistenza del record `confirmation`;
-- nessuna ricevuta automatica;
-- ritorno a non pagato, modifica successiva e pulizia del record QA;
-- blocco della rata generata futura coperto dai test repository; fixture browser non disponibile nel collaudo finale.
+Pagamenti parziali e documenti di pagamento sono futuri.
 
 **Casi ancora dipendenti da D2D o D3:**
 
@@ -852,130 +673,15 @@ Verificare:
 
 # BLOCCO F — Modifiche non salvate
 
-## TASK F0 — Specifica
-
-**Stato:** specifica condivisa disponibile in [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
-
-La matrice approvata copre, per ogni form:
-
-- nuova/modifica unità;
-- nuovo/modifica edificio;
-- nuovo/modifica inquilino;
-- nuova/modifica locazione.
-
-Scenari:
-
-- form vuoto;
-- form dirty;
-- bozza esistente;
-- bozza ripristinata;
-- `Resta`;
-- `Abbandona`;
-- `Salva bozza`;
-- submit riuscito;
-- submit fallito;
-- apertura con `Riprendi bozza`, `Elimina e ricomincia`, `Annulla`.
-
-## TASK F1 — Repository condiviso delle bozze manuali
-
-**Stato:** COMPLETATA.
-
-L’infrastruttura condivisa e account-scoped del repository bozze è completata. L’integrazione è conclusa in Nuovo inquilino, Nuova unità e Nuova locazione; resta da applicare, dopo il Blocco A, a Nuovo edificio.
-
-### F1A — Contratto e operazioni pure — COMPLETATA
-
-- port asincrono `DraftRepository` con `get`, `list`, `save` e `delete`, senza subscription;
-- form supportati: `building`, `property`, `tenant` e `lease`;
-- modalità `create` ed `edit`;
-- chiave logica univoca composta da `accountId`, `formType`, `mode` ed `entityId`, con `entityId: null` in create e stringa valida in edit;
-- normalizzazione e costruzione della chiave, lettura, elenco, upsert e cancellazione come operazioni pure;
-- validazione payload tramite `DraftDefinition`, cloni difensivi ed errori dominio dedicati.
-
-### F1B — Schema canonico e migrazione — COMPLETATA
-
-- database locale canonico aggiornato da `schemaVersion` 3 a `schemaVersion` 4 con `drafts: DraftRecord<unknown>[]`;
-- migrazione degli slot embedded `tenantForm`, `propertyForm` e `leaseForm` e import delle standalone `tenant_form_draft` e `property_form_draft`;
-- riconciliazione con equivalenza JSON ricorsiva, ordine degli array significativo e conservazione dei conflitti reali;
-- rimozione delle standalone soltanto dopo scrittura verificata, rollback e migrazione idempotente;
-- validazione dei record canonici, inclusa la proprietà `payload` obbligatoria e la validità di `payload: null`;
-- esclusione di `drafts` dal CRUD generico;
-- bridge temporaneo `getDraft`, `setDraft` e `clearDraft`;
-- mutazione `createLease` atomica per il dominio Lease, pagamenti, deposito e relazioni, senza cancellazione della bozza; dopo la create riuscita il cleanup F1 avviene separatamente tramite `DraftRepository` e, se fallisce, il recovery ritenta soltanto la delete senza rollback o seconda create.
-
-### F1C — Adapter locale account-scoped — COMPLETATA
-
-- factory `createLocalDraftRepository({ accountId })` basata su un unico `createJsonDbAccountScope(accountId)`;
-- account catturato alla costruzione e indipendenza dai cambi successivi dell’account globale;
-- letture senza scritture applicative, una scrittura per save valida e delete esistente, nessuna scrittura per validazione rifiutata o delete assente;
-- rilettura del record dal database verificato dopo la save;
-- isolamento logico e fisico tra account;
-- quota tradotta in `DraftStorageQuotaError`, altri errori gateway in `DraftStorageError`, con errori dominio e cause preservati;
-- nessuna subscription.
-
-La verifica conclusiva F1 ha registrato 74 test mirati e 218 test complessivi passati, senza test falliti o saltati; ESLint, build e `git diff --check` sono risultati positivi.
-
-**Fuori dal perimetro F1:** le integrazioni nei singoli form restano task F3. F3.1, F3.2 e F3.3 sono concluse; F3.4 resta aperta. Il contratto approvato prevede salvataggio manuale e nessun debounce o autosave.
-
-## TASK F2 — Guard condiviso
-
-**Stato:** COMPLETATA.
-
-### F2A — Data Router e infrastruttura test — COMPLETATA
-
-- migrazione da `BrowserRouter` a `createBrowserRouter` e `RouterProvider`;
-- configurazione condivisa e riusabile tramite `createAppRoutes`;
-- `QueryClientProvider` e `AuthProvider` conservati sopra il router;
-- ramo autenticato con provider contatti account-scoped, `Layout` e `Outlet`;
-- tutte le 17 route, i componenti e i redirect preservati;
-- aggiunte esclusivamente come dev dependency `jsdom`, `@testing-library/react` e `@testing-library/user-event`;
-- nessun comportamento applicativo modificato intenzionalmente.
-
-### F2B — Contratto e macchina a stati pura — COMPLETATA
-
-- fasi `idle`, `blocked`, `saving`, `discarding` e `proceeding`;
-- prima navigazione sospesa preservata ed eventi concorrenti ignorati;
-- `Resta`, save e discard asincroni con retry ed errore normalizzato;
-- bypass one-shot e helper puri per blocco, dialog e disponibilità azioni;
-- nessuna dipendenza da React, router, auth o database.
-
-### F2C — Hook e dialog — COMPLETATA
-
-- binding ufficiale con `useBlocker` e `useBeforeUnload` per refresh e chiusura;
-- `UnsavedChangesDialog` basato sulle primitive accessibili Headless UI;
-- azioni `Resta`, `Abbandona` e `Salva bozza`;
-- operazioni serializzate, errori mostrati senza chiudere il dialog e bypass utilizzabile nello stesso tick;
-- callback aggiornate senza closure obsolete;
-- titolo e descrizione associati, focus iniziale, focus trap, ripristino del focus, Escape e backdrop equivalenti a Resta, alert accessibile e pulsanti disabilitati durante le operazioni;
-- compatibilità React Strict Mode verificata da F2C-FIX1.
-
-### F2D — Integrazione logout — COMPLETATA
-
-- test integrato con `AuthProvider` e `LogoutPage` reali;
-- sessione e account conservati mentre il dialog è aperto e durante operazioni pendenti;
-- logout eseguito soltanto dopo save o discard riusciti;
-- `Resta` ed errori non cancellano la sessione;
-- prima destinazione `/logout` preservata rispetto a navigazioni concorrenti;
-- nessuna doppia operazione sotto Strict Mode;
-- smoke browser della baseline applicativa positivo.
-
-### Verifica finale F2
-
-La verifica conclusiva registra 5 file di test specifici F2 e 124 test specifici F2. La suite complessiva comprende 21 file e 342 test passati, con 0 falliti e 0 saltati. Lint focalizzato, build e `git diff --check` sono positivi. Lo smoke browser è positivo. Restano non bloccanti il warning Vite sulla dimensione del chunk e gli avvisi LF→CRLF.
-
-**Fuori dal perimetro F2:** le integrazioni nei singoli form restano task F3. Il guard è ora attivo e collaudato in Nuovo inquilino, Nuova unità e Nuova locazione; Nuovo edificio resta da integrare. F3 e F4 non sono completate.
-
 ## TASK F3 — Integrazioni
 
-**Dipendenze tecniche:** F1 e F2 sono soddisfatte. F3 resta aperta.
+**Dipendenze tecniche:** F1 e F2 sono soddisfatte. F3 resta aperta esclusivamente per l'integrazione Nuovo edificio.
 
-Mantenere task separate per form:
+### F3.4 — Nuovo edificio
 
-1. **F3.1 — Nuovo inquilino — COMPLETATA.** Repository condiviso e controller account-scoped, salvataggio esclusivamente manuale, restore/cancellazione, baseline dirty, guard di navigazione e logout, history browser, submit con cleanup e recovery sono integrati. Strict Mode e destinazione sospesa dopo `Salva bozza` sono coperti; collaudo tecnico e browser conclusi.
-2. **F3.2 — Nuova unità — COMPLETATA.** Definition e controller Property, restore con `Riprendi`, `Elimina e ricomincia` e `Annulla`, guard di sidebar, header Indietro, footer Annulla, browser back e logout sono integrati. `Resta` non scrive; `Abbandona` ripristina la baseline persistita; `Salva bozza` conserva la destinazione. Submit singolo, cleanup atomico e recovery evitano duplicazioni; duplicati, focus errori, account scope e responsive sono verificati. `useFormPersistence.ts` legacy è eliminato. Le condizioni del guard sono sincronizzate con `useLayoutEffect` prima delle navigazioni imperative del commit corrente; reducer, bypass e `navigate(-1)` restano invariati. Il round-trip `Resta → Abbandona → remount → Riprendi` è coperto. Collaudo finale: 38 file, 549 test, 20/20 scenari browser, build e lint PASS, nessun errore console e nessun fallimento di rete osservato.
-3. **F3.3 — Nuova locazione — COMPLETATA.** Controller Lease create-only account-scoped con chiave F1 canonica `formType: lease`, `mode: create`, `entityId: null`; salvataggio esclusivamente manuale, senza autosave o debounce, e apertura con `Riprendi bozza`, `Elimina e ricomincia` e `Annulla`. `activeTab` è persistita come stato UX ma esclusa dal dirty; i riferimenti Property, Tenant e Guarantor sono riconciliati senza cancellazione silenziosa degli ID. Il guard copre navigazioni applicative, header, footer, sidebar, browser back, logout e `beforeunload`, con `Resta`, `Abbandona`, `Salva bozza` e destinazione sospesa preservata. Dopo la create riuscita il cleanup F1 è separato dal repository Lease; il recovery ritenta soltanto la cancellazione senza seconda create. Il submit lock sincrono create-only viene rilasciato se `createLease` fallisce e resta acquisito dopo una create riuscita, anche nel cleanup/recovery. Il ramo edit Lease resta separato e preservato. Collaudo conclusivo: 47 file e 683 test, tre suite complete consecutive verdi, build e lint PASS, browser reale isolato PASS, doppio submit senza duplicazione, una sola locazione QA, cleanup QA completato, zero errori console, unhandled rejection o failure di rete e nessun residuo QA.
-4. **F3.4 — Nuovo edificio — APERTA.** Resta dipendente dal Blocco A.
+**Stato:** APERTA.
 
-Non unire le integrazioni se modificano form complessi diversi.
+**Dipendenza:** completamento del Blocco A.
 
 ## TASK F4 — Collaudo trasversale
 
@@ -1326,58 +1032,18 @@ Non aggiungere soltanto un’opzione allo schema o alla select senza implementar
 
 ## TASK J1 — Test automatizzati
 
-**Stato:** infrastruttura attiva e copertura estesa; task ancora aperta perché accompagna le implementazioni future.
+**Stato:** PARZIALE; l'infrastruttura e la copertura automatizzata sono attive, ma J1 accompagna le implementazioni ancora residue.
 
-Il progetto usa Vitest come runner TypeScript, con:
+La baseline automatizzata verificata corrente è mantenuta nella Todo list e non viene duplicata qui.
 
-- script `test` e `test:run` in `package.json`;
-- configurazione Node in `vitest.config.ts`;
-- ricerca limitata a `tests/**/*.test.ts`;
-- suite baseline in `tests/db/databaseBaseline.test.ts`;
-- copertura iniziale delle business rule pure per identificativi, chiavi di localizzazione, codici fiscali e sovrapposizione delle date.
+**Aree residue:**
 
-La baseline non conclude la task J1. I test devono essere estesi tramite task dedicate e separate.
-
-La copertura corrente include:
-
-- calcolo sicuro della data finale;
-- stato iniziale delle rate generate;
-- contratto puro della conferma completa;
-- normalizzazione del record `confirmation`;
-- flusso repository della conferma completa;
-- atomicità e assenza di salvataggi sugli errori;
-- cinque metodi canonici;
-- pagamenti manuali creati non pagati;
-- blocco della modifica di un pagamento manuale già pagato;
-- esclusione delle locazioni archiviate dal controllo di sovrapposizione.
-- repair e migrazione dei pagamenti;
-- deduplicazione delle rate generate;
-- consumer finanziari conservativi;
-- isolamento account dei contatti;
-- adapter `ContactRepository`;
-- composition root;
-- store asincrono, risposte obsolete, disconnect e reconnect.
-
-Snapshot verificato della suite:
-
-```text
-13 file di test
-144 test passati
-0 test falliti
-0 test saltati
-```
-
-Aree residue:
-
-- repository futuri;
-- duplicati non ancora definiti;
-- lifecycle e CRUD mancanti;
-- bozze manuali;
-- guard condiviso;
+- repository e consumer ancora da implementare;
+- duplicati e lifecycle non ancora completati;
 - D1B — storico append-only e override motivato;
 - D2D — prepagato, ricevuta e confirmation precedenti;
-- funzioni future gialle e realmente disabilitate.
-- audit finali.
+- funzioni future gialle e realmente disabilitate;
+- audit e gate finali.
 
 Vincoli:
 
