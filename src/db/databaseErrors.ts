@@ -32,6 +32,28 @@ export class DuplicateBuildingLocationError extends Error {
     }
 }
 
+export class BuildingNotFoundError extends Error {
+    readonly buildingId: string;
+
+    constructor(buildingId: string) {
+        super(`Edificio non trovato: ${buildingId}.`);
+        this.name = 'BuildingNotFoundError';
+        this.buildingId = buildingId;
+    }
+}
+
+export class BuildingDeleteBlockedError extends Error {
+    readonly buildingId: string;
+    readonly linkedPropertyIds: string[];
+
+    constructor(buildingId: string, linkedPropertyIds: string[]) {
+        super(`L'edificio ${buildingId} non può essere eliminato perché contiene unità collegate. L'archiviazione è l'alternativa sicura.`);
+        this.name = 'BuildingDeleteBlockedError';
+        this.buildingId = buildingId;
+        this.linkedPropertyIds = [...linkedPropertyIds];
+    }
+}
+
 export class DuplicatePropertyLocationError extends Error {
     existingPropertyId: string;
 
