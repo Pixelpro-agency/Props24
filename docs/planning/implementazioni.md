@@ -272,37 +272,38 @@ Verificare:
 - preservare i contratti già verificati di B5/F3.2;
 - nessuna UI finale del selettore edificio.
 
-### B1.3 — Campo Edificio nella UI e submit reale
+### B1.3 — Nuova unità standalone e boundary relazione Building
 
-- aggiungere il campo Edificio a Nuova unità;
-- mostrare soltanto edifici esistenti e non archiviati come nuove destinazioni;
-- offrire l’opzione Nessun edificio;
-- usare il repository Building già completato;
-- persistere la scelta in `relations.buildingId`;
-- non modificare automaticamente l’indirizzo;
-- non implementare il flusso proveniente dal dettaglio edificio;
-- non implementare B2 o B6.
+- mantenere il normale `/properties/new` come flusso standalone, senza campo o selettore Edificio;
+- la creazione standalone usa il solo `PropertyFormData` canonico e persiste `relations.buildingId = null` tramite il contratto repository;
+- mantenere `PropertyBuildingId` nello stato form/draft introdotto da B1.2 come infrastruttura compatibile, senza duplicarlo nel `PropertyRecord.formData`;
+- impedire che una bozza v2 contenente un precedente `PropertyBuildingId` produca una relazione Building nascosta nel normale submit standalone;
+- mantenere nel repository la create con `buildingId` valido per il futuro flusso contestuale proveniente dall’Edificio;
+- rinviare al Blocco A il flusso Edificio → aggiunta di nuove unità;
+- rinviare a B6 la gestione UI di collegamento, riassegnazione e scollegamento delle unità esistenti;
+- non implementare A2, B2 o B6.
 
 ### B1.4 — Gate tecnico consolidato B1
 
-- consolidare create, repository update, detach, reassign e draft;
+- consolidare create standalone detached, create repository linked, preserve, reassign, detach e draft;
 - verificare edificio inesistente e archiviato;
 - verificare preservazione della relazione esistente verso edificio archiviato;
+- verificare che una precedente bozza v2 con Building non produca collegamenti nascosti nel flusso standalone;
 - verificare `unitsCount`, delete, archive e account isolation;
 - verificare assenza di perdita silenziosa della relazione;
 - eseguire suite completa, build, lint e gate finale senza introdurre nuove funzionalità.
 
 **Obiettivo:**
 
-- campo edificio tipizzato nello stato del form;
-- soli edifici esistenti e non archiviati come nuove destinazioni;
-- opzione nessun edificio;
-- persistenza canonica esclusivamente in `relations.buildingId`;
-- round-trip nella create e nella bozza create;
-- supporto repository a preserve/reassign/detach per la futura UI edit di B6;
-- nessuna integrazione UI edit in B1;
-- `unitsCount` derivato tramite il meccanismo centrale già esistente;
-- le unità archiviate conservano relazione e conteggio finché non vengono eliminate o scollegate.
+- mantenere `PropertyRecord.relations.buildingId` come unica persistenza canonica della relazione;
+- mantenere la relazione tipizzata nello stato form/draft senza duplicarla nel `PropertyRecord.formData`;
+- mantenere il normale flusso Nuova unità standalone privo di selezione Edificio e con `buildingId = null`;
+- impedire che dati Building residui nelle bozze create producano associazioni nascoste;
+- supportare a livello repository create linked, preserve, reassign e detach per i flussi contestuali futuri;
+- rinviare al Blocco A la creazione di unità dal contesto di un Edificio;
+- rinviare a B6 la gestione UI della relazione sulle unità esistenti;
+- mantenere `unitsCount` esclusivamente derivato dal meccanismo centrale;
+- mantenere la relazione delle unità archiviate finché non vengono eliminate o esplicitamente scollegate.
 
 **File da verificare:**
 
