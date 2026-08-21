@@ -219,7 +219,7 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Stato form e bozza della relazione Building — B1.2
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di B1.1: 53 file, 734 test passati, 0 falliti, 0 saltati.
+Baseline verificata al termine di B1.2: 55 file, 747 test passati, 0 falliti, 0 saltati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
