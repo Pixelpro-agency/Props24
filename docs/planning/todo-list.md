@@ -20,7 +20,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: B1.3 — Campo Edificio nella UI e submit reale
+- Prossimo punto tecnico: B1.4 — Gate tecnico consolidato B1
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 62 task non concluse e non vanno sommati nuovamente. B1.1–B1.4, D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
 
@@ -33,8 +33,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 > - [ ] B1 — Relazione unità–edificio — **APERTO; A1 soddisfatta; suddiviso in B1.1–B1.4**
 >   - [x] B1.1 — Contratto relazione unità–edificio e mutazioni repository — **COMPLETATA; 53 file / 734 test, build e lint positivi**
 >   - [x] B1.2 — Stato form e bozza della relazione Building — **COMPLETATA; 55 file / 747 test, build e lint positivi**
->   - [ ] B1.3 — Campo Edificio nella UI e submit reale — **PROSSIMA TASK**
->   - [ ] B1.4 — Gate tecnico consolidato B1 — **DOPO B1.3; chiude B1**
+>   - [x] B1.3 — Campo Edificio nella UI e submit reale — **COMPLETATA; 56 file / 755 test, build e lint positivi**
+>   - [ ] B1.4 — Gate tecnico consolidato B1 — **PROSSIMA TASK; chiude B1**
 > - [ ] A2 — Form Nuovo edificio — **DOPO B1; A1, F1 e F2 già soddisfatte; PA-08 e PA-09 restano aperte e non vanno interpretate**
 > - [ ] A3 — Route e accessi edificio — **DOPO A2**
 > - [ ] A4 — Lista edifici reale — **DOPO A1/A3**
@@ -68,8 +68,8 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
 - [ ] B1 — Relazione unità–edificio — **APERTO; dipendenza A1 soddisfatta**
   - [x] B1.1 — Contratto relazione unità–edificio e mutazioni repository — **COMPLETATA**
   - [x] B1.2 — Stato form e bozza della relazione Building — **COMPLETATA**
-  - [ ] B1.3 — Campo Edificio nella UI e submit reale — **PROSSIMA TASK**
-  - [ ] B1.4 — Gate tecnico consolidato B1 — **DOPO B1.3; chiude B1**
+  - [x] B1.3 — Campo Edificio nella UI e submit reale — **COMPLETATA**
+  - [ ] B1.4 — Gate tecnico consolidato B1 — **PROSSIMA TASK; chiude B1**
 - [ ] B2 — Duplicati unità — **APERTO; UN-04 validata**
 - [ ] B3 — Campi placeholder — **APERTO; UN-01, UN-02 e UN-03 validate**
 - [ ] B4 — ID annidati canonici — **APERTO**
@@ -217,9 +217,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Gate tecnico consolidato repository edifici — A1.4
   - [x] Contratto relazione unità–edificio e mutazioni repository — B1.1
   - [x] Stato form e bozza della relazione Building — B1.2
+  - [x] Campo Edificio nella UI e submit reale — B1.3
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di B1.2: 55 file, 747 test passati, 0 falliti, 0 saltati.
+Baseline verificata al termine di B1.3: 56 file, 755 test passati, 0 falliti, 0 saltati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
