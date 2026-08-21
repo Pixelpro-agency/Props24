@@ -50,10 +50,7 @@ Un form vuoto e mai modificato può essere abbandonato senza modale. Un form dir
 
 Il guard condiviso dovrà coprire sidebar, navbar, menu Aggiungi, link e route interne, browser back, Annulla, logout, cambio pagina e cambio di scheda interna quando comporta perdita di dati.
 
-Quando la navigazione è già sospesa, `Resta` non scrive; `Abbandona` ripristina
-soltanto la baseline dell’ultimo salvataggio manuale; `Salva bozza` esegue una
-sola scrittura e prosegue verso la destinazione originaria. La destinazione
-resta conservata anche durante il salvataggio asincrono.
+Quando la navigazione è già sospesa, `Resta` non scrive; `Abbandona` ripristina soltanto la baseline dell’ultimo salvataggio manuale; `Salva bozza` esegue una sola scrittura e prosegue verso la destinazione originaria. La destinazione resta conservata anche durante il salvataggio asincrono.
 
 Per refresh e chiusura della scheda si usa `beforeunload`: il browser può mostrare soltanto l'avviso nativo e non va promessa una modale CSS personalizzata.
 
@@ -73,8 +70,7 @@ Le modifiche alle locazioni producono eventi append-only persistiti nel database
 - campi cambiati;
 - stato precedente e successivo.
 
-Lo storico non è sovrascrivibile né ricostruito soltanto dai dati correnti e deve mostrare come i dati erano e come sono diventati.
-È conservato a tempo indefinito e non prevede scadenza automatica.
+Lo storico non è sovrascrivibile né ricostruito soltanto dai dati correnti e deve mostrare come i dati erano e come sono diventati. È conservato a tempo indefinito e non prevede scadenza automatica.
 
 ## 5. Data finale della locazione
 
@@ -143,11 +139,7 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 8. lista, lifecycle e collaudo edifici — da completare;
 9. collaudo trasversale dei quattro CRUD — non avviabile prima dell’integrazione residua Nuovo edificio.
 
-Il comportamento manuale è integrato nei primi tre form e resta da applicare a
-Nuovo edificio. `Elimina e ricomincia` cancella esplicitamente la bozza
-persistita. Nuova locazione comprende restore esplicito, riconciliazione dei
-riferimenti, guard, cleanup/recovery e submit lock; le integrazioni dei form
-complessi restano task separate.
+Il comportamento manuale è integrato nei primi tre form e resta da applicare a Nuovo edificio. `Elimina e ricomincia` cancella esplicitamente la bozza persistita. Nuova locazione comprende restore esplicito, riconciliazione dei riferimenti, guard, cleanup/recovery e submit lock; le integrazioni dei form complessi restano task separate.
 
 ## Decisioni approvate, futuro e questioni aperte
 

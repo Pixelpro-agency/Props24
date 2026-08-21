@@ -17,54 +17,29 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Completate integralmente: 5
 - Parzialmente completate: 4
 - Non concluse: 63
-- Domande professionali aperte: 13
-- Prossimo punto tecnico: da rivalutare dopo l’allineamento documentale; F3.3 è completata e F3.4 resta aperta, dipendente dal Blocco A
+- Decisioni professionali aperte o rinviate: 13
+- Di cui rinviate con risposta/decisione già registrata: 7
+- Di cui ancora senza risposta: 6
+- Prossimo punto tecnico: A1 — Repository edifici
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 63 task non concluse e non vanno sommati nuovamente. D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
 
 ## Percorso operativo immediato
 
-> - [x] F1 — Repository condiviso delle bozze manuali — **COMPLETATA**
-> - [x] F2 — Guard condiviso delle modifiche non salvate — **COMPLETATA**
-> - [x] PRODUCT-ALIGNMENT-DOC-1 — Allineamento prodotto documentato — **COMPLETATO; nessuna funzione implementata**
-> - [x] F3.1 — Integrazione in Nuovo inquilino — **COMPLETATA**
-> - [x] F3.2 — Integrazione in Nuova unità — **COMPLETATA**
-> - [x] F3.3 — Integrazione in Nuova locazione — **COMPLETATA**
-> - [ ] F3.4 — Integrazione in Nuovo edificio — **APERTA; dipende dal Blocco A**
-> - [ ] A1/A2 — Repository e form Nuovo edificio — **APERTI; decisioni edificio validate, restano dipendenze tecniche e PA-08/PA-09**
-> - [ ] A4–A7 — Lista, lifecycle e collaudo edifici — **APERTO**
-> - [ ] K1/K2 — Audit e collaudo trasversale dei quattro CRUD — **FINALE**
+> - [ ] A1 — Repository edifici — **PROSSIMA TASK; ED-01 ed ED-02 validate**
+> - [ ] B1 — Relazione unità–edificio — **DOPO A1; necessaria per il flusso edificio → unità**
+> - [ ] A2 — Form Nuovo edificio — **DOPO A1/B1; F1 e F2 già soddisfatte; PA-08 e PA-09 restano aperte e non vanno interpretate**
+> - [ ] A3 — Route e accessi edificio — **DOPO A2**
+> - [ ] A4 — Lista edifici reale — **DOPO A1/A3**
+> - [ ] A5 — Azioni edificio — **DOPO A4**
+> - [ ] A6 — Dettaglio e modifica edificio — **DOPO il consolidamento del flusso edificio**
+> - [ ] A7 — Collaudo edifici — **DOPO A1–A6**
+> - [ ] F3.4 — Integrazione bozze e guard in Nuovo edificio — **DOPO il Blocco A**
+> - [ ] F4 — Collaudo trasversale delle modifiche non salvate — **DOPO F3.4**
 
-Questa sezione è un percorso sintetico e non sostituisce le voci complete dei blocchi.
-F3.3 — Nuova locazione — è completata. F3 resta aperta per l’integrazione
-residua Nuovo edificio; F4 non può iniziare prima di F3.4. Questa task
-documentale non assegna una nuova priorità tecnica. Inviti, portale inquilino,
-workspace professionali, visure e KPI restano attività future.
+Questa sezione mostra soltanto il percorso operativo corrente e non sostituisce stato, dipendenze e criteri di chiusura riportati nei rispettivi blocchi.
 
-## Baseline trasversale già raggiunta
-
-- [x] Workflow Chat Analisi / Desktop consolidato
-- [x] Specifiche della fase locale prioritaria consolidate
-- [x] Specifica Nuovo edificio consolidata
-- [x] Infrastruttura Vitest introdotta
-- [x] Calcolo automatico sicuro della data finale
-- [x] D2A — Rate generate senza incasso automatico
-- [x] D2B — Conferma manuale completa dei pagamenti
-- [x] D2C — Repair, migrazione e consumer finanziari conservativi
-- [x] Pilot repository `contacts`
-- [x] Isolamento account e subscription `contacts`
-- [x] Provider, store e hook asincrono `contacts`
-- [x] Consumer garanti di Nuova locazione migrati
-- [x] QA browser del pilot `contacts`
-- [x] Click-through del backdrop corretto e ricollaudato
-- [x] Pianificazione aggiornata dopo il pilot
-- [x] F1 — Infrastruttura condivisa e account-scoped del repository bozze
-- [x] F2 — Data Router, macchina a stati, hook, dialog accessibile e gate logout
-- [x] F3.1 — Bozza manuale e guard integrati e collaudati in Nuovo inquilino
-- [x] F3.2 — Bozza manuale e guard integrati e collaudati in Nuova unità
-- [x] F3.3 — Bozza manuale, restore, riconciliazione riferimenti, guard, cleanup/recovery e submit lock integrati e collaudati in Nuova locazione
-
-Questa baseline non rientra nel conteggio delle 72 task principali.
+Le attività già concluse restano registrate nei rispettivi blocchi; la cronologia delle implementazioni e delle verifiche precedenti è conservata nella storia Git e non viene duplicata in una baseline separata.
 
 ## Blocco A — Edifici
 
@@ -157,8 +132,7 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] F3.2 — Nuova unità — **COMPLETATA**
   - [x] F3.3 — Nuova locazione — **COMPLETATA**
   - [ ] F3.4 — Nuovo edificio, dopo il Blocco A — **APERTO**
-  - [ ] Sostituire i flussi legacy residui e integrare restore/cancellazione
-        delle bozze in Nuovo edificio — **APERTO**
+  - [ ] Sostituire i flussi legacy residui e integrare restore/cancellazione delle bozze in Nuovo edificio — **APERTO**
   - [ ] Applicare al form residuo Nuovo edificio il contratto manuale senza debounce o autosave; Nuovo inquilino, Nuova unità e Nuova locazione sono integrati — **APERTO**
   - [ ] Test end-to-end dei form — **APERTO**
 - [ ] F4 — Collaudo trasversale — **APERTO; non avviabile prima di F3.4**
@@ -219,9 +193,12 @@ Questa baseline non rientra nel conteggio delle 72 task principali.
   - [x] Dialog accessibile delle modifiche non salvate
   - [x] Compatibilità React Strict Mode del guard
   - [x] Integrazione auth/logout del guard
+    - [x] Integrazione bozza manuale e guard in Nuovo inquilino — F3.1
+    - [x] Integrazione bozza manuale e guard in Nuova unità — F3.2
+    - [x] Integrazione Nuova locazione: restore, riconciliazione riferimenti, guard, cleanup/recovery e submit lock — F3.3
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di F3.2: 38 file, 549 test passati, 0 falliti, 0 saltati.
+Baseline verificata al termine di F3.3: 47 file, 683 test passati, 0 falliti, 0 saltati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
@@ -256,21 +233,26 @@ Baseline verificata al termine di F3.2: 38 file, 549 test passati, 0 falliti, 0 
 - [ ] L3 — README — **FUTURO**
 - [ ] L4 — README database — **FUTURO**
 
-## Decisioni professionali ancora aperte
+## Decisioni professionali ancora aperte o rinviate
 
-- [ ] [KPI-03](./decisioni-da-validare.md#kpi-03--kpi-delle-locazioni) — KPI delle locazioni — **RINVIATA**
-- [ ] [PA-01](./decisioni-da-validare.md#pa-01) — Catalogo futuro metodi di pagamento — **RINVIATA**
-- [ ] [PA-02](./decisioni-da-validare.md#pa-02) — Prove documentali — **RINVIATA**
-- [ ] [PA-03](./decisioni-da-validare.md#pa-03) — Pagamenti parziali, crediti e debiti — **RINVIATA**
-- [ ] [PA-04](./decisioni-da-validare.md#pa-04) — Ricevute — **RINVIATA**
-- [ ] [PA-05](./decisioni-da-validare.md#pa-05) — Tipologie documentali — **RINVIATA**
-- [ ] [PA-06](./decisioni-da-validare.md#pa-06) — Motivi override data finale — **RINVIATA**
-- [ ] [PA-08](./decisioni-da-validare.md#pa-08) — Semantica valore IMU — **IN ATTESA**
-- [ ] [PA-09](./decisioni-da-validare.md#pa-09) — Dettaglio prezzo e spese acquisto — **IN ATTESA**
-- [ ] [PA-10](./decisioni-da-validare.md#pa-10) — Affitto prepagato — **IN ATTESA**
-- [ ] [PA-11](./decisioni-da-validare.md#pa-11) — Annullamento ricevute — **IN ATTESA**
-- [ ] [PA-12](./decisioni-da-validare.md#pa-12) — Confirmation precedente — **IN ATTESA**
-- [ ] [PA-13](./decisioni-da-validare.md#pa-13) — Rinnovo locazione — **IN ATTESA**
+### Rinviate con decisione o risposta già registrata
+
+- [ ] [KPI-03](./decisioni-da-validare.md#kpi-03--kpi-delle-locazioni) — KPI delle locazioni — **RINVIATA; DA RIPROPORRE**
+- [ ] [PA-01](./decisioni-da-validare.md#pa-01) — Catalogo futuro metodi di pagamento — **RINVIATA ALLA SEZIONE FINANZE; CATALOGO CORRENTE NON RIAPERTO**
+- [ ] [PA-02](./decisioni-da-validare.md#pa-02) — Prove documentali — **RINVIATA; RISPOSTA PARZIALE GIÀ REGISTRATA**
+- [ ] [PA-03](./decisioni-da-validare.md#pa-03) — Pagamenti parziali, crediti e debiti — **RINVIATA ALLA SEZIONE FINANZE**
+- [ ] [PA-04](./decisioni-da-validare.md#pa-04) — Ricevute — **RINVIATA; REQUISITI PARZIALMENTE DEFINITI**
+- [ ] [PA-05](./decisioni-da-validare.md#pa-05) — Tipologie documentali — **RINVIATA; DISTINZIONE MINIMA GIÀ DEFINITA**
+- [ ] [PA-06](./decisioni-da-validare.md#pa-06) — Motivi override data finale — **RINVIATA; DA RIPROPORRE**
+
+### Ancora senza risposta
+
+- [ ] [PA-08](./decisioni-da-validare.md#pa-08) — Semantica valore IMU — **IN ATTESA DI RISPOSTA**
+- [ ] [PA-09](./decisioni-da-validare.md#pa-09) — Dettaglio prezzo e spese acquisto — **IN ATTESA DI RISPOSTA**
+- [ ] [PA-10](./decisioni-da-validare.md#pa-10) — Affitto prepagato — **IN ATTESA DI RISPOSTA**
+- [ ] [PA-11](./decisioni-da-validare.md#pa-11) — Annullamento ricevute — **IN ATTESA DI RISPOSTA**
+- [ ] [PA-12](./decisioni-da-validare.md#pa-12) — Confirmation precedente — **IN ATTESA DI RISPOSTA**
+- [ ] [PA-13](./decisioni-da-validare.md#pa-13) — Rinnovo locazione — **IN ATTESA DI RISPOSTA**
 
 ## Decisioni prodotto ancora aperte
 

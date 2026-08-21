@@ -67,31 +67,13 @@ updatedAt
 
 Caricare una bozza non crea entità definitive. La bozza è aggiornata soltanto manualmente, resta dopo l'abbandono di modifiche non salvate, viene eliminata dopo submit riuscito ed è eliminabile esplicitamente all'apertura del form. Gli allegati futuri non devono far crescere senza limiti il JSON locale.
 
-Il repository condiviso è implementato con contratto asincrono e adapter locale
-account-scoped. Usa chiavi logiche per form, modalità ed eventuale entità,
-schema canonico versionato e migrazione delle forme legacy; non dipende da una
-singola chiave globale. I payload restano specifici per ciascun form e vengono
-validati dalla relativa definition. La baseline persistita è clonata e non
-viene mutata dalle modifiche dirty del form.
+Il repository condiviso è implementato con contratto asincrono e adapter locale account-scoped. Usa chiavi logiche per form, modalità ed eventuale entità, schema canonico versionato e migrazione delle forme legacy; non dipende da una singola chiave globale. I payload restano specifici per ciascun form e vengono validati dalla relativa definition. La baseline persistita è clonata e non viene mutata dalle modifiche dirty del form.
 
-Nuovo inquilino, Nuova unità e Nuova locazione usano il repository condiviso,
-il caricamento iniziale con ripresa o cancellazione, save manuale, delete
-esplicita e cleanup post-submit. Nuovo edificio resta da integrare; non esiste
-alcuna bozza globale.
+Nuovo inquilino, Nuova unità e Nuova locazione usano il repository condiviso, il caricamento iniziale con ripresa o cancellazione, save manuale, delete esplicita e cleanup post-submit. Nuovo edificio resta da integrare; non esiste alcuna bozza globale.
 
-La bozza create di Nuova locazione è account-scoped e usa la chiave logica
-`formType: lease`, `mode: create`, `entityId: null`. Il payload è validato e
-salvato soltanto manualmente; `activeTab` viene persistita senza contribuire al
-dirty. La riconciliazione preserva gli ID Property, Tenant e Guarantor e il
-restore non crea entità definitive.
+La bozza create di Nuova locazione è account-scoped e usa la chiave logica `formType: lease`, `mode: create`, `entityId: null`. Il payload è validato e salvato soltanto manualmente; `activeTab` viene persistita senza contribuire al dirty. La riconciliazione preserva gli ID Property, Tenant e Guarantor e il restore non crea entità definitive.
 
-`createLease` persiste atomicamente il dominio Lease previsto, inclusi
-pagamenti, deposito e relazioni, ma non cancella la bozza nella stessa
-mutazione. Dopo il successo, `DraftRepository` esegue il cleanup F1 come
-mutazione separata. Se la delete fallisce, la locazione già creata viene
-preservata e il recovery ritenta esclusivamente la cancellazione della bozza:
-non esegue rollback e non richiama `createLease`. Un submit lock sincrono
-create-only impedisce una seconda create concorrente dallo stesso form montato.
+`createLease` persiste atomicamente il dominio Lease previsto, inclusi pagamenti, deposito e relazioni, ma non cancella la bozza nella stessa mutazione. Dopo il successo, `DraftRepository` esegue il cleanup F1 come mutazione separata. Se la delete fallisce, la locazione già creata viene preservata e il recovery ritenta esclusivamente la cancellazione della bozza: non esegue rollback e non richiama `createLease`. Un submit lock sincrono create-only impedisce una seconda create concorrente dallo stesso form montato.
 
 ## 6. Storico append-only
 
@@ -112,8 +94,7 @@ actorAccountId
 createdAt
 ```
 
-Gli eventi sono immutabili, cronologici, contengono snapshot precedente e successivo, non includono dati sensibili non necessari e supportano inizialmente le locazioni, con estensione futura ad altri domini.
-Sono conservati a tempo indefinito e non hanno scadenza automatica.
+Gli eventi sono immutabili, cronologici, contengono snapshot precedente e successivo, non includono dati sensibili non necessari e supportano inizialmente le locazioni, con estensione futura ad altri domini. Sono conservati a tempo indefinito e non hanno scadenza automatica.
 
 ## 7. Unicità delle unità
 

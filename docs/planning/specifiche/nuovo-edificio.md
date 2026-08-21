@@ -26,21 +26,21 @@ Password e codice, Foto e Documenti restano visibili, gialle e disabilitate: non
 
 ## 5. Informazioni generali
 
-| Campo | Prima fase | Obbligatorio |
-| --- | ---: | ---: |
-| Identificativo | attivo | sì |
-| Colore | attivo | no |
-| Indirizzo | attivo | sì |
-| Indirizzo 2 | attivo | no |
-| Città | attivo | sì |
-| CAP | attivo | sì |
-| Provincia | attivo | no |
-| Regione | attivo | no |
-| Paese | attivo | sì |
-| Superficie m² | attivo | no |
-| Anno di costruzione | attivo | no |
-| Descrizione | attivo | no |
-| Nota privata | attivo | no |
+| Campo               | Prima fase | Obbligatorio |
+| ------------------- | ---------: | -----------: |
+| Identificativo      | attivo     | sì           |
+| Colore              | attivo     | no           |
+| Indirizzo           | attivo     | sì           |
+| Indirizzo 2         | attivo     | no           |
+| Città               | attivo     | sì           |
+| CAP                 | attivo     | sì           |
+| Provincia           | attivo     | no           |
+| Regione             | attivo     | no           |
+| Paese               | attivo     | sì           |
+| Superficie m²       | attivo     | no           |
+| Anno di costruzione | attivo     | no           |
+| Descrizione         | attivo     | no           |
+| Nota privata        | attivo     | no           |
 
 Sono richieste validazione sul campo, numeri sicuri, nessuna conversione silenziosa, separazione tra descrizione e nota privata e colore canonico. L'identificativo è univoco nello stesso account, non globalmente; in edit il record corrente è escluso dal controllo.
 

@@ -131,14 +131,7 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-F1 — repository condiviso delle bozze manuali — e F2 — guard condiviso delle
-modifiche non salvate — sono completate. L’allineamento di prodotto su ruoli,
-inviti e workspace è documentato, ma nessuna funzione è stata implementata.
-F3.1 — Nuovo inquilino —, F3.2 — Nuova unità — e F3.3 — Nuova locazione — sono
-completate e collaudate. F3 resta aperta; F3.4 resta dipendente dal Blocco A e
-F4 non può iniziare prima di questa integrazione residua. Inviti, portale
-inquilino, workspace
-professionali, visure e KPI restano futuri e non sono stati implementati.
+F1 — repository condiviso delle bozze manuali — e F2 — guard condiviso delle modifiche non salvate — sono completate. L’allineamento di prodotto su ruoli, inviti e workspace è documentato, ma nessuna funzione è stata implementata. F3.1 — Nuovo inquilino —, F3.2 — Nuova unità — e F3.3 — Nuova locazione — sono completate e collaudate. F3 resta aperta; F3.4 resta dipendente dal Blocco A e F4 non può iniziare prima di questa integrazione residua. Inviti, portale inquilino, workspace professionali, visure e KPI restano futuri e non sono stati implementati.
 
 Classificazione complessiva:
 
@@ -156,8 +149,6 @@ Classificazione complessiva:
 12. Blocco L — Documentazione tecnica.
 
 Non eseguire in parallelo task che modificano gli stessi repository, form o contratti persistiti.
-
----
 
 # BLOCCO A — Edifici
 
@@ -322,8 +313,6 @@ Verificare:
 - console;
 - nessuna modifica del codice durante il collaudo.
 
----
-
 # BLOCCO B — Unità
 
 ## TASK B1 — Relazione unità–edificio
@@ -406,8 +395,7 @@ Verificare:
 
 **Dipendenze:** F1 — Repository condiviso delle bozze manuali; F2 — Guard condiviso.
 
-**Stato:** COMPLETATA con F3.2. Restano fuori scope la modifica e il lifecycle
-completo dell’unità, trattati da B6, e il collaudo dell’intero blocco B9.
+**Stato:** COMPLETATA con F3.2. Restano fuori scope la modifica e il lifecycle completo dell’unità, trattati da B6, e il collaudo dell’intero blocco B9.
 
 **Obiettivo:**
 
@@ -491,10 +479,7 @@ Le card future definite sono:
 - Guadagno lordo, basato sugli incassi effettivi nel periodo;
 - Guadagno netto, al netto di tasse e costi realmente disponibili.
 
-Affittate = unità non archiviate collegate a una locazione attiva secondo lo
-stato canonico della locazione. Valore patrimoniale usa il valore di acquisizione; un selettore comune offre Ultimo mese, Anno corrente, Ultimi 12 mesi e Dall'inizio; dati assenti non valgono zero e sono segnalati come incompleti. Il Tasso di occupazione è futuro per affitti brevi; la Copertura locativa è soprattutto aggregata e non è una card standard della singola unità tradizionale. B9A resta futura.
-
----
+Affittate = unità non archiviate collegate a una locazione attiva secondo lo stato canonico della locazione. Valore patrimoniale usa il valore di acquisizione; un selettore comune offre Ultimo mese, Anno corrente, Ultimi 12 mesi e Dall'inizio; dati assenti non valgono zero e sono segnalati come incompleti. Il Tasso di occupazione è futuro per affitti brevi; la Copertura locativa è soprattutto aggregata e non è una card standard della singola unità tradizionale. B9A resta futura.
 
 # BLOCCO C — Inquilini e contatti
 
@@ -662,11 +647,7 @@ Le tre card approvate sono:
 - Connessi = inquilini con invito accettato e account collegato;
 - Con locazione = inquilini distinti presenti in almeno una locazione attiva.
 
-Gli stati degli inviti restano documentati nella TASK C7 e non sostituiscono
-le tre card principali della lista inquilini. Non aggiungere altre card senza
-una decisione separata.
-
----
+Gli stati degli inviti restano documentati nella TASK C7 e non sostituiscono le tre card principali della lista inquilini. Non aggiungere altre card senza una decisione separata.
 
 # BLOCCO D — Locazioni e pagamenti
 
@@ -826,11 +807,7 @@ Usare “Deposito cauzionale”. Le tre card approvate sono:
 - Canoni di affitto;
 - Depositi cauzionali.
 
-Canoni di affitto e Depositi cauzionali restano subordinati a KPI-03 per base
-temporale e distinzione tra valori contrattuali e incassi reali. Non modificare
-modelli dati o nomi tecnici persistiti.
-
----
+Canoni di affitto e Depositi cauzionali restano subordinati a KPI-03 per base temporale e distinzione tra valori contrattuali e incassi reali. Non modificare modelli dati o nomi tecnici persistiti.
 
 # BLOCCO E — Preferenze account-scoped
 
@@ -873,8 +850,6 @@ Verificare:
 - migrazione idempotente;
 - nessuna lettura o scrittura diretta dalle pagine.
 
----
-
 # BLOCCO F — Modifiche non salvate
 
 ## TASK F0 — Specifica
@@ -905,63 +880,41 @@ Scenari:
 
 **Stato:** COMPLETATA.
 
-L’infrastruttura condivisa e account-scoped del repository bozze è completata.
-L’integrazione è conclusa in Nuovo inquilino, Nuova unità e Nuova locazione;
-resta da applicare, dopo il Blocco A, a Nuovo edificio.
+L’infrastruttura condivisa e account-scoped del repository bozze è completata. L’integrazione è conclusa in Nuovo inquilino, Nuova unità e Nuova locazione; resta da applicare, dopo il Blocco A, a Nuovo edificio.
 
 ### F1A — Contratto e operazioni pure — COMPLETATA
 
-- port asincrono `DraftRepository` con `get`, `list`, `save` e `delete`, senza
-  subscription;
+- port asincrono `DraftRepository` con `get`, `list`, `save` e `delete`, senza subscription;
 - form supportati: `building`, `property`, `tenant` e `lease`;
 - modalità `create` ed `edit`;
-- chiave logica univoca composta da `accountId`, `formType`, `mode` ed
-  `entityId`, con `entityId: null` in create e stringa valida in edit;
-- normalizzazione e costruzione della chiave, lettura, elenco, upsert e
-  cancellazione come operazioni pure;
-- validazione payload tramite `DraftDefinition`, cloni difensivi ed errori
-  dominio dedicati.
+- chiave logica univoca composta da `accountId`, `formType`, `mode` ed `entityId`, con `entityId: null` in create e stringa valida in edit;
+- normalizzazione e costruzione della chiave, lettura, elenco, upsert e cancellazione come operazioni pure;
+- validazione payload tramite `DraftDefinition`, cloni difensivi ed errori dominio dedicati.
 
 ### F1B — Schema canonico e migrazione — COMPLETATA
 
-- database locale canonico aggiornato da `schemaVersion` 3 a `schemaVersion` 4
-  con `drafts: DraftRecord<unknown>[]`;
-- migrazione degli slot embedded `tenantForm`, `propertyForm` e `leaseForm` e
-  import delle standalone `tenant_form_draft` e `property_form_draft`;
-- riconciliazione con equivalenza JSON ricorsiva, ordine degli array
-  significativo e conservazione dei conflitti reali;
-- rimozione delle standalone soltanto dopo scrittura verificata, rollback e
-  migrazione idempotente;
-- validazione dei record canonici, inclusa la proprietà `payload` obbligatoria
-  e la validità di `payload: null`;
+- database locale canonico aggiornato da `schemaVersion` 3 a `schemaVersion` 4 con `drafts: DraftRecord<unknown>[]`;
+- migrazione degli slot embedded `tenantForm`, `propertyForm` e `leaseForm` e import delle standalone `tenant_form_draft` e `property_form_draft`;
+- riconciliazione con equivalenza JSON ricorsiva, ordine degli array significativo e conservazione dei conflitti reali;
+- rimozione delle standalone soltanto dopo scrittura verificata, rollback e migrazione idempotente;
+- validazione dei record canonici, inclusa la proprietà `payload` obbligatoria e la validità di `payload: null`;
 - esclusione di `drafts` dal CRUD generico;
 - bridge temporaneo `getDraft`, `setDraft` e `clearDraft`;
-- mutazione `createLease` atomica per il dominio Lease, pagamenti, deposito e
-  relazioni, senza cancellazione della bozza; dopo la create riuscita il cleanup
-  F1 avviene separatamente tramite `DraftRepository` e, se fallisce, il recovery
-  ritenta soltanto la delete senza rollback o seconda create.
+- mutazione `createLease` atomica per il dominio Lease, pagamenti, deposito e relazioni, senza cancellazione della bozza; dopo la create riuscita il cleanup F1 avviene separatamente tramite `DraftRepository` e, se fallisce, il recovery ritenta soltanto la delete senza rollback o seconda create.
 
 ### F1C — Adapter locale account-scoped — COMPLETATA
 
-- factory `createLocalDraftRepository({ accountId })` basata su un unico
-  `createJsonDbAccountScope(accountId)`;
-- account catturato alla costruzione e indipendenza dai cambi successivi
-  dell’account globale;
-- letture senza scritture applicative, una scrittura per save valida e delete
-  esistente, nessuna scrittura per validazione rifiutata o delete assente;
+- factory `createLocalDraftRepository({ accountId })` basata su un unico `createJsonDbAccountScope(accountId)`;
+- account catturato alla costruzione e indipendenza dai cambi successivi dell’account globale;
+- letture senza scritture applicative, una scrittura per save valida e delete esistente, nessuna scrittura per validazione rifiutata o delete assente;
 - rilettura del record dal database verificato dopo la save;
 - isolamento logico e fisico tra account;
-- quota tradotta in `DraftStorageQuotaError`, altri errori gateway in
-  `DraftStorageError`, con errori dominio e cause preservati;
+- quota tradotta in `DraftStorageQuotaError`, altri errori gateway in `DraftStorageError`, con errori dominio e cause preservati;
 - nessuna subscription.
 
-La verifica conclusiva F1 ha registrato 74 test mirati e 218 test complessivi
-passati, senza test falliti o saltati; ESLint, build e `git diff --check` sono
-risultati positivi.
+La verifica conclusiva F1 ha registrato 74 test mirati e 218 test complessivi passati, senza test falliti o saltati; ESLint, build e `git diff --check` sono risultati positivi.
 
-**Fuori dal perimetro F1:** le integrazioni nei singoli form restano task F3.
-F3.1, F3.2 e F3.3 sono concluse; F3.4 resta aperta. Il contratto approvato
-prevede salvataggio manuale e nessun debounce o autosave.
+**Fuori dal perimetro F1:** le integrazioni nei singoli form restano task F3. F3.1, F3.2 e F3.3 sono concluse; F3.4 resta aperta. Il contratto approvato prevede salvataggio manuale e nessun debounce o autosave.
 
 ## TASK F2 — Guard condiviso
 
@@ -974,8 +927,7 @@ prevede salvataggio manuale e nessun debounce o autosave.
 - `QueryClientProvider` e `AuthProvider` conservati sopra il router;
 - ramo autenticato con provider contatti account-scoped, `Layout` e `Outlet`;
 - tutte le 17 route, i componenti e i redirect preservati;
-- aggiunte esclusivamente come dev dependency `jsdom`,
-  `@testing-library/react` e `@testing-library/user-event`;
+- aggiunte esclusivamente come dev dependency `jsdom`, `@testing-library/react` e `@testing-library/user-event`;
 - nessun comportamento applicativo modificato intenzionalmente.
 
 ### F2B — Contratto e macchina a stati pura — COMPLETATA
@@ -991,19 +943,15 @@ prevede salvataggio manuale e nessun debounce o autosave.
 - binding ufficiale con `useBlocker` e `useBeforeUnload` per refresh e chiusura;
 - `UnsavedChangesDialog` basato sulle primitive accessibili Headless UI;
 - azioni `Resta`, `Abbandona` e `Salva bozza`;
-- operazioni serializzate, errori mostrati senza chiudere il dialog e bypass
-  utilizzabile nello stesso tick;
+- operazioni serializzate, errori mostrati senza chiudere il dialog e bypass utilizzabile nello stesso tick;
 - callback aggiornate senza closure obsolete;
-- titolo e descrizione associati, focus iniziale, focus trap, ripristino del
-  focus, Escape e backdrop equivalenti a Resta, alert accessibile e pulsanti
-  disabilitati durante le operazioni;
+- titolo e descrizione associati, focus iniziale, focus trap, ripristino del focus, Escape e backdrop equivalenti a Resta, alert accessibile e pulsanti disabilitati durante le operazioni;
 - compatibilità React Strict Mode verificata da F2C-FIX1.
 
 ### F2D — Integrazione logout — COMPLETATA
 
 - test integrato con `AuthProvider` e `LogoutPage` reali;
-- sessione e account conservati mentre il dialog è aperto e durante operazioni
-  pendenti;
+- sessione e account conservati mentre il dialog è aperto e durante operazioni pendenti;
 - logout eseguito soltanto dopo save o discard riusciti;
 - `Resta` ed errori non cancellano la sessione;
 - prima destinazione `/logout` preservata rispetto a navigazioni concorrenti;
@@ -1012,15 +960,9 @@ prevede salvataggio manuale e nessun debounce o autosave.
 
 ### Verifica finale F2
 
-La verifica conclusiva registra 5 file di test specifici F2 e 124 test
-specifici F2. La suite complessiva comprende 21 file e 342 test passati, con
-0 falliti e 0 saltati. Lint focalizzato, build e `git diff --check` sono
-positivi. Lo smoke browser è positivo. Restano non bloccanti il warning Vite
-sulla dimensione del chunk e gli avvisi LF→CRLF.
+La verifica conclusiva registra 5 file di test specifici F2 e 124 test specifici F2. La suite complessiva comprende 21 file e 342 test passati, con 0 falliti e 0 saltati. Lint focalizzato, build e `git diff --check` sono positivi. Lo smoke browser è positivo. Restano non bloccanti il warning Vite sulla dimensione del chunk e gli avvisi LF→CRLF.
 
-**Fuori dal perimetro F2:** le integrazioni nei singoli form restano task F3.
-Il guard è ora attivo e collaudato in Nuovo inquilino, Nuova unità e Nuova
-locazione; Nuovo edificio resta da integrare. F3 e F4 non sono completate.
+**Fuori dal perimetro F2:** le integrazioni nei singoli form restano task F3. Il guard è ora attivo e collaudato in Nuovo inquilino, Nuova unità e Nuova locazione; Nuovo edificio resta da integrare. F3 e F4 non sono completate.
 
 ## TASK F3 — Integrazioni
 
@@ -1028,40 +970,9 @@ locazione; Nuovo edificio resta da integrare. F3 e F4 non sono completate.
 
 Mantenere task separate per form:
 
-1. **F3.1 — Nuovo inquilino — COMPLETATA.** Repository condiviso e controller
-   account-scoped, salvataggio esclusivamente manuale, restore/cancellazione,
-   baseline dirty, guard di navigazione e logout, history browser, submit con
-   cleanup e recovery sono integrati. Strict Mode e destinazione sospesa dopo
-   `Salva bozza` sono coperti; collaudo tecnico e browser conclusi.
-2. **F3.2 — Nuova unità — COMPLETATA.** Definition e controller Property,
-   restore con `Riprendi`, `Elimina e ricomincia` e `Annulla`, guard di sidebar,
-   header Indietro, footer Annulla, browser back e logout sono integrati. `Resta`
-   non scrive; `Abbandona` ripristina la baseline persistita; `Salva bozza`
-   conserva la destinazione. Submit singolo, cleanup atomico e recovery evitano
-   duplicazioni; duplicati, focus errori, account scope e responsive sono
-   verificati. `useFormPersistence.ts` legacy è eliminato. Le condizioni del
-   guard sono sincronizzate con `useLayoutEffect` prima delle navigazioni
-   imperative del commit corrente; reducer, bypass e `navigate(-1)` restano
-   invariati. Il round-trip `Resta → Abbandona → remount → Riprendi` è coperto.
-   Collaudo finale: 38 file, 549 test, 20/20 scenari browser, build e lint PASS,
-   nessun errore console e nessun fallimento di rete osservato.
-3. **F3.3 — Nuova locazione — COMPLETATA.** Controller Lease create-only
-   account-scoped con chiave F1 canonica `formType: lease`, `mode: create`,
-   `entityId: null`; salvataggio esclusivamente manuale, senza autosave o
-   debounce, e apertura con `Riprendi bozza`, `Elimina e ricomincia` e `Annulla`.
-   `activeTab` è persistita come stato UX ma esclusa dal dirty; i riferimenti
-   Property, Tenant e Guarantor sono riconciliati senza cancellazione silenziosa
-   degli ID. Il guard copre navigazioni applicative, header, footer, sidebar,
-   browser back, logout e `beforeunload`, con `Resta`, `Abbandona`, `Salva bozza`
-   e destinazione sospesa preservata. Dopo la create riuscita il cleanup F1 è
-   separato dal repository Lease; il recovery ritenta soltanto la cancellazione
-   senza seconda create. Il submit lock sincrono create-only viene rilasciato se
-   `createLease` fallisce e resta acquisito dopo una create riuscita, anche nel
-   cleanup/recovery. Il ramo edit Lease resta separato e preservato. Collaudo
-   conclusivo: 47 file e 683 test, tre suite complete consecutive verdi, build e
-   lint PASS, browser reale isolato PASS, doppio submit senza duplicazione, una
-   sola locazione QA, cleanup QA completato, zero errori console, unhandled
-   rejection o failure di rete e nessun residuo QA.
+1. **F3.1 — Nuovo inquilino — COMPLETATA.** Repository condiviso e controller account-scoped, salvataggio esclusivamente manuale, restore/cancellazione, baseline dirty, guard di navigazione e logout, history browser, submit con cleanup e recovery sono integrati. Strict Mode e destinazione sospesa dopo `Salva bozza` sono coperti; collaudo tecnico e browser conclusi.
+2. **F3.2 — Nuova unità — COMPLETATA.** Definition e controller Property, restore con `Riprendi`, `Elimina e ricomincia` e `Annulla`, guard di sidebar, header Indietro, footer Annulla, browser back e logout sono integrati. `Resta` non scrive; `Abbandona` ripristina la baseline persistita; `Salva bozza` conserva la destinazione. Submit singolo, cleanup atomico e recovery evitano duplicazioni; duplicati, focus errori, account scope e responsive sono verificati. `useFormPersistence.ts` legacy è eliminato. Le condizioni del guard sono sincronizzate con `useLayoutEffect` prima delle navigazioni imperative del commit corrente; reducer, bypass e `navigate(-1)` restano invariati. Il round-trip `Resta → Abbandona → remount → Riprendi` è coperto. Collaudo finale: 38 file, 549 test, 20/20 scenari browser, build e lint PASS, nessun errore console e nessun fallimento di rete osservato.
+3. **F3.3 — Nuova locazione — COMPLETATA.** Controller Lease create-only account-scoped con chiave F1 canonica `formType: lease`, `mode: create`, `entityId: null`; salvataggio esclusivamente manuale, senza autosave o debounce, e apertura con `Riprendi bozza`, `Elimina e ricomincia` e `Annulla`. `activeTab` è persistita come stato UX ma esclusa dal dirty; i riferimenti Property, Tenant e Guarantor sono riconciliati senza cancellazione silenziosa degli ID. Il guard copre navigazioni applicative, header, footer, sidebar, browser back, logout e `beforeunload`, con `Resta`, `Abbandona`, `Salva bozza` e destinazione sospesa preservata. Dopo la create riuscita il cleanup F1 è separato dal repository Lease; il recovery ritenta soltanto la cancellazione senza seconda create. Il submit lock sincrono create-only viene rilasciato se `createLease` fallisce e resta acquisito dopo una create riuscita, anche nel cleanup/recovery. Il ramo edit Lease resta separato e preservato. Collaudo conclusivo: 47 file e 683 test, tre suite complete consecutive verdi, build e lint PASS, browser reale isolato PASS, doppio submit senza duplicazione, una sola locazione QA, cleanup QA completato, zero errori console, unhandled rejection o failure di rete e nessun residuo QA.
 4. **F3.4 — Nuovo edificio — APERTA.** Resta dipendente dal Blocco A.
 
 Non unire le integrazioni se modificano form complessi diversi.
@@ -1073,8 +984,6 @@ Non unire le integrazioni se modificano form complessi diversi.
 **Dipendenze:** completamento dell’integrazione residua F3.4, oltre alla baseline F2 già soddisfatta.
 
 Verificare create/edit, route, back, annulla, logout, refresh, bozza, abbandona, resta, submit riuscito e fallito.
-
----
 
 # BLOCCO G — Azioni simulate, mock e route
 
@@ -1201,8 +1110,6 @@ Per ogni funzione rinviata:
 
 I FeedbackBox restano visibili, gialli e disabilitati, senza falso invio. Import ed export seguono la stessa convenzione. Riferimento: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
----
-
 # BLOCCO H — Sicurezza, backend e storage
 
 Riferimenti: [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md) e [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md). Password e codici, foto, documenti, OCR, PDF, scraping e firme sono funzioni future dipendenti da backend e storage sicuro.
@@ -1271,8 +1178,6 @@ Dipendenze:
 - C9;
 - B8;
 - task documentali del Blocco I.
-
----
 
 # BLOCCO I — Automazioni locazione e servizi documentali
 
@@ -1351,9 +1256,7 @@ PA-03 rinvia alla sezione Finanze pagamenti parziali, crediti e debiti; Rentila 
 - effetto sulle rate successive;
 - correzioni e audit.
 
-I conguagli distinguono spesa effettiva, acconti, periodo, criterio di
-attribuzione, saldo a debito o credito, giustificativi ed effetto sulla rata
-successiva. Il PDF è un giustificativo, non l’intero modello contabile.
+I conguagli distinguono spesa effettiva, acconti, periodo, criterio di attribuzione, saldo a debito o credito, giustificativi ed effetto sulla rata successiva. Il PDF è un giustificativo, non l’intero modello contabile.
 
 ## TASK I6 — Notifiche locazione
 
@@ -1388,12 +1291,9 @@ Valutare una transazione che:
 - gestisce rollback;
 - conserva la possibilità attuale di aggiungere documenti dopo il primo salvataggio.
 
-La futura estrazione da contratti PDF o immagini deve sempre mostrare anteprima
-e richiedere conferma; nessun dato estratto è automaticamente verificato.
+La futura estrazione da contratti PDF o immagini deve sempre mostrare anteprima e richiedere conferma; nessun dato estratto è automaticamente verificato.
 
-> Nota non pianificata: è emersa un’idea futura sull’affidabilità di clienti o
-> inquilini tramite fonti esterne. Non è approvata, non ha priorità né task e
-> richiede prima discovery e audit legale, privacy e qualità dei dati.
+> Nota non pianificata: è emersa un’idea futura sull’affidabilità di clienti o inquilini tramite fonti esterne. Non è approvata, non ha priorità né task e richiede prima discovery e audit legale, privacy e qualità dei dati.
 
 ## TASK I9 — Modelli, cataloghi e inventari
 
@@ -1421,8 +1321,6 @@ Prima di aggiungerla definire:
 - migrazione e compatibilità dei record.
 
 Non aggiungere soltanto un’opzione allo schema o alla select senza implementarne la semantica completa.
-
----
 
 # BLOCCO J — Qualità e pulizia
 
@@ -1565,8 +1463,6 @@ Audit mirato di:
 - doppio submit;
 - toast.
 
----
-
 # BLOCCO K — Audit e collaudo conclusivi
 
 ## TASK K1 — Audit statico CRUD
@@ -1631,8 +1527,6 @@ Basato sulle decisioni G1–G7:
 - report separato del debito globale residuo;
 - nessun allargamento automatico.
 
----
-
 # BLOCCO L — Documentazione tecnica
 
 ## TASK L1 — Acquisizione modello
@@ -1685,8 +1579,6 @@ Il nuovo README dovrà essere una porta d’ingresso breve verso:
 `src/db/README.md` contiene previsioni ormai superate e va riscritto o sostituito dalla documentazione tecnica del modulo database.
 
 Non deve continuare a descrivere come futuro ciò che è già presente.
-
----
 
 # 5. Criteri di chiusura complessivi
 
