@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Save } from 'lucide-react';
@@ -13,7 +13,6 @@ import {
     type PropertyTabId,
 } from '../components/property-form/PropertyFormTabs';
 import type { PropertyFormData } from '../components/property-form/schema';
-import type { PropertyFormState } from '../components/property-form/schema';
 import { Tab1Info } from '../components/property-form/tabs/Tab1Info';
 import { Tab2Additional } from '../components/property-form/tabs/Tab2Additional';
 import { Tab3Financial } from '../components/property-form/tabs/Tab3Financial';
@@ -25,35 +24,18 @@ import { Tab8Contacts } from '../components/property-form/tabs/Tab8Contacts';
 import { Tab9Documents } from '../components/property-form/tabs/Tab9Documents';
 import { StatusToast } from '../components/ui/StatusToast';
 import { createProperty } from '../db/propertyRepository';
-import { createBuildingRepository } from '../db/buildingRepository';
-import { useAuth } from '../auth/AuthContext';
 
 interface PropertyFormContentProps {
     activeTab: PropertyTabId;
     submitError: string | null;
-    buildingOptions: Array<{ value: string; label: string; disabled?: boolean }>;
 }
 
 function PropertyFormContent({
     activeTab,
     submitError,
-    buildingOptions,
 }: PropertyFormContentProps) {
     const navigate = useNavigate();
     const draft = usePropertyFormContext();
-    const { watch } = useFormContext<PropertyFormState>();
-    const buildingId = watch('PropertyBuildingId');
-    const renderedBuildingOptions = buildingId
-        && !buildingOptions.some((option) => option.value === buildingId)
-        ? [
-            ...buildingOptions,
-            {
-                value: buildingId,
-                label: 'Edificio non disponibile',
-                disabled: true,
-            },
-        ]
-        : buildingOptions;
     const operationsPending =
         draft.isSubmitting || draft.isSavingDraft || draft.isDeletingDraft;
     const toast = !draft.isSubmitRecovery && draft.draftError
@@ -82,9 +64,7 @@ function PropertyFormContent({
                     <div className="p-6" id="property-form-content">
                         <PropertyFormErrors submitError={submitError} />
                         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm min-h-[400px]">
-                            {activeTab === 'info1' && (
-                                <Tab1Info buildingOptions={renderedBuildingOptions} />
-                            )}
+                            {activeTab === 'info1' && <Tab1Info />}
                             {activeTab === 'info2' && <Tab2Additional />}
                             {activeTab === 'info9' && <Tab3Financial />}
                             {activeTab === 'info10' && <Tab4Passwords />}
@@ -141,34 +121,19 @@ function PropertyFormContent({
 
 export function NewProperty() {
     const navigate = useNavigate();
-    const { account } = useAuth();
     const [activeTab, setActiveTabId] = useState<PropertyTabId>(
         PROPERTY_TABS[0].id,
     );
     const [isFormBusy, setIsFormBusy] = useState(true);
     const [submitError, setSubmitError] = useState<string | null>(null);
-    const buildingRepository = useMemo(() => (
-        account ? createBuildingRepository({ accountId: account.id }) : null
-    ), [account]);
-    const activeBuildingOptions = useMemo(() => (
-        buildingRepository?.list()
-            .filter((building) => !building.archived)
-            .map((building) => ({
-                value: building.id,
-                label: building.identifier,
-            })) ?? []
-    ), [buildingRepository]);
 
     const setActiveTab = (id: string | PropertyTabId) => {
         setActiveTabId(id as PropertyTabId);
     };
 
-    const handleCreateProperty = (
-        data: PropertyFormData,
-        buildingId: string | null,
-    ) => {
+    const handleCreateProperty = (data: PropertyFormData) => {
         setSubmitError(null);
-        const record = createProperty(data, { buildingId });
+        const record = createProperty(data);
         return { id: record.id };
     };
 
@@ -208,7 +173,6 @@ export function NewProperty() {
                 <PropertyFormContent
                     activeTab={activeTab}
                     submitError={submitError}
-                    buildingOptions={activeBuildingOptions}
                 />
             </PropertyFormProvider>
         </div>
@@ -218,7 +182,7 @@ export function NewProperty() {
 function PropertyFormErrors({ submitError }: { submitError: string | null }) {
     const {
         formState: { errors },
-    } = useFormContext<PropertyFormState>();
+    } = useFormContext<PropertyFormData>();
     const hasErrors = Object.keys(errors).length > 0;
 
     if (!hasErrors && !submitError) return null;

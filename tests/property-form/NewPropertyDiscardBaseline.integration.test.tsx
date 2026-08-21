@@ -38,12 +38,6 @@ vi.mock('../../src/drafts/DraftRepositoryContext', () => ({
 vi.mock('../../src/db/propertyRepository', () => ({
     createProperty: (...args: unknown[]) => createProperty(...args),
 }));
-vi.mock('../../src/auth/AuthContext', () => ({
-    useAuth: () => ({ account: { id: 'user-001' } }),
-}));
-vi.mock('../../src/db/buildingRepository', () => ({
-    createBuildingRepository: () => ({ list: () => [] }),
-}));
 vi.mock('../../src/db/jsonDb', () => ({
     clearDraft: (...args: unknown[]) => legacyClear(...args),
 }));

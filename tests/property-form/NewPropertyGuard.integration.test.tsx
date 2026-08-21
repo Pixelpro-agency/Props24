@@ -56,9 +56,6 @@ vi.mock('../../src/drafts/DraftRepositoryContext', () => ({
 vi.mock('../../src/db/propertyRepository', () => ({
     createProperty: (...args: unknown[]) => createProperty(...args),
 }));
-vi.mock('../../src/db/buildingRepository', () => ({
-    createBuildingRepository: () => ({ list: () => [] }),
-}));
 vi.mock('../../src/db/jsonDb', () => ({
     clearDraft: (...args: unknown[]) => legacyClear(...args),
     setActiveDatabaseAccount: vi.fn(),
@@ -134,8 +131,8 @@ function renderPage(strict = false) {
         initialIndex: 1,
     });
     render(strict
-        ? <StrictMode><AuthProvider><RouterProvider router={router} /></AuthProvider></StrictMode>
-        : <AuthProvider><RouterProvider router={router} /></AuthProvider>);
+        ? <StrictMode><RouterProvider router={router} /></StrictMode>
+        : <RouterProvider router={router} />);
     return router;
 }
 
@@ -153,8 +150,8 @@ function renderBrowserPage(strictMode = false) {
     ]);
     browserRouters.push(router);
     render(strictMode
-        ? <StrictMode><AuthProvider><RouterProvider router={router} /></AuthProvider></StrictMode>
-        : <AuthProvider><RouterProvider router={router} /></AuthProvider>);
+        ? <StrictMode><RouterProvider router={router} /></StrictMode>
+        : <RouterProvider router={router} />);
     return router;
 }
 

@@ -17,8 +17,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
     DuplicatePropertyIdentifierError,
     DuplicatePropertyLocationError,
-    BuildingNotFoundError,
-    PropertyBuildingArchivedError,
 } from '../../db/databaseErrors';
 import { UnsavedChangesDialog } from '../../navigation/UnsavedChangesDialog';
 import { useUnsavedChangesGuard } from '../../navigation/useUnsavedChangesGuard';
@@ -78,7 +76,6 @@ interface PropertyFormProviderProps {
     setActiveTab: (tabId: PropertyTabId | string) => void;
     onCreateProperty(
         data: PropertyFormData,
-        buildingId: string | null,
     ): CreatedProperty | Promise<CreatedProperty>;
     onPropertyCreated(property: CreatedProperty): void;
     onSubmitError?: (message: string) => void;
@@ -110,7 +107,6 @@ export function PropertyFormProvider({
     const retryLockRef = useRef(false);
     const createdPropertyIdRef = useRef<string | null>(null);
     const pendingCompletionIdRef = useRef<string | null>(null);
-    const pendingBuildingFocusRef = useRef(false);
     const mountedRef = useRef(true);
     const isSubmitRecovery = recoveryError !== null;
     const isSubmitting = methods.formState.isSubmitting
@@ -144,13 +140,6 @@ export function PropertyFormProvider({
         onFormBusyChange?.(busy);
     }, [busy, onFormBusyChange]);
 
-    useEffect(() => {
-        if (activeTab === 'info1' && pendingBuildingFocusRef.current) {
-            pendingBuildingFocusRef.current = false;
-            methods.setFocus('PropertyBuildingId');
-        }
-    }, [activeTab, methods]);
-
     const finishCreatedProperty = useCallback((id: string) => {
         setIsCompletingCreation(true);
         setIsCleaningDraft(false);
@@ -178,13 +167,7 @@ export function PropertyFormProvider({
         onSubmitError?.('');
         let created: CreatedProperty;
         try {
-            const buildingId = data.PropertyBuildingId === ''
-                ? null
-                : data.PropertyBuildingId;
-            created = await onCreateProperty(
-                normalizePropertyFormData(data),
-                buildingId,
-            );
+            created = await onCreateProperty(normalizePropertyFormData(data));
             createdPropertyIdRef.current = created.id;
         } catch (error) {
             submitLockRef.current = false;
@@ -214,26 +197,6 @@ export function PropertyFormProvider({
                 });
                 methods.setFocus('PropertyAddress');
                 onSubmitError?.(message);
-                return;
-            }
-            if (
-                error instanceof BuildingNotFoundError
-                || error instanceof PropertyBuildingArchivedError
-            ) {
-                const message = error instanceof BuildingNotFoundError
-                    ? "L'edificio selezionato non è più disponibile. Scegli un altro edificio o Nessun edificio."
-                    : "L'edificio selezionato è archiviato. Scegli un altro edificio o Nessun edificio.";
-                methods.setError('PropertyBuildingId', {
-                    type: 'manual',
-                    message,
-                });
-                onSubmitError?.(message);
-                if (activeTab === 'info1') {
-                    methods.setFocus('PropertyBuildingId');
-                } else {
-                    pendingBuildingFocusRef.current = true;
-                    setActiveTab('info1');
-                }
                 return;
             }
             onSubmitError?.(

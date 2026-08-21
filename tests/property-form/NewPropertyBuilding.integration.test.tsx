@@ -14,21 +14,13 @@ import {
     type PropertyFormState,
 } from '../../src/components/property-form/schema';
 import type { DraftRecord, DraftRepository } from '../../src/db/draftRepository.port';
-import {
-    BuildingNotFoundError,
-    PropertyBuildingArchivedError,
-} from '../../src/db/databaseErrors';
 
 let draftRepository: DraftRepository;
 const createProperty = vi.fn();
 const createBuildingRepository = vi.fn();
-const buildingList = vi.fn();
 
-vi.mock('../../src/auth/AuthContext', () => ({
-    useAuth: () => ({ account: { id: 'user-001' } }),
-}));
 vi.mock('../../src/db/buildingRepository', () => ({
-    createBuildingRepository: (options: unknown) => createBuildingRepository(options),
+    createBuildingRepository: (...args: unknown[]) => createBuildingRepository(...args),
 }));
 vi.mock('../../src/db/propertyRepository', () => ({
     createProperty: (...args: unknown[]) => createProperty(...args),
@@ -43,12 +35,6 @@ vi.mock('../../src/components/property-form/ui/AddressAutocomplete', () => ({
     },
 }));
 
-const buildings = [
-    { id: 'building-a', identifier: 'Building A', archived: false },
-    { id: 'building-b', identifier: 'Building B', archived: true },
-    { id: 'building-c', identifier: 'Building C', archived: false },
-] as never[];
-
 function record(payload: PropertyFormState): DraftRecord<PropertyFormState> {
     return {
         id: 'draft-1', accountId: 'user-001', formType: 'property',
@@ -59,18 +45,13 @@ function record(payload: PropertyFormState): DraftRecord<PropertyFormState> {
 }
 
 function makeDraftRepository(initial: DraftRecord<PropertyFormState> | null = null) {
-    let stored = initial;
     draftRepository = {
-        get: vi.fn(async () => stored ? structuredClone(stored) : null),
-        list: vi.fn(async () => stored ? [structuredClone(stored)] : []),
-        save: vi.fn(async (_definition, input) => {
-            stored = record(input.payload as PropertyFormState);
-            return structuredClone(stored);
-        }),
-        delete: vi.fn(async () => {
-            stored = null;
-            return true;
-        }),
+        get: vi.fn().mockResolvedValue(initial),
+        list: vi.fn().mockResolvedValue(initial ? [initial] : []),
+        save: vi.fn().mockImplementation(async (_definition, input) => (
+            record(input.payload as PropertyFormState)
+        )),
+        delete: vi.fn().mockResolvedValue(true),
     };
 }
 
@@ -95,117 +76,70 @@ afterEach(() => {
     vi.clearAllMocks();
 });
 
-describe('NewProperty Building integration', () => {
-    it('usa repository account-scoped, mostra solo Building attivi e preserva il Select standard', async () => {
+describe('NewProperty standalone Building contract', () => {
+    it('non mostra UI Building e mantiene il Select Tipo standard', async () => {
         makeDraftRepository();
-        buildingList.mockReturnValue(buildings);
-        createBuildingRepository.mockReturnValue({ list: buildingList });
         renderPage();
-
-        const building = await screen.findByLabelText('Edificio') as HTMLSelectElement;
-        expect(createBuildingRepository).toHaveBeenCalledWith({ accountId: 'user-001' });
-        expect(building.value).toBe('');
-        expect(Array.from(building.options).map((option) => option.textContent))
-            .toEqual(['Nessun edificio', 'Building A', 'Building C']);
-        expect(building.options[0]).toMatchObject({ disabled: false, hidden: false });
-        expect(screen.queryByRole('option', { name: 'Building B' })).toBeNull();
+        expect(await screen.findByLabelText('Tipo')).toBeTruthy();
+        expect(screen.queryByLabelText('Edificio')).toBeNull();
+        expect(screen.queryByText('Nessun edificio')).toBeNull();
+        expect(screen.queryByText('Edificio non disponibile')).toBeNull();
         const type = screen.getByLabelText('Tipo') as HTMLSelectElement;
-        expect(type.options[0]).toMatchObject({ disabled: true, hidden: true });
+        expect(type.options[0]).toMatchObject({
+            value: '',
+            disabled: true,
+            hidden: true,
+            text: "Seleziona un'opzione",
+        });
+        expect(createBuildingRepository).not.toHaveBeenCalled();
     });
 
-    it.each([
-        ['', null],
-        ['building-a', 'building-a'],
-    ])('crea con mapping Building %s, canonical data pulito e navigazione', async (selected, expected) => {
+    it('crea standalone con il solo canonical PropertyFormData', async () => {
         makeDraftRepository();
-        buildingList.mockReturnValue(buildings);
-        createBuildingRepository.mockReturnValue({ list: buildingList });
-        createProperty.mockReturnValue({ id: `property-${expected ?? 'none'}` });
+        createProperty.mockReturnValue({ id: 'property-standalone' });
         const router = renderPage();
-        await fillRequired(String(expected ?? 'none'));
-        if (selected) await userEvent.selectOptions(screen.getByLabelText('Edificio'), selected);
+        await fillRequired('standalone');
         await userEvent.click(screen.getByRole('button', { name: 'Salva' }));
         await waitFor(() => expect(createProperty).toHaveBeenCalledOnce());
-        const [data, relation] = createProperty.mock.calls[0] as [PropertyFormData, { buildingId: string | null }];
+        expect(createProperty.mock.calls[0]).toHaveLength(1);
+        const data = createProperty.mock.calls[0][0] as PropertyFormData;
         expect(data).not.toHaveProperty('PropertyBuildingId');
-        expect(relation).toEqual({ buildingId: expected });
+        expect(data).not.toHaveProperty('buildingId');
         await waitFor(() => expect(router.state.location.pathname)
-            .toBe(`/properties/units/property-${expected ?? 'none'}`));
-        expect(draftRepository.delete).toHaveBeenCalledOnce();
+            .toBe('/properties/units/property-standalone'));
     });
 
-    it('non sincronizza l’indirizzo quando cambia Building', async () => {
+    it('una bozza v2 B1.3 con Building non crea una relazione nascosta', async () => {
+        makeDraftRepository(record({
+            ...defaultPropertyFormStateValues,
+            PropertyBuildingId: 'building-a',
+            PropertyTitle: 'Unità legacy Building',
+            PropertyAddress: 'Via Legacy 1',
+            PropertyCity: 'Milano',
+            PropertyPostalCode: '20100',
+        }));
+        createProperty.mockReturnValue({ id: 'property-legacy-detached' });
+        renderPage();
+        await userEvent.click(await screen.findByRole('button', {
+            name: 'Riprendi bozza',
+        }));
+        expect(await screen.findByLabelText('Tipo')).toBeTruthy();
+        expect(screen.queryByLabelText('Edificio')).toBeNull();
+        expect(draftRepository.save).not.toHaveBeenCalled();
+        await userEvent.click(screen.getByRole('button', { name: 'Salva' }));
+        await waitFor(() => expect(createProperty).toHaveBeenCalledOnce());
+        expect(createProperty.mock.calls[0]).toHaveLength(1);
+        expect(createProperty.mock.calls[0][0]).not.toHaveProperty('PropertyBuildingId');
+        expect(createProperty.mock.calls[0][0]).not.toHaveProperty('buildingId');
+    });
+
+    it('mantiene l’indirizzo come normale input standalone', async () => {
         makeDraftRepository();
-        buildingList.mockReturnValue(buildings);
-        createBuildingRepository.mockReturnValue({ list: buildingList });
         renderPage();
         const address = await screen.findByLabelText('Indirizzo') as HTMLInputElement;
         await userEvent.type(address, 'Via autonoma 7');
-        await userEvent.selectOptions(screen.getByLabelText('Edificio'), 'building-a');
         expect(address.value).toBe('Via autonoma 7');
         expect(address.readOnly).toBe(false);
-    });
-
-    it('salva e riprende Building nel vero Select senza autosave supplementare', async () => {
-        makeDraftRepository();
-        buildingList.mockReturnValue(buildings);
-        createBuildingRepository.mockReturnValue({ list: buildingList });
-        const first = renderPage();
-        await userEvent.selectOptions(await screen.findByLabelText('Edificio'), 'building-a');
-        await userEvent.click(screen.getByRole('button', { name: 'Salva bozza' }));
-        await waitFor(() => expect(draftRepository.save).toHaveBeenCalledOnce());
-        first.dispose();
-        cleanup();
-        renderPage();
-        await userEvent.click(await screen.findByRole('button', { name: 'Riprendi bozza' }));
-        expect((await screen.findByLabelText('Edificio') as HTMLSelectElement).value)
-            .toBe('building-a');
-        expect(draftRepository.save).toHaveBeenCalledOnce();
-        expect(createProperty).not.toHaveBeenCalled();
-    });
-
-    it('rappresenta una relazione draft non disponibile senza cancellarla o autosalvarla', async () => {
-        makeDraftRepository(record({
-            ...defaultPropertyFormStateValues,
-            PropertyBuildingId: 'building-old',
-        }));
-        buildingList.mockReturnValue(buildings);
-        createBuildingRepository.mockReturnValue({ list: buildingList });
-        renderPage();
-        await userEvent.click(await screen.findByRole('button', { name: 'Riprendi bozza' }));
-        const select = await screen.findByLabelText('Edificio') as HTMLSelectElement;
-        expect(select.value).toBe('building-old');
-        expect(screen.getByRole('option', { name: 'Edificio non disponibile' }))
-            .toMatchObject({ disabled: true, selected: true });
-        expect(screen.getByRole('option', { name: 'Nessun edificio' }))
-            .toMatchObject({ disabled: false });
-        expect(draftRepository.save).not.toHaveBeenCalled();
-    });
-
-    it.each([
-        [new BuildingNotFoundError('building-a'), "L'edificio selezionato non è più disponibile. Scegli un altro edificio o Nessun edificio."],
-        [new PropertyBuildingArchivedError('building-a'), "L'edificio selezionato è archiviato. Scegli un altro edificio o Nessun edificio."],
-    ])('gestisce il race Building senza navigazione o cleanup', async (failure, message) => {
-        makeDraftRepository();
-        buildingList.mockReturnValue(buildings);
-        createBuildingRepository.mockReturnValue({ list: buildingList });
-        createProperty.mockImplementation(() => {
-            throw failure;
-        });
-        const router = renderPage();
-        await fillRequired(failure.name);
-        await userEvent.selectOptions(screen.getByLabelText('Edificio'), 'building-a');
-        await userEvent.click(screen.getByRole('button', { name: 'Informazioni aggiuntive' }));
-        await userEvent.click(screen.getByRole('button', { name: 'Salva' }));
-        expect(await screen.findAllByText(message)).toHaveLength(2);
-        const building = await screen.findByLabelText('Edificio');
-        expect(document.activeElement).toBe(building);
-        expect(router.state.location.pathname).toBe('/properties/new');
-        expect(createProperty).toHaveBeenCalledOnce();
-        expect(draftRepository.delete).not.toHaveBeenCalled();
-        createProperty.mockReturnValue({ id: 'property-retry' });
-        await userEvent.selectOptions(building, 'building-c');
-        await userEvent.click(screen.getByRole('button', { name: 'Salva' }));
-        await waitFor(() => expect(createProperty).toHaveBeenCalledTimes(2));
+        expect(address.disabled).toBe(false);
     });
 });
