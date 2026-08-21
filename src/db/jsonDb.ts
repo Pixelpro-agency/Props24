@@ -504,21 +504,34 @@ function normalizeLeaseRecord(input: unknown, fallbackId: string): LeaseRecord {
 function normalizeBuildingRecord(input: unknown, fallbackId: string): BuildingRecord {
     const source = asObject(input);
     const address = splitAddress(source.address);
+    const features = Array.isArray(source.features)
+        ? source.features.filter((feature): feature is string => typeof feature === 'string' && feature.length > 0)
+            .filter((feature, index, list) => list.indexOf(feature) === index)
+        : [];
     return {
         id: valueAsString(source.id) || fallbackId,
         createdAt: valueAsString(source.createdAt) || nowIso(),
         updatedAt: valueAsString(source.updatedAt) || nowIso(),
         archived: source.archived === true || source.status === 'archived',
-        name: valueAsString(source.name) || valueAsString(source.description) || `Edificio ${fallbackId}`,
+        identifier: valueAsString(source.identifier) || valueAsString(source.name) || valueAsString(source.description) || `Edificio ${fallbackId}`,
+        color: valueAsString(source.color),
         address: valueAsString(source.address) || address.PropertyAddress,
+        address2: valueAsString(source.address2),
         city: valueAsString(source.city) || address.PropertyCity,
         postalCode: valueAsString(source.postalCode) || address.PropertyPostalCode,
         county: valueAsString(source.county) || address.PropertyCounty,
         state: valueAsString(source.state) || address.PropertyState,
         country: valueAsString(source.country) || address.PropertyCountry,
         size: valueAsNumberOrNull(source.size),
-        unitsCount: valueAsNumber(source.unitsCount),
+        constructionYear: valueAsNumberOrNull(source.constructionYear),
         description: valueAsString(source.description),
+        privateNote: valueAsString(source.privateNote),
+        features,
+        acquisitionDate: normalizeIsoDate(source.acquisitionDate),
+        purchasePrice: valueAsNumberOrNull(source.purchasePrice),
+        acquisitionCosts: valueAsNumberOrNull(source.acquisitionCosts),
+        imu: valueAsNumberOrNull(source.imu),
+        unitsCount: valueAsNumber(source.unitsCount),
     };
 }
 

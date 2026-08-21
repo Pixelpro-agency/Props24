@@ -32,16 +32,25 @@ export interface BuildingRecord {
     createdAt: string;
     updatedAt: string;
     archived: boolean;
-    name: string;
+    identifier: string;
+    color: string;
     address: string;
+    address2: string;
     city: string;
     postalCode: string;
     county: string;
     state: string;
     country: string;
     size: number | null;
-    unitsCount: number;
+    constructionYear: number | null;
     description: string;
+    privateNote: string;
+    features: string[];
+    acquisitionDate: string;
+    purchasePrice: number | null;
+    acquisitionCosts: number | null;
+    imu: number | null;
+    unitsCount: number;
 }
 
 export interface PropertyRecord {
