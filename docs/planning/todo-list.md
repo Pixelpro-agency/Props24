@@ -26,7 +26,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 
 ## Percorso operativo immediato
 
-> - [ ] A1.1 — Contratto dati e normalizzazione edificio — **PROSSIMA TASK; primo sottopunto di A1**
+> - [x] A1.1 — Contratto dati e normalizzazione edificio — **PROSSIMA TASK; primo sottopunto di A1**
 > - [ ] A1.2 — Regole edificio, errori e integrità DB — **DOPO A1.1; applica ED-01 ed ED-02**
 > - [ ] A1.3 — Repository edifici account-scoped e lifecycle — **DOPO A1.1/A1.2**
 > - [ ] A1.4 — Copertura automatizzata e gate tecnico A1 — **DOPO A1.3; chiude A1**
@@ -48,7 +48,7 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
 
 - [x] A0 — Specifica Nuovo edificio — **COMPLETATA**
 - [ ] A1 — Repository edifici — **APERTO; ED-01 ed ED-02 validate**
-  - [ ] A1.1 — Contratto dati e normalizzazione edificio — **PROSSIMA TASK**
+  - [x] A1.1 — Contratto dati e normalizzazione edificio — **PROSSIMA TASK**
   - [ ] A1.2 — Regole edificio, errori e integrità DB — **DOPO A1.1**
   - [ ] A1.3 — Repository edifici account-scoped e lifecycle — **DOPO A1.1/A1.2**
   - [ ] A1.4 — Copertura automatizzata e gate tecnico A1 — **DOPO A1.3; chiude A1**
@@ -203,9 +203,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Integrazione bozza manuale e guard in Nuovo inquilino — F3.1
   - [x] Integrazione bozza manuale e guard in Nuova unità — F3.2
   - [x] Integrazione Nuova locazione: restore, riconciliazione riferimenti, guard, cleanup/recovery e submit lock — F3.3
+  - [x] Contratto dati e normalizzazione edificio — A1.1
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di F3.3: 47 file, 683 test passati, 0 falliti, 0 saltati.
+Baseline verificata al termine di A1.1: 48 file, 686 test passati, 0 falliti, 0 saltati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
