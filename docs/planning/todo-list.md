@@ -200,9 +200,9 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Dialog accessibile delle modifiche non salvate
   - [x] Compatibilità React Strict Mode del guard
   - [x] Integrazione auth/logout del guard
-    - [x] Integrazione bozza manuale e guard in Nuovo inquilino — F3.1
-    - [x] Integrazione bozza manuale e guard in Nuova unità — F3.2
-    - [x] Integrazione Nuova locazione: restore, riconciliazione riferimenti, guard, cleanup/recovery e submit lock — F3.3
+  - [x] Integrazione bozza manuale e guard in Nuovo inquilino — F3.1
+  - [x] Integrazione bozza manuale e guard in Nuova unità — F3.2
+  - [x] Integrazione Nuova locazione: restore, riconciliazione riferimenti, guard, cleanup/recovery e submit lock — F3.3
   - [ ] Copertura progressiva delle task future — **APERTO**
 
 Baseline verificata al termine di F3.3: 47 file, 683 test passati, 0 falliti, 0 saltati.
