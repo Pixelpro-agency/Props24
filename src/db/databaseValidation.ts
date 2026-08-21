@@ -1,5 +1,5 @@
 import type { LocalDatabase } from './database.types';
-import { findTenantLeaseConflicts, normalizeFiscalCode, normalizePropertyIdentifier, normalizePropertyLocationKey } from './businessRules';
+import { findTenantLeaseConflicts, normalizeBuildingIdentifier, normalizeBuildingLocationKey, normalizeFiscalCode, normalizePropertyIdentifier, normalizePropertyLocationKey } from './businessRules';
 import { isLeaseCurrentlyActive, isValidIsoDate, todayIso } from './dataSelectors';
 import { calculateLeasePeriodicAmount } from '../landlord/leases/schema/leaseFormSchema';
 import { isGeneratedRentPayment } from './paymentRepository';
@@ -76,6 +76,8 @@ export function validateDatabaseRelations(database: LocalDatabase, referenceDate
     const leaseIds = new Set(database.leases.map((item) => item.id));
     const propertyIdentifiers = new Map<string, string>();
     const propertyLocations = new Map<string, string>();
+    const buildingIdentifiers = new Map<string, string>();
+    const buildingLocations = new Map<string, string>();
     const tenantFiscalCodes = new Map<string, string>();
     const derivedPropertyLeaseIds = new Map<string, Set<string>>();
     const derivedPropertyTenantIds = new Map<string, Set<string>>();
@@ -151,12 +153,31 @@ export function validateDatabaseRelations(database: LocalDatabase, referenceDate
     });
 
     database.buildings.forEach((building) => {
+        const identifier = normalizeBuildingIdentifier(building.identifier);
+        if (!identifier) {
+            issues.push(issue('error', 'BUILDING_IDENTIFIER_REQUIRED', 'buildings', building.id, 'Identificativo edificio obbligatorio vuoto.'));
+        } else {
+            const existingId = buildingIdentifiers.get(identifier);
+            if (existingId) issues.push(issue('error', 'BUILDING_IDENTIFIER_DUPLICATE', 'buildings', building.id, `Identificativo edificio duplicato con ${existingId}.`));
+            else buildingIdentifiers.set(identifier, building.id);
+        }
+        const locationKey = normalizeBuildingLocationKey(building);
+        if (locationKey) {
+            const existingId = buildingLocations.get(locationKey);
+            if (existingId) issues.push(issue('error', 'BUILDING_LOCATION_DUPLICATE', 'buildings', building.id, `Indirizzo edificio duplicato con ${existingId}.`));
+            else buildingLocations.set(locationKey, building.id);
+        }
         checkAddressFields(issues, 'buildings', building.id, {
             address: building.address,
             city: building.city,
             postalCode: building.postalCode,
             country: building.country,
-        }, false);
+        }, true);
+        if (!requiredString(building.country)) issues.push(issue('error', 'BUILDING_COUNTRY_REQUIRED', 'buildings', building.id, 'Paese edificio obbligatorio vuoto.'));
+        const expectedUnitsCount = database.properties.filter((property) => property.relations.buildingId === building.id).length;
+        if (building.unitsCount !== expectedUnitsCount) {
+            issues.push(issue('error', 'BUILDING_UNITS_COUNT_OUT_OF_SYNC', 'buildings', building.id, `Conteggio unità non coerente: atteso ${expectedUnitsCount}, trovato ${building.unitsCount}.`));
+        }
     });
 
     database.tenants.forEach((tenant) => {

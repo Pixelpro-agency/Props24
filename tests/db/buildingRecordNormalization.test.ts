@@ -206,6 +206,10 @@ describe('BuildingRecord normalization', () => {
           {
             id: 'building-valid-date',
             identifier: 'Data ISO',
+            address: 'Via Roma 10',
+            city: 'Milano',
+            postalCode: '20100',
+            country: 'IT',
             size: 100,
             constructionYear: Number.POSITIVE_INFINITY,
             purchasePrice: '150000',
@@ -217,6 +221,10 @@ describe('BuildingRecord normalization', () => {
           {
             id: 'building-invalid-date',
             identifier: 'Data non valida',
+            address: 'Via Roma 10 bis',
+            city: 'Milano',
+            postalCode: '20100',
+            country: 'IT',
             acquisitionDate: '31/02/2020',
           },
         ],

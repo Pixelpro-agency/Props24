@@ -1,11 +1,15 @@
-import type { LeaseRecord, LocalDatabase, PropertyRecord, TenantRecord } from './database.types';
+import type { BuildingRecord, LeaseRecord, LocalDatabase, PropertyRecord, TenantRecord } from './database.types';
 import type { PropertyFormData } from '../components/property-form/schema';
-import { DuplicatePropertyIdentifierError, DuplicatePropertyLocationError, TenantLeaseConflictError } from './databaseErrors';
+import { DuplicateBuildingIdentifierError, DuplicateBuildingLocationError, DuplicatePropertyIdentifierError, DuplicatePropertyLocationError, TenantLeaseConflictError } from './databaseErrors';
 import { isValidIsoDate } from './dataSelectors';
 
 const ALLOW_OVERLAPPING_TENANT_LEASES = false;
 
 export function normalizePropertyIdentifier(value: string): string {
+    return String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('it-IT');
+}
+
+export function normalizeBuildingIdentifier(value: string): string {
     return String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('it-IT');
 }
 
@@ -15,6 +19,43 @@ function normalizePropertyLocationPart(value: string): string {
 
 function normalizePostalCode(value: string): string {
     return String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, '').toUpperCase();
+}
+
+function normalizeCountry(value: string): string {
+    return String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, '').toUpperCase();
+}
+
+export type BuildingLocation = Pick<BuildingRecord, 'address' | 'city' | 'postalCode' | 'country'>;
+
+export function normalizeBuildingLocationKey(building: BuildingLocation): string {
+    const address = normalizePropertyLocationPart(building.address);
+    const city = normalizePropertyLocationPart(building.city);
+    const postalCode = normalizePostalCode(building.postalCode);
+    const country = normalizeCountry(building.country);
+    if (!address || !city || !postalCode || !country) return '';
+    return `${address}|${city}|${postalCode}|${country}`;
+}
+
+export function findBuildingByIdentifier(database: LocalDatabase, identifier: string, excludeBuildingId?: string): BuildingRecord | null {
+    const normalized = normalizeBuildingIdentifier(identifier);
+    if (!normalized) return null;
+    return database.buildings.find((building) => building.id !== excludeBuildingId && normalizeBuildingIdentifier(building.identifier) === normalized) || null;
+}
+
+export function assertUniqueBuildingIdentifier(database: LocalDatabase, identifier: string, excludeBuildingId?: string): void {
+    const duplicate = findBuildingByIdentifier(database, identifier, excludeBuildingId);
+    if (duplicate) throw new DuplicateBuildingIdentifierError(identifier, duplicate.id);
+}
+
+export function findBuildingByLocation(database: LocalDatabase, location: BuildingLocation, excludeBuildingId?: string): BuildingRecord | null {
+    const key = normalizeBuildingLocationKey(location);
+    if (!key) return null;
+    return database.buildings.find((building) => building.id !== excludeBuildingId && normalizeBuildingLocationKey(building) === key) || null;
+}
+
+export function assertUniqueBuildingLocation(database: LocalDatabase, location: BuildingLocation, excludeBuildingId?: string): void {
+    const duplicate = findBuildingByLocation(database, location, excludeBuildingId);
+    if (duplicate) throw new DuplicateBuildingLocationError(duplicate.id);
 }
 
 export function normalizePropertyLocationKey(formData: Pick<PropertyFormData, 'PropertyAddress' | 'PropertyCity' | 'PropertyPostalCode'>): string {

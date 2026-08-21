@@ -10,6 +10,28 @@
     }
 }
 
+export class DuplicateBuildingIdentifierError extends Error {
+    identifier: string;
+    existingBuildingId: string;
+
+    constructor(identifier: string, existingBuildingId: string) {
+        super(`Esiste già un edificio con l'identificativo "${identifier}".`);
+        this.name = 'DuplicateBuildingIdentifierError';
+        this.identifier = identifier;
+        this.existingBuildingId = existingBuildingId;
+    }
+}
+
+export class DuplicateBuildingLocationError extends Error {
+    existingBuildingId: string;
+
+    constructor(existingBuildingId: string) {
+        super('Esiste già un edificio allo stesso indirizzo.');
+        this.name = 'DuplicateBuildingLocationError';
+        this.existingBuildingId = existingBuildingId;
+    }
+}
+
 export class DuplicatePropertyLocationError extends Error {
     existingPropertyId: string;
 
