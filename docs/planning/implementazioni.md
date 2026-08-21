@@ -252,6 +252,46 @@ Verificare:
 
 **Dipendenza:** A1.
 
+**Decomposizione operativa:**
+
+### B1.1 — Contratto relazione unità–edificio e mutazioni repository
+
+- mantenere `PropertyRecord.relations.buildingId` come unica fonte canonica;
+- supportare create con `buildingId` nullo o edificio valido;
+- supportare preserve, reassign e detach nella mutazione repository;
+- bloccare come nuove destinazioni edifici inesistenti o archiviati;
+- permettere di preservare una relazione già esistente verso un edificio successivamente archiviato;
+- mantenere `unitsCount` esclusivamente derivato dal meccanismo centrale;
+- verificare create, reassign, detach, delete e archive senza introdurre UI, draft o B2.
+
+### B1.2 — Stato form e bozza della relazione Building
+
+- introdurre la relazione nello stato del form senza duplicarla nel `PropertyRecord.formData`;
+- includerla nel ciclo dirty/reset/save/resume/discard;
+- evolvere in modo retrocompatibile la bozza create dell’unità;
+- preservare i contratti già verificati di B5/F3.2;
+- nessuna UI finale del selettore edificio.
+
+### B1.3 — Campo Edificio nella UI e submit reale
+
+- aggiungere il campo Edificio a Nuova unità;
+- mostrare soltanto edifici esistenti e non archiviati come nuove destinazioni;
+- offrire l’opzione Nessun edificio;
+- usare il repository Building già completato;
+- persistere la scelta in `relations.buildingId`;
+- non modificare automaticamente l’indirizzo;
+- non implementare il flusso proveniente dal dettaglio edificio;
+- non implementare B2 o B6.
+
+### B1.4 — Gate tecnico consolidato B1
+
+- consolidare create, repository update, detach, reassign e draft;
+- verificare edificio inesistente e archiviato;
+- verificare preservazione della relazione esistente verso edificio archiviato;
+- verificare `unitsCount`, delete, archive e account isolation;
+- verificare assenza di perdita silenziosa della relazione;
+- eseguire suite completa, build, lint e gate finale senza introdurre nuove funzionalità.
+
 **Obiettivo:**
 
 - campo edificio tipizzato nello stato del form;
