@@ -20,13 +20,16 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: A1 — Repository edifici
+- Prossimo punto tecnico: A1.1 — Contratto dati e normalizzazione edificio
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 63 task non concluse e non vanno sommati nuovamente. D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
 
 ## Percorso operativo immediato
 
-> - [ ] A1 — Repository edifici — **PROSSIMA TASK; ED-01 ed ED-02 validate**
+> - [ ] A1.1 — Contratto dati e normalizzazione edificio — **PROSSIMA TASK; primo sottopunto di A1**
+> - [ ] A1.2 — Regole edificio, errori e integrità DB — **DOPO A1.1; applica ED-01 ed ED-02**
+> - [ ] A1.3 — Repository edifici account-scoped e lifecycle — **DOPO A1.1/A1.2**
+> - [ ] A1.4 — Copertura automatizzata e gate tecnico A1 — **DOPO A1.3; chiude A1**
 > - [ ] B1 — Relazione unità–edificio — **DOPO A1; necessaria per il flusso edificio → unità**
 > - [ ] A2 — Form Nuovo edificio — **DOPO A1/B1; F1 e F2 già soddisfatte; PA-08 e PA-09 restano aperte e non vanno interpretate**
 > - [ ] A3 — Route e accessi edificio — **DOPO A2**
@@ -45,6 +48,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
 
 - [x] A0 — Specifica Nuovo edificio — **COMPLETATA**
 - [ ] A1 — Repository edifici — **APERTO; ED-01 ed ED-02 validate**
+  - [ ] A1.1 — Contratto dati e normalizzazione edificio — **PROSSIMA TASK**
+  - [ ] A1.2 — Regole edificio, errori e integrità DB — **DOPO A1.1**
+  - [ ] A1.3 — Repository edifici account-scoped e lifecycle — **DOPO A1.1/A1.2**
+  - [ ] A1.4 — Copertura automatizzata e gate tecnico A1 — **DOPO A1.3; chiude A1**
 - [ ] A2 — Form Nuovo edificio — **APERTO; ED-04, ED-06 ed ED-07 validate; PA-08 e PA-09 aperte; dipende da A1, F1, F2**
 - [ ] A3 — Route e accessi edificio — **APERTO; ED-03 validata; dipende da A2**
 - [ ] A4 — Lista edifici reale — **APERTO; dipende da A1, A3**
