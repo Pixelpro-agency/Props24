@@ -6,7 +6,13 @@ import { Select } from '../ui/Select';
 import { ColorPicker } from '../ui/ColorPicker';
 import { AddressAutocomplete } from '../ui/AddressAutocomplete';
 
-export function Tab1Info() {
+interface BuildingOption {
+    value: string;
+    label: string;
+    disabled?: boolean;
+}
+
+export function Tab1Info({ buildingOptions }: { buildingOptions: BuildingOption[] }) {
     return (
         <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -40,6 +46,14 @@ export function Tab1Info() {
                             { value: 'nuda_proprieta', label: 'Nuda proprietà' },
                             { value: 'altro', label: 'Altro' },
                         ]}
+                    />
+                    <Select
+                        name="PropertyBuildingId"
+                        label="Edificio"
+                        orientation="horizontal"
+                        options={buildingOptions}
+                        allowEmptySelection
+                        emptyOptionLabel="Nessun edificio"
                     />
                 </div>
             </FormSection>

@@ -5,6 +5,7 @@ import { twMerge } from 'tailwind-merge';
 interface SelectOption {
     value: string | number;
     label: string;
+    disabled?: boolean;
 }
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
@@ -14,9 +15,11 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
     helpText?: string;
     required?: boolean;
     orientation?: 'vertical' | 'horizontal';
+    allowEmptySelection?: boolean;
+    emptyOptionLabel?: string;
 }
 
-export function Select({ name, label, options, helpText, required, orientation = 'vertical', className, ...props }: SelectProps) {
+export function Select({ name, label, options, helpText, required, orientation = 'vertical', allowEmptySelection = false, emptyOptionLabel = "Seleziona un'opzione", className, ...props }: SelectProps) {
     const { register, formState: { errors } } = useFormContext();
     const error = errors[name]?.message as string | undefined;
 
@@ -40,9 +43,19 @@ export function Select({ name, label, options, helpText, required, orientation =
                 }}
                 {...props}
             >
-                <option value="" disabled hidden>Seleziona un'opzione</option>
+                <option
+                    value=""
+                    disabled={!allowEmptySelection}
+                    hidden={!allowEmptySelection}
+                >
+                    {emptyOptionLabel}
+                </option>
                 {options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
+                    <option
+                        key={opt.value}
+                        value={opt.value}
+                        disabled={opt.disabled}
+                    >
                         {opt.label}
                     </option>
                 ))}
