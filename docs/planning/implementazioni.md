@@ -254,12 +254,15 @@ Verificare:
 
 **Obiettivo:**
 
-- campo edificio tipizzato;
-- soli edifici validi e non archiviati;
+- campo edificio tipizzato nello stato del form;
+- soli edifici esistenti e non archiviati come nuove destinazioni;
 - opzione nessun edificio;
-- persistenza di `relations.buildingId`;
-- round-trip in create, edit e draft;
-- ricalcolo `unitsCount` dopo ogni lifecycle dell’unità.
+- persistenza canonica esclusivamente in `relations.buildingId`;
+- round-trip nella create e nella bozza create;
+- supporto repository a preserve/reassign/detach per la futura UI edit di B6;
+- nessuna integrazione UI edit in B1;
+- `unitsCount` derivato tramite il meccanismo centrale già esistente;
+- le unità archiviate conservano relazione e conteggio finché non vengono eliminate o scollegate.
 
 **File da verificare:**
 

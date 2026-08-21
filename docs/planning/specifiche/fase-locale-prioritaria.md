@@ -134,10 +134,11 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 3. Nuovo inquilino — integrato e collaudato;
 4. Nuova unità — integrata e collaudata;
 5. Nuova locazione — integrata e collaudata;
-6. repository edifici — da implementare dopo le decisioni del Blocco A;
-7. Nuovo edificio — da integrare dopo il Blocco A;
-8. lista, lifecycle e collaudo edifici — da completare;
-9. collaudo trasversale dei quattro CRUD — non avviabile prima dell’integrazione residua Nuovo edificio.
+6. repository edifici — implementato e verificato;
+7. relazione unità–edificio — prossimo punto tecnico;
+8. Nuovo edificio — da integrare dopo il completamento delle dipendenze del Blocco A;
+9. lista, lifecycle e collaudo edifici — da completare;
+10. collaudo trasversale dei quattro CRUD — non avviabile prima dell’integrazione residua Nuovo edificio.
 
 Il comportamento manuale è integrato nei primi tre form e resta da applicare a Nuovo edificio. `Elimina e ricomincia` cancella esplicitamente la bozza persistita. Nuova locazione comprende restore esplicito, riconciliazione dei riferimenti, guard, cleanup/recovery e submit lock; le integrazioni dei form complessi restano task separate.
 
