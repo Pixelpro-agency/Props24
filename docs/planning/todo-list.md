@@ -20,7 +20,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: A1.3 — Repository edifici account-scoped e lifecycle
+- Prossimo punto tecnico: A1.4 — Copertura automatizzata e gate tecnico A1
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 63 task non concluse e non vanno sommati nuovamente. D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
 
@@ -28,8 +28,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 
 > - [x] A1.1 — Contratto dati e normalizzazione edificio — **COMPLETATA; 48 file / 686 test, build e lint positivi**
 > - [x] A1.2 — Regole edificio, errori e integrità DB — **COMPLETATA; 50 file / 701 test, build e lint positivi**
-> - [ ] A1.3 — Repository edifici account-scoped e lifecycle — **PROSSIMA TASK**
-> - [ ] A1.4 — Copertura automatizzata e gate tecnico A1 — **DOPO A1.3; chiude A1**
+> - [x] A1.3 — Repository edifici account-scoped e lifecycle — **COMPLETATA; 51 file / 715 test, build e lint positivi**
+> - [ ] A1.4 — Copertura automatizzata e gate tecnico A1 — **PROSSIMA TASK; chiude A1**
 > - [ ] B1 — Relazione unità–edificio — **DOPO A1; necessaria per il flusso edificio → unità**
 > - [ ] A2 — Form Nuovo edificio — **DOPO A1/B1; F1 e F2 già soddisfatte; PA-08 e PA-09 restano aperte e non vanno interpretate**
 > - [ ] A3 — Route e accessi edificio — **DOPO A2**
@@ -50,8 +50,8 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
 - [ ] A1 — Repository edifici — **APERTO; ED-01 ed ED-02 validate**
   - [x] A1.1 — Contratto dati e normalizzazione edificio — **COMPLETATA**
   - [x] A1.2 — Regole edificio, errori e integrità DB — **COMPLETATA**
-  - [ ] A1.3 — Repository edifici account-scoped e lifecycle — **PROSSIMA TASK**
-  - [ ] A1.4 — Copertura automatizzata e gate tecnico A1 — **DOPO A1.3; chiude A1**
+  - [x] A1.3 — Repository edifici account-scoped e lifecycle — **COMPLETATA**
+  - [ ] A1.4 — Copertura automatizzata e gate tecnico A1 — **PROSSIMA TASK; chiude A1**
 - [ ] A2 — Form Nuovo edificio — **APERTO; ED-04, ED-06 ed ED-07 validate; PA-08 e PA-09 aperte; dipende da A1, F1, F2**
 - [ ] A3 — Route e accessi edificio — **APERTO; ED-03 validata; dipende da A2**
 - [ ] A4 — Lista edifici reale — **APERTO; dipende da A1, A3**
@@ -205,9 +205,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Integrazione Nuova locazione: restore, riconciliazione riferimenti, guard, cleanup/recovery e submit lock — F3.3
   - [x] Contratto dati e normalizzazione edificio — A1.1
   - [x] Regole edificio, errori e integrità DB — A1.2
+  - [x] Repository edifici account-scoped e lifecycle — A1.3
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di A1.2: 50 file, 701 test passati, 0 falliti, 0 saltati.
+Baseline verificata al termine di A1.3: 51 file, 715 test passati, 0 falliti, 0 saltati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
