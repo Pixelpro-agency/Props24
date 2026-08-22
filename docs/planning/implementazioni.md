@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: d2a1a923f9f8d77b3f67a04093604b56ab3f8351
+SHA applicativo esaminato: 3047179858ef4755a2762c943181c895f18f2a31
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A3.1 — Route, pagina Nuovo edificio e destinazione dettaglio minima è completata. Il prossimo punto tecnico è A3.2 — Accessi UI al Nuovo edificio.
+A3.2 — Accessi UI al Nuovo edificio è completata. Il prossimo punto tecnico è A3.3 — Gate tecnico consolidato A3.
 
-A3 resta aperta: A3.2 collega gli accessi UI, A3.3 consolida il gate tecnico e A3.4 esegue il collaudo browser. Lista reale A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+A3 resta aperta: A3.3 consolida il gate tecnico e A3.4 esegue il collaudo browser. Lista reale A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -145,38 +145,13 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 **Dipendenze:** A2 completata; ED-03 validata.
 
-A3.1 è completata. Restano A3.2–A3.4 per collegare gli accessi UI, consolidare il gate tecnico ed eseguire il collaudo browser. La lista edifici reale resta A4; il dettaglio completo, le unità collegate e il lifecycle restano A5/A6.
-
-### A3.2 — Accessi UI al Nuovo edificio
-
-**Dipendenza:** A3.1 completata.
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- collegare realmente il pulsante `Nuovo edificio` dell'header;
-- collegare realmente la CTA `Nuovo edificio` dell'empty state;
-- verificare il quick-add Edifici della sidebar;
-- usare esclusivamente `/properties/buildings/new`;
-- eliminare il `console.log` usato come falsa navigazione;
-- rimuovere dall'empty state il riferimento obsoleto alla divisione delle spese tramite millesimi, incompatibile con ED-06/ED-07;
-- mantenere invariati lista mock, ricerca, ordinamento, archivio ed azioni, che appartengono alle task successive;
-- verificare che i tre ingressi conducano alla stessa route reale.
-
-**File da verificare:**
-
-- `src/pages/BuildingsPage.tsx`;
-- `src/components/buildings/BuildingsHeader.tsx`;
-- `src/components/buildings/EmptyState.tsx`;
-- `src/data/menu.ts`;
-- `src/components/layout/MenuItem.tsx`;
-- `src/utils/routes.ts`;
-- test mirati A3.2 da creare.
+A3.1 e A3.2 sono completate. Restano A3.3–A3.4 per consolidare il gate tecnico ed eseguire il collaudo browser.
 
 ### A3.3 — Gate tecnico consolidato A3
 
-**Dipendenza:** A3.2.
+**Dipendenza:** A3.2 completata.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 
