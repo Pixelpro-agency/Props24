@@ -143,23 +143,113 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 ## TASK A3 — Route e accessi edificio
 
-**Dipendenze:** A2; ED-03 validata.
+**Dipendenze:** A2 completata; ED-03 validata.
+
+A3 è suddivisa in A3.1–A3.4 per separare il routing applicativo, gli accessi UI, il gate tecnico e il collaudo browser. La lista edifici reale resta A4; il dettaglio completo, le unità collegate e il lifecycle restano A5/A6.
+
+### A3.1 — Route, pagina Nuovo edificio e destinazione dettaglio minima
 
 **Obiettivo:**
 
-- aggiungere `/properties/buildings/new`;
-- collegare pulsante, empty state e quick-add;
-- proteggere la route con autenticazione;
-- gestire annullamento e aprire il dettaglio edificio dopo il submit;
-- aggiornare `src/utils/routes.ts`.
+- aggiungere la route autenticata `/properties/buildings/new`;
+- creare la pagina applicativa Nuovo edificio;
+- usare l'account autenticato per fornire `accountId` a `BuildingCreateForm`;
+- gestire ritorno/annullamento con fallback sicuro alla lista edifici;
+- dopo submit riuscito navigare a `/properties/buildings/:id` secondo ED-03;
+- registrare `/properties/buildings/:id` come route reale;
+- introdurre una destinazione dettaglio minima, read-only e account-scoped, sufficiente a mostrare che il record creato esiste realmente;
+- la destinazione minima può mostrare identificativo e informazioni essenziali del Building, ma non implementa modifica, lifecycle, unità collegate o azioni A6;
+- gestire in modo sicuro un `buildingId` inesistente;
+- aggiornare `src/utils/routes.ts` per la nuova route statica e il pattern dinamico;
+- verificare autenticazione, route matching, account scope, annullamento e post-submit.
 
 **File da verificare:**
 
-- `src/App.tsx`;
+- `src/router.tsx`;
 - `src/utils/routes.ts`;
-- `src/data/menu.ts`;
+- `src/auth/AuthContext.tsx`;
+- `src/components/building-form/BuildingCreateForm.tsx`;
+- `src/pages/NewBuildingPage.tsx` — da creare;
+- `src/pages/BuildingDetailPage.tsx` — destinazione minima da creare;
+- `tests/navigation/appRouter.test.tsx`;
+- test mirati A3.1 da creare.
+
+**Fuori scope:**
+
+- lista edifici reale;
+- click delle righe della lista verso il dettaglio;
+- modifica edificio;
+- archivio, ripristino ed eliminazione;
+- unità collegate e `Aggiungi unità`;
+- bozza e guard.
+
+### A3.2 — Accessi UI al Nuovo edificio
+
+**Dipendenza:** A3.1.
+
+**Obiettivo:**
+
+- collegare realmente il pulsante `Nuovo edificio` dell'header;
+- collegare realmente la CTA `Nuovo edificio` dell'empty state;
+- verificare il quick-add Edifici della sidebar;
+- usare esclusivamente `/properties/buildings/new`;
+- eliminare il `console.log` usato come falsa navigazione;
+- rimuovere dall'empty state il riferimento obsoleto alla divisione delle spese tramite millesimi, incompatibile con ED-06/ED-07;
+- mantenere invariati lista mock, ricerca, ordinamento, archivio ed azioni, che appartengono alle task successive;
+- verificare che i tre ingressi conducano alla stessa route reale.
+
+**File da verificare:**
+
+- `src/pages/BuildingsPage.tsx`;
 - `src/components/buildings/BuildingsHeader.tsx`;
-- `src/components/buildings/EmptyState.tsx`.
+- `src/components/buildings/EmptyState.tsx`;
+- `src/data/menu.ts`;
+- `src/components/layout/MenuItem.tsx`;
+- `src/utils/routes.ts`;
+- test mirati A3.2 da creare.
+
+### A3.3 — Gate tecnico consolidato A3
+
+**Dipendenza:** A3.2.
+
+**Obiettivo:**
+
+- verificare route `/properties/buildings/new`;
+- verificare pattern `/properties/buildings/:id`;
+- verificare protezione tramite `AuthenticatedRootRoute`;
+- verificare accountId autenticato → `BuildingCreateForm`;
+- verificare create reale e persistenza;
+- verificare post-submit al dettaglio dell'ID creato;
+- verificare che il dettaglio minimo rilegga realmente il record account-scoped;
+- verificare annullamento/ritorno;
+- verificare header, empty state e quick-add;
+- verificare assenza di false route e falsi `console.log`;
+- rieseguire regressioni A2;
+- eseguire suite completa, build, lint mirato e diff check;
+- non introdurre nuove funzionalità.
+
+### A3.4 — Collaudo browser route e accessi
+
+**Dipendenza:** A3.3 verde.
+
+**Modalità:** `DESKTOP_COLLAUDATORE`.
+
+**Obiettivo:**
+
+- verificare accesso da `Nuovo edificio` nell'header;
+- verificare accesso dalla CTA dell'empty state;
+- verificare accesso dal quick-add Edifici della sidebar;
+- verificare apertura diretta di `/properties/buildings/new`;
+- verificare protezione della route senza sessione;
+- verificare annullamento/ritorno;
+- creare realmente un edificio di prova;
+- verificare post-submit a `/properties/buildings/:id`;
+- verificare che la destinazione mostri il Building appena creato;
+- verificare reload della destinazione;
+- controllare console ed errori browser;
+- non modificare codice o documentazione.
+
+A3.4 chiude A3 soltanto con collaudo positivo.
 
 ## TASK A4 — Lista edifici reale
 
