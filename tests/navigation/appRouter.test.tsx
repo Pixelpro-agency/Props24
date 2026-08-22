@@ -98,6 +98,12 @@ vi.mock('../../src/pages/PropertiesPage', () => ({
 vi.mock('../../src/pages/BuildingsPage', () => ({
     BuildingsPage: page('buildings'),
 }));
+vi.mock('../../src/pages/NewBuildingPage', () => ({
+    NewBuildingPage: page('new-building'),
+}));
+vi.mock('../../src/pages/BuildingDetailPage', () => ({
+    BuildingDetailPage: page('building-detail'),
+}));
 vi.mock('../../src/pages/NewProperty', () => ({
     NewProperty: page('new-property'),
 }));
@@ -183,6 +189,8 @@ describe('app Data Router', () => {
         ['/properties/units', '/properties/units'],
         ['/properties/units/property-1', '/properties/units/:id'],
         ['/properties/buildings', '/properties/buildings'],
+        ['/properties/buildings/new', '/properties/buildings/new'],
+        ['/properties/buildings/building-1', '/properties/buildings/:id'],
         ['/properties/new', '/properties/new'],
         ['/properties/units/import', '/properties/units/import'],
         ['/tenants', '/tenants'],
@@ -217,6 +225,25 @@ describe('app Data Router', () => {
         expect(await screen.findByTestId('auth-modal')).toBeTruthy();
         expect(screen.queryByTestId('layout')).toBeNull();
         expect(screen.queryByTestId('page-dashboard')).toBeNull();
+    });
+
+    it.each([
+        ['/properties/buildings/new', 'page-new-building'],
+        ['/properties/buildings/building-1', 'page-building-detail'],
+    ])('protegge la nuova route %s senza sessione', async (pathname, pageTestId) => {
+        renderRouter(pathname);
+        expect(await screen.findByTestId('auth-modal')).toBeTruthy();
+        expect(screen.queryByTestId(pageTestId)).toBeNull();
+        expect(screen.queryByTestId('layout')).toBeNull();
+    });
+
+    it.each([
+        ['/properties/buildings/new', 'page-new-building'],
+        ['/properties/buildings/building-1', 'page-building-detail'],
+    ])('raggiunge la nuova route autenticata %s', async (pathname, pageTestId) => {
+        renderRouter(pathname, true);
+        expect(await screen.findByTestId(pageTestId)).toBeTruthy();
+        expect(screen.queryByTestId('auth-modal')).toBeNull();
     });
 
     it('reindirizza /logout non autenticato senza creare una sessione', async () => {

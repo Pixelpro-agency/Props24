@@ -26,6 +26,8 @@ import { LeasesPage } from './pages/LeasesPage';
 import { NewLeasePage } from './landlord/leases/pages/NewLeasePage';
 import { NewProperty } from './pages/NewProperty';
 import { NewTenantPage } from './pages/NewTenantPage';
+import { NewBuildingPage } from './pages/NewBuildingPage';
+import { BuildingDetailPage } from './pages/BuildingDetailPage';
 import { PropertiesPage } from './pages/PropertiesPage';
 import { PropertyDetailPage } from './pages/PropertyDetailPage';
 import { TenantDetailPage } from './pages/TenantDetailPage';
@@ -97,6 +99,14 @@ export function createAppRoutes() {
             <Route
                 path="/properties/buildings"
                 element={<BuildingsPage />}
+            />
+            <Route
+                path="/properties/buildings/new"
+                element={<NewBuildingPage />}
+            />
+            <Route
+                path="/properties/buildings/:id"
+                element={<BuildingDetailPage />}
             />
             <Route path="/properties/new" element={<NewProperty />} />
             <Route

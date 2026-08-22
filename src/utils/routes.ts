@@ -4,6 +4,7 @@ const KNOWN_ROUTES = [
     '/properties',
     '/properties/units',
     '/properties/buildings',
+    '/properties/buildings/new',
     '/properties/new',
     '/properties/units/import',
     '/tenants',
@@ -16,6 +17,7 @@ const KNOWN_ROUTES = [
 
 const DYNAMIC_ROUTE_PATTERNS = [
     /^\/properties\/units\/[^/]+$/,
+    /^\/properties\/buildings\/[^/]+$/,
     /^\/tenants\/[^/]+$/,
     /^\/leases\/[^/]+$/,
     /^\/leases\/[^/]+\/edit$/,
