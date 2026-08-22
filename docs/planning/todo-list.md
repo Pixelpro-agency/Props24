@@ -14,15 +14,15 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 6
+- Completate integralmente: 7
 - Parzialmente completate: 4
-- Non concluse: 62
+- Non concluse: 61
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: B1.4 — Gate tecnico consolidato B1
+- Prossimo punto tecnico: A2 — Form Nuovo edificio
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 62 task non concluse e non vanno sommati nuovamente. B1.1–B1.4, D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 61 task non concluse e non vanno sommati nuovamente. B1.1–B1.4, D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
 
 ## Percorso operativo immediato
 
@@ -30,12 +30,12 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 > - [x] A1.2 — Regole edificio, errori e integrità DB — **COMPLETATA; 50 file / 701 test, build e lint positivi**
 > - [x] A1.3 — Repository edifici account-scoped e lifecycle — **COMPLETATA; 51 file / 715 test, build e lint positivi**
 > - [x] A1.4 — Copertura automatizzata e gate tecnico A1 — **COMPLETATA; 52 file / 723 test, build e lint positivi; A1 chiusa**
-> - [ ] B1 — Relazione unità–edificio — **APERTO; A1 soddisfatta; suddiviso in B1.1–B1.4**
+> - [x] B1 — Relazione unità–edificio — **COMPLETATA; B1.1–B1.4 verificate, 57 file / 760 test, build e lint positivi; collaudo browser finale PASS**
 >   - [x] B1.1 — Contratto relazione unità–edificio e mutazioni repository — **COMPLETATA; 53 file / 734 test, build e lint positivi**
 >   - [x] B1.2 — Stato form e bozza della relazione Building — **COMPLETATA; 55 file / 747 test, build e lint positivi**
 >   - [x] B1.3 — Nuova unità standalone e boundary relazione Building — **COMPLETATA E RIALLINEATA; 56 file / 751 test nel tree pubblicato, build e lint positivi**
->   - [ ] B1.4 — Gate tecnico consolidato B1 — **PROSSIMA TASK; chiude B1**
-> - [ ] A2 — Form Nuovo edificio — **DOPO B1; A1, F1 e F2 già soddisfatte; PA-08 e PA-09 restano aperte e non vanno interpretate**
+>   - [x] B1.4 — Gate tecnico consolidato B1 — **COMPLETATA; 57 file / 760 test, build e lint positivi**
+> - [ ] A2 — Form Nuovo edificio — **PROSSIMA TASK; A1, B1, F1 e F2 soddisfatte; PA-08 e PA-09 restano aperte e non vanno interpretate**
 > - [ ] A3 — Route e accessi edificio — **DOPO A2**
 > - [ ] A4 — Lista edifici reale — **DOPO A1/A3**
 > - [ ] A5 — Azioni edificio — **DOPO A4**
@@ -56,7 +56,7 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] A1.2 — Regole edificio, errori e integrità DB — **COMPLETATA**
   - [x] A1.3 — Repository edifici account-scoped e lifecycle — **COMPLETATA**
   - [x] A1.4 — Copertura automatizzata e gate tecnico A1 — **COMPLETATA**
-- [ ] A2 — Form Nuovo edificio — **APERTO; ED-04, ED-06 ed ED-07 validate; PA-08 e PA-09 aperte; dipende da A1, F1, F2**
+- [ ] A2 — Form Nuovo edificio — **PROSSIMA TASK; ED-04, ED-06 ed ED-07 validate; PA-08 e PA-09 aperte; A1, B1, F1 e F2 soddisfatte**
 - [ ] A3 — Route e accessi edificio — **APERTO; ED-03 validata; dipende da A2**
 - [ ] A4 — Lista edifici reale — **APERTO; dipende da A1, A3**
 - [ ] A5 — Azioni edificio — **APERTO; ED-05 validata; dipende da A4**
@@ -65,11 +65,11 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
 
 ## Blocco B — Unità
 
-- [ ] B1 — Relazione unità–edificio — **APERTO; dipendenza A1 soddisfatta**
+- [x] B1 — Relazione unità–edificio — **COMPLETATA; relazione canonica, create standalone, draft, mutazioni repository, gate tecnico e collaudo browser verificati**
   - [x] B1.1 — Contratto relazione unità–edificio e mutazioni repository — **COMPLETATA**
   - [x] B1.2 — Stato form e bozza della relazione Building — **COMPLETATA**
   - [x] B1.3 — Nuova unità standalone e boundary relazione Building — **COMPLETATA E RIALLINEATA**
-  - [ ] B1.4 — Gate tecnico consolidato B1 — **PROSSIMA TASK; chiude B1**
+  - [x] B1.4 — Gate tecnico consolidato B1 — **COMPLETATA**
 - [ ] B2 — Duplicati unità — **APERTO; UN-04 validata**
 - [ ] B3 — Campi placeholder — **APERTO; UN-01, UN-02 e UN-03 validate**
 - [ ] B4 — ID annidati canonici — **APERTO**
@@ -218,9 +218,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Contratto relazione unità–edificio e mutazioni repository — B1.1
   - [x] Stato form e bozza della relazione Building — B1.2
   - [x] Nuova unità standalone e boundary relazione Building — B1.3
+  - [x] Gate tecnico consolidato relazione unità–edificio — B1.4
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline applicativa pubblicata al termine di B1.3 riallineata: 56 file, 751 test; la verifica locale 57 file / 760 test includeva anche il gate B1.4 non ancora pubblicato da 9 test.
+Baseline verificata al termine di B1.4: 57 file, 760 test passati, 0 falliti, 0 saltati; build e lint positivi.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
