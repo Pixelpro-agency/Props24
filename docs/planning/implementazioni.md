@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 3cc576c838df3f09fdd057c6674560be6b507de1
+SHA applicativo esaminato: 3a87dd76bb394888662dc87fd4a9deeb003cb17b
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,109 +131,15 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-B1 — Relazione unità–edificio è completata. Il prossimo punto tecnico è A2.1 — Contratto form edificio.
+A2 — Form Nuovo edificio è completata: contratto dati, UI, submit repository account-scoped e gate tecnico consolidato sono verificati. Il prossimo punto tecnico è A3 — Route e accessi edificio.
 
-A2 è suddivisa in A2.1–A2.4 per separare contratto dati, UI, submit repository e gate tecnico. Routing e accessi restano A3; lista reale A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4.
+Routing e accessi restano A3; lista reale A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
 Inviti, portale inquilino, workspace professionali, visure, servizi backend e KPI futuri restano fuori dalla fase tecnica immediata.
 
 # BLOCCO A — Edifici
-
-## TASK A2 — Form Nuovo edificio
-
-**Dipendenze:** specifica consolidata A0; A1; B1; F1; F2. ED-04, ED-06 ed ED-07 sono validate; PA-08 e PA-09 restano aperte e non devono essere interpretate oltre quanto già approvato.
-
-A2 implementa il contratto, la UI e la create repository del form edificio, ma non introduce ancora route o accessi applicativi.
-
-### A2.1 — Contratto form edificio
-
-**Obiettivo:**
-
-- definire schema Zod e tipi del form edificio;
-- definire default values e normalizzazione canonica;
-- mappare il form verso `BuildingCreateInput`;
-- includere tutti e soli i campi Building attivi nella prima fase;
-- mantenere fuori dal form `id`, timestamp, `archived` e `unitsCount`;
-- normalizzare in modo sicuro numeri e data di acquisto;
-- rappresentare importi come numeri e non stringhe monetarie;
-- definire il catalogo canonico delle informazioni aggiuntive;
-- non attribuire significati fiscali ulteriori a IMU, prezzo o spese di acquisto mentre PA-08 e PA-09 restano aperte;
-- aggiungere test puri di schema, normalizzazione e mapping;
-- non creare UI, route, draft, guard o mutazioni repository.
-
-### A2.2 — UI completa del form edificio
-
-**Dipendenza:** A2.1.
-
-**Obiettivo:**
-
-- costruire il form React Hook Form sul contratto A2.1;
-- quattro schede attive:
-  - Informazioni generali;
-  - Unità;
-  - Informazioni aggiuntive;
-  - Informazioni finanziarie;
-- tre schede future visibili, gialle e realmente disabilitate:
-  - Password e codice;
-  - Foto;
-  - Documenti;
-- rendere tutti i campi attivi previsti dalla specifica;
-- mostrare errori di validazione sul campo;
-- usare input numerici sicuri;
-- mantenere Descrizione e Nota privata distinte;
-- eliminare completamente Criteri di ripartizione;
-- non introdurre logiche speciali sui millesimi;
-- nella scheda Unità non creare né associare unità inline: mostrare soltanto lo stato informativo del flusso futuro;
-- verificare rendering e round-trip dei controlli visibili;
-- non creare route, non scrivere nel repository e non integrare ancora draft/guard.
-
-### A2.3 — Submit reale edificio
-
-**Dipendenza:** A2.2.
-
-**Obiettivo:**
-
-- collegare il form al `BuildingRepository` account-scoped;
-- creare realmente un Building tramite il contratto A1;
-- effettuare una sola create per submit;
-- gestire `DuplicateBuildingIdentifierError`;
-- gestire `DuplicateBuildingLocationError`;
-- mostrare errori utente senza perdere i dati inseriti;
-- applicare il focus prioritario al campo pertinente;
-- evitare falsi successi;
-- produrre un solo feedback di successo;
-- preservare `unitsCount = 0` derivato dal repository;
-- non implementare route, navigazione al dettaglio, lista reale, lifecycle o creazione unità contestuale.
-
-### A2.4 — Gate tecnico consolidato A2
-
-**Dipendenza:** A2.3.
-
-**Obiettivo:**
-
-- verificare schema → UI → mapping → repository;
-- verificare round-trip di ogni controllo attivo;
-- verificare quattro schede attive e tre future realmente disabilitate;
-- verificare assenza di Criteri di ripartizione;
-- verificare create singola e record persistito;
-- verificare duplicato identificativo e duplicato indirizzo;
-- verificare errori e preservazione dei dati;
-- verificare regressione A1 e B1;
-- eseguire suite completa, build, lint mirato e diff check;
-- non introdurre nuove funzionalità.
-
-**Fuori scope A2:**
-
-- route `/properties/buildings/new` e accessi UI — A3;
-- destinazione applicativa post-submit — A3;
-- lista edifici reale — A4;
-- archivio, ripristino ed eliminazione — A5;
-- dettaglio e modifica edificio — A6;
-- collegamento o creazione di unità dal dettaglio edificio — A6 sulla base di ED-04 e B1;
-- bozza manuale, restore, dirty state, guard e `beforeunload` — F3.4;
-- collaudo trasversale delle modifiche non salvate — F4.
 
 ## TASK A3 — Route e accessi edificio
 
