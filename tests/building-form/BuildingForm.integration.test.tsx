@@ -6,6 +6,10 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BuildingForm } from '../../src/components/building-form/BuildingForm';
 import {
+    DuplicateBuildingIdentifierError,
+    DuplicateBuildingLocationError,
+} from '../../src/db/databaseErrors';
+import {
     BUILDING_FEATURE_VALUES,
     defaultBuildingValues,
     type BuildingFormData,
@@ -13,6 +17,14 @@ import {
 
 const activeTabs = ['Informazioni generali', 'Unità', 'Informazioni aggiuntive', 'Informazioni finanziarie'];
 const futureTabs = ['Password e codice', 'Foto', 'Documenti'];
+
+function fillRequiredBuilding(values: Partial<Record<'identifier' | 'address' | 'city' | 'postalCode' | 'country', string>> = {}) {
+    fireEvent.change(document.getElementById('identifier')!, { target: { value: values.identifier ?? 'Edificio test' } });
+    fireEvent.change(document.getElementById('address')!, { target: { value: values.address ?? 'Via Test 1' } });
+    fireEvent.change(document.getElementById('city')!, { target: { value: values.city ?? 'Roma' } });
+    fireEvent.change(document.getElementById('postalCode')!, { target: { value: values.postalCode ?? '00100' } });
+    fireEvent.change(document.getElementById('country')!, { target: { value: values.country ?? 'IT' } });
+}
 
 afterEach(cleanup);
 
@@ -182,5 +194,42 @@ describe('BuildingForm', () => {
         expect((await screen.findByRole<HTMLButtonElement>('button', { name: 'Salvataggio...' })).disabled).toBe(true);
         await act(async () => resolveSubmit());
         expect((await screen.findByRole<HTMLButtonElement>('button', { name: 'Salva' })).disabled).toBe(false);
+    });
+
+    it('gestisce il duplicato identificativo con errore, focus e valori preservati', async () => {
+        const user = userEvent.setup();
+        const error = new DuplicateBuildingIdentifierError('Edificio test', 'building-existing');
+        const onSubmit = vi.fn(() => { throw error; });
+        render(<BuildingForm onSubmit={onSubmit} />);
+        fillRequiredBuilding();
+        await user.click(screen.getByRole('button', { name: 'Salva' }));
+        await waitFor(() => expect(document.activeElement).toBe(document.getElementById('identifier')));
+        expect(onSubmit).toHaveBeenCalledTimes(1);
+        expect(screen.getAllByText(error.message).length).toBeGreaterThanOrEqual(2);
+        expect((document.getElementById('address') as HTMLInputElement).value).toBe('Via Test 1');
+    });
+
+    it('gestisce il duplicato localizzazione su quattro campi con focus address', async () => {
+        const user = userEvent.setup();
+        const error = new DuplicateBuildingLocationError('building-existing');
+        render(<BuildingForm onSubmit={() => { throw error; }} />);
+        fillRequiredBuilding({ identifier: 'Edificio diverso' });
+        await user.click(screen.getByRole('button', { name: 'Salva' }));
+        await waitFor(() => expect(document.activeElement).toBe(document.getElementById('address')));
+        expect(screen.getAllByText(error.message)).toHaveLength(5);
+        for (const id of ['address', 'city', 'postalCode', 'country']) {
+            expect(document.getElementById(id)?.parentElement?.textContent).toContain(error.message);
+        }
+        expect((document.getElementById('identifier') as HTMLInputElement).value).toBe('Edificio diverso');
+    });
+
+    it('mostra un alert per errore generico senza crash o perdita dati', async () => {
+        const user = userEvent.setup();
+        render(<BuildingForm onSubmit={() => { throw new Error('Servizio temporaneamente non disponibile.'); }} />);
+        fillRequiredBuilding();
+        await user.click(screen.getByRole('button', { name: 'Salva' }));
+        await screen.findByRole('alert');
+        expect(screen.getByRole('alert').textContent).toBe('Servizio temporaneamente non disponibile.');
+        expect((document.getElementById('identifier') as HTMLInputElement).value).toBe('Edificio test');
     });
 });
