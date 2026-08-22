@@ -64,8 +64,7 @@ export function EmptyState({ onCreateClick }: EmptyStateProps) {
 
             {/* Description */}
             <p className="text-sm text-gray-500 mb-6 text-center max-w-md">
-                Questa sezione ti consente di gestire i tuoi edifici. Inserisci i
-                millesimi di ogni proprietà per dividere le spese comuni.
+                Questa sezione ti consente di gestire i tuoi edifici. Puoi creare un nuovo edificio in qualsiasi momento.
             </p>
 
             {/* CTA */}

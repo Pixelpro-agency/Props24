@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { motion, type Variants } from 'framer-motion';
 import { useBuildings } from '../hooks/useBuildings';
 import { useTableSelection } from '../hooks/useTableSelection';
 import type { BuildingStatus } from '../types/building';
@@ -16,7 +17,7 @@ import { FeedbackBox } from '../components/buildings/FeedbackBox';
 
 
 // Staggered entrance animation variants
-const containerVariants: any = {
+const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
@@ -27,7 +28,7 @@ const containerVariants: any = {
     },
 };
 
-const itemVariants: any = {
+const itemVariants: Variants = {
     hidden: { opacity: 0, y: 12 },
     visible: {
         opacity: 1,
@@ -37,6 +38,7 @@ const itemVariants: any = {
 };
 
 export function BuildingsPage() {
+    const navigate = useNavigate();
     const {
         view,
         searchQuery,
@@ -61,7 +63,7 @@ export function BuildingsPage() {
 
     // Handlers
     function handleNewBuilding() {
-        console.log('Naviga a: /buildings/new');
+        navigate('/properties/buildings/new');
     }
 
     function handleDelete() {
