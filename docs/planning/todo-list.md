@@ -228,7 +228,7 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Nuova unità standalone e boundary relazione Building — B1.3
   - [x] Gate tecnico consolidato relazione unità–edificio — B1.4
   - [x] Contratto form edificio — A2.1
-    - [x] UI completa del form edificio — A2.2
+  - [x] UI completa del form edificio — A2.2
   - [ ] Copertura progressiva delle task future — **APERTO**
 
 Baseline verificata al termine di A2.2: 59 file, 806 test passati, 0 falliti, 0 saltati; build e lint positivi.
