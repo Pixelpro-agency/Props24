@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 3a87dd76bb394888662dc87fd4a9deeb003cb17b
+SHA applicativo esaminato: d2a1a923f9f8d77b3f67a04093604b56ab3f8351
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A2 — Form Nuovo edificio è completata: contratto dati, UI, submit repository account-scoped e gate tecnico consolidato sono verificati. Il prossimo punto tecnico è A3 — Route e accessi edificio.
+A3.1 — Route, pagina Nuovo edificio e destinazione dettaglio minima è completata. Il prossimo punto tecnico è A3.2 — Accessi UI al Nuovo edificio.
 
-Routing e accessi restano A3; lista reale A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+A3 resta aperta: A3.2 collega gli accessi UI, A3.3 consolida il gate tecnico e A3.4 esegue il collaudo browser. Lista reale A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -145,47 +145,13 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 **Dipendenze:** A2 completata; ED-03 validata.
 
-A3 è suddivisa in A3.1–A3.4 per separare il routing applicativo, gli accessi UI, il gate tecnico e il collaudo browser. La lista edifici reale resta A4; il dettaglio completo, le unità collegate e il lifecycle restano A5/A6.
-
-### A3.1 — Route, pagina Nuovo edificio e destinazione dettaglio minima
-
-**Obiettivo:**
-
-- aggiungere la route autenticata `/properties/buildings/new`;
-- creare la pagina applicativa Nuovo edificio;
-- usare l'account autenticato per fornire `accountId` a `BuildingCreateForm`;
-- gestire ritorno/annullamento con fallback sicuro alla lista edifici;
-- dopo submit riuscito navigare a `/properties/buildings/:id` secondo ED-03;
-- registrare `/properties/buildings/:id` come route reale;
-- introdurre una destinazione dettaglio minima, read-only e account-scoped, sufficiente a mostrare che il record creato esiste realmente;
-- la destinazione minima può mostrare identificativo e informazioni essenziali del Building, ma non implementa modifica, lifecycle, unità collegate o azioni A6;
-- gestire in modo sicuro un `buildingId` inesistente;
-- aggiornare `src/utils/routes.ts` per la nuova route statica e il pattern dinamico;
-- verificare autenticazione, route matching, account scope, annullamento e post-submit.
-
-**File da verificare:**
-
-- `src/router.tsx`;
-- `src/utils/routes.ts`;
-- `src/auth/AuthContext.tsx`;
-- `src/components/building-form/BuildingCreateForm.tsx`;
-- `src/pages/NewBuildingPage.tsx` — da creare;
-- `src/pages/BuildingDetailPage.tsx` — destinazione minima da creare;
-- `tests/navigation/appRouter.test.tsx`;
-- test mirati A3.1 da creare.
-
-**Fuori scope:**
-
-- lista edifici reale;
-- click delle righe della lista verso il dettaglio;
-- modifica edificio;
-- archivio, ripristino ed eliminazione;
-- unità collegate e `Aggiungi unità`;
-- bozza e guard.
+A3.1 è completata. Restano A3.2–A3.4 per collegare gli accessi UI, consolidare il gate tecnico ed eseguire il collaudo browser. La lista edifici reale resta A4; il dettaglio completo, le unità collegate e il lifecycle restano A5/A6.
 
 ### A3.2 — Accessi UI al Nuovo edificio
 
-**Dipendenza:** A3.1.
+**Dipendenza:** A3.1 completata.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 
