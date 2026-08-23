@@ -18,16 +18,24 @@ import {
 
 export interface BuildingFormProps {
     onSubmit(data: BuildingFormData): void | Promise<void>;
+    initialValues?: BuildingFormData;
+    mode?: 'create' | 'edit';
+    onCancel?: () => void;
 }
 
-export function BuildingForm({ onSubmit }: BuildingFormProps) {
+export function BuildingForm({
+    onSubmit,
+    initialValues,
+    mode = 'create',
+    onCancel,
+}: BuildingFormProps) {
     const [activeTab, setActiveTab] = useState<BuildingTabId>('general');
     const [submissionError, setSubmissionError] = useState<string | null>(null);
     const methods = useForm<BuildingFormData>({
         resolver: zodResolver(buildingFormSchema) as Resolver<BuildingFormData>,
         defaultValues: {
-            ...defaultBuildingValues,
-            features: [...defaultBuildingValues.features],
+            ...(initialValues ?? defaultBuildingValues),
+            features: [...(initialValues?.features ?? defaultBuildingValues.features)],
         },
         mode: 'onChange',
     });
@@ -66,7 +74,7 @@ export function BuildingForm({ onSubmit }: BuildingFormProps) {
 
     const renderActiveTab = () => {
         switch (activeTab) {
-            case 'units': return <BuildingUnitsTab />;
+            case 'units': return <BuildingUnitsTab mode={mode} />;
             case 'additional': return <BuildingAdditionalTab />;
             case 'financial': return <BuildingFinancialTab />;
             default: return <BuildingGeneralTab />;
@@ -83,13 +91,25 @@ export function BuildingForm({ onSubmit }: BuildingFormProps) {
                     </div>
                 )}
                 <div className="rounded-lg bg-white p-6 shadow-sm">{renderActiveTab()}</div>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-3">
+                    {onCancel && (
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            disabled={methods.formState.isSubmitting}
+                            className="rounded-md border border-gray-300 px-5 py-2.5 font-medium text-gray-700 disabled:opacity-60"
+                        >
+                            Annulla
+                        </button>
+                    )}
                     <button
                         type="submit"
                         disabled={methods.formState.isSubmitting}
                         className="rounded-md bg-green-600 px-5 py-2.5 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {methods.formState.isSubmitting ? 'Salvataggio...' : 'Salva'}
+                        {methods.formState.isSubmitting
+                            ? 'Salvataggio...'
+                            : mode === 'edit' ? 'Salva modifiche' : 'Salva'}
                     </button>
                 </div>
             </form>

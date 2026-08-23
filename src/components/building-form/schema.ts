@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import type { BuildingCreateInput } from '../../db/buildingRepository';
+import type { BuildingRecord } from '../../db/database.types';
+import type { BuildingCreateInput, BuildingUpdateInput } from '../../db/buildingRepository';
 
 export const BUILDING_FEATURE_VALUES = [
     'Accesso per i disabili',
@@ -169,6 +170,52 @@ export function normalizeBuildingFormData(input: unknown): BuildingFormData {
 }
 
 export function toBuildingCreateInput(data: BuildingFormData): BuildingCreateInput {
+    return {
+        identifier: data.identifier,
+        color: data.color,
+        address: data.address,
+        address2: data.address2,
+        city: data.city,
+        postalCode: data.postalCode,
+        county: data.county,
+        state: data.state,
+        country: data.country,
+        size: data.size,
+        constructionYear: data.constructionYear,
+        description: data.description,
+        privateNote: data.privateNote,
+        features: [...data.features],
+        acquisitionDate: data.acquisitionDate,
+        purchasePrice: data.purchasePrice,
+        acquisitionCosts: data.acquisitionCosts,
+        imu: data.imu,
+    };
+}
+
+export function toBuildingFormData(building: BuildingRecord): BuildingFormData {
+    return {
+        identifier: building.identifier,
+        color: building.color,
+        address: building.address,
+        address2: building.address2,
+        city: building.city,
+        postalCode: building.postalCode,
+        county: building.county,
+        state: building.state,
+        country: building.country,
+        size: building.size,
+        constructionYear: building.constructionYear,
+        description: building.description,
+        privateNote: building.privateNote,
+        features: [...building.features] as BuildingFeature[],
+        acquisitionDate: building.acquisitionDate,
+        purchasePrice: building.purchasePrice,
+        acquisitionCosts: building.acquisitionCosts,
+        imu: building.imu,
+    };
+}
+
+export function toBuildingUpdateInput(data: BuildingFormData): BuildingUpdateInput {
     return {
         identifier: data.identifier,
         color: data.color,

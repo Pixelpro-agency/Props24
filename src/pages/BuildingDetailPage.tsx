@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import type { PropertyRecord } from '../db/database.types';
 import { useBuildingDetail } from '../hooks/useBuildingDetail';
+import { BuildingEditForm } from '../components/building-form/BuildingEditForm';
 
 function UnitCard({ unit }: { unit: PropertyRecord }) {
     const data = unit.formData;
@@ -39,7 +41,28 @@ function UnitCard({ unit }: { unit: PropertyRecord }) {
 export function BuildingDetailPage() {
     const { account } = useAuth();
     const { id } = useParams<{ id: string }>();
-    const { loading, building, units } = useBuildingDetail(account?.id ?? null, id ?? null);
+    const accountId = account?.id ?? null;
+    const buildingId = id ?? null;
+
+    return (
+        <BuildingDetailContent
+            key={`${accountId ?? ''}:${buildingId ?? ''}`}
+            accountId={accountId}
+            buildingId={buildingId}
+        />
+    );
+}
+
+function BuildingDetailContent({
+    accountId,
+    buildingId,
+}: {
+    accountId: string | null;
+    buildingId: string | null;
+}) {
+    const { loading, building, units } = useBuildingDetail(accountId, buildingId);
+    const [isEditing, setIsEditing] = useState(false);
+    const [updateSuccess, setUpdateSuccess] = useState(false);
 
     if (loading) {
         return <main className="mx-auto w-full max-w-5xl p-6"><p role="status">Caricamento edificio...</p></main>;
@@ -63,6 +86,24 @@ export function BuildingDetailPage() {
     return (
         <main className="mx-auto w-full max-w-5xl p-6">
             <Link className="text-green-700 hover:underline" to="/properties/buildings">Torna agli edifici</Link>
+            {updateSuccess && (
+                <p role="status" className="mt-4 rounded-md border border-green-200 bg-green-50 p-3 text-green-800">
+                    Edificio aggiornato correttamente.
+                </p>
+            )}
+            {isEditing && accountId ? (
+                <section className="mt-4">
+                    <BuildingEditForm
+                        accountId={accountId}
+                        building={building}
+                        onCancel={() => setIsEditing(false)}
+                        onUpdated={() => {
+                            setIsEditing(false);
+                            setUpdateSuccess(true);
+                        }}
+                    />
+                </section>
+            ) : (
             <section className="mt-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <h1 className="text-2xl font-medium text-gray-900">{building.identifier}</h1>
@@ -78,6 +119,16 @@ export function BuildingDetailPage() {
                         Aggiungi unità
                     </Link>
                 )}
+                <button
+                    type="button"
+                    onClick={() => {
+                        setUpdateSuccess(false);
+                        setIsEditing(true);
+                    }}
+                    className="ml-3 mt-4 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                    Modifica
+                </button>
                 <address className="mt-4 not-italic text-gray-700">
                     <p>{building.address}</p>
                     {building.address2 && <p>{building.address2}</p>}
@@ -93,6 +144,7 @@ export function BuildingDetailPage() {
                 </dl>
                 {building.description && <p className="mt-5 text-gray-700">{building.description}</p>}
             </section>
+            )}
 
             <section className="mt-8" aria-labelledby="linked-units-heading">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
