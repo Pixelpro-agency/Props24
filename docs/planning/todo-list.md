@@ -46,7 +46,11 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] A3.3 — Gate tecnico consolidato A3 — **COMPLETATA; 64 file / 836 test, build e lint positivi**
 >   - [x] A3.4 — Collaudo browser route e accessi — **COMPLETATA; PASS; nessun finding**
 > - [x] A4 — Lista edifici reale — **COMPLETATA; 65 file / 842 test, build e lint positivi; browser QA finale PASS; A4-F01 risolto**
-> - [ ] A5 — Azioni edificio — **PROSSIMA TASK; dipendenza A4 soddisfatta; ED-05 validata**
+> - [ ] A5 — Azioni edificio — **APERTO; suddiviso in A5.1–A5.4; ED-05 validata**
+>   - [ ] A5.1 — Operazioni bulk atomiche repository edifici — **PROSSIMA TASK**
+>   - [ ] A5.2 — Azioni UI singole e bulk — **DOPO A5.1**
+>   - [ ] A5.3 — Gate tecnico consolidato A5 — **DOPO A5.2**
+>   - [ ] A5.4 — Collaudo browser azioni edificio — **DOPO A5.3; chiude A5 solo con PASS**
 > - [ ] A6 — Dettaglio e modifica edificio — **DOPO il consolidamento del flusso edificio**
 > - [ ] A7 — Collaudo edifici — **DOPO A1–A6**
 > - [ ] F3.4 — Integrazione bozze e guard in Nuovo edificio — **DOPO il Blocco A**
@@ -75,7 +79,11 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] A3.3 — Gate tecnico consolidato A3 — **COMPLETATA; 64 file / 836 test, build e lint positivi**
   - [x] A3.4 — Collaudo browser route e accessi — **COMPLETATA; PASS; nessun finding**
 - [x] A4 — Lista edifici reale — **COMPLETATA; repository account-scoped, subscription, attivi/archivio, ricerca, ordinamento, ID reali, unitsCount derivato e browser QA verificati**
-- [ ] A5 — Azioni edificio — **PROSSIMA TASK; ED-05 validata; dipendenza A4 soddisfatta**
+- [ ] A5 — Azioni edificio — **APERTO; suddiviso in A5.1–A5.4; ED-05 validata**
+  - [ ] A5.1 — Operazioni bulk atomiche repository edifici — **PROSSIMA TASK**
+  - [ ] A5.2 — Azioni UI singole e bulk — **DOPO A5.1**
+  - [ ] A5.3 — Gate tecnico consolidato A5 — **DOPO A5.2**
+  - [ ] A5.4 — Collaudo browser azioni edificio — **DOPO A5.3; chiude A5 solo con PASS**
 - [ ] A6 — Dettaglio e modifica edificio — **APERTO; ED-03 ed ED-05 validate**
 - [ ] A7 — Collaudo edifici — **APERTO; dipende da A1–A6**
 
@@ -243,7 +251,7 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Accessi UI al Nuovo edificio — A3.2
   - [x] Gate tecnico consolidato routing edifici — A3.3
   - [x] Collaudo browser route e accessi edificio — A3.4
-    - [x] Lista edifici reale, gate e collaudo browser — A4
+  - [x] Lista edifici reale, gate e collaudo browser — A4
   - [ ] Copertura progressiva delle task future — **APERTO**
 
 Baseline alla chiusura di A4: 65 file, 842 test passati, 0 falliti, 0 saltati; build e lint positivi; browser QA A4 PASS dopo risoluzione di A4-F01.

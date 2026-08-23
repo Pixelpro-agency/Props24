@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A4 — Lista edifici reale è completata: repository account-scoped, subscription, lista reale, attivi/archivio, ricerca, ordinamenti, ID reali, `unitsCount` derivato e persistenza sono verificati. Il finding browser A4-F01 sull'inversione consecutiva dell'ordinamento è stato corretto e il ricollaudo finale è PASS. Il prossimo punto tecnico è A5 — Azioni edificio.
+A4 — Lista edifici reale è completata. A5 — Azioni edificio è suddivisa in A5.1–A5.4 per separare il contratto bulk atomico del repository, l'integrazione UI, il gate tecnico e il collaudo browser. Il prossimo punto tecnico è A5.1 — Operazioni bulk atomiche repository edifici.
 
-Il lifecycle operativo della lista prosegue con A5; dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+Dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -145,17 +145,77 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 **Dipendenze:** A4 completata; ED-05 validata.
 
+**Stato:** aperta; suddivisa in A5.1–A5.4.
+
+### A5.1 — Operazioni bulk atomiche repository edifici
+
 **Stato:** prossima task.
 
 **Obiettivo:**
 
-- archiviazione e ripristino;
-- eliminazione protetta;
-- azioni singole e bulk;
-- conferma modale;
-- selezione pulita dopo mutazione;
-- errori reali e nessuna cancellazione parziale silenziosa;
-- eliminare i `console.log` operativi.
+- introdurre operazioni bulk account-scoped per archivio, ripristino ed eliminazione;
+- validare l'intero insieme prima della mutazione;
+- eseguire una sola scrittura per operazione bulk;
+- impedire modifiche parziali se un ID non esiste;
+- impedire qualsiasi eliminazione se almeno un edificio selezionato contiene unità collegate;
+- mantenere invariati i contratti lifecycle singoli esistenti;
+- preservare isolamento account e subscription.
+
+### A5.2 — Azioni UI singole e bulk
+
+**Dipendenza:** A5.1 completata.
+
+**Obiettivo:**
+
+- collegare le azioni reali alle righe della tabella;
+- mostrare `Archivia` per gli attivi e `Ripristina` per gli archiviati;
+- supportare eliminazione protetta singola;
+- rendere la floating bar coerente con Attivi/Archivio;
+- supportare archivio, ripristino ed eliminazione bulk;
+- usare conferma modale reale;
+- mostrare successi soltanto dopo mutazione riuscita;
+- mostrare gli errori di dominio senza falso successo;
+- pulire la selezione soltanto dopo operazione riuscita;
+- eliminare i `console.log` operativi;
+- non anticipare modifica/dettaglio A6.
+
+### A5.3 — Gate tecnico consolidato A5
+
+**Dipendenza:** A5.2 completata.
+
+**Obiettivo:**
+
+- consolidare lifecycle singolo e bulk;
+- provare atomicità delle operazioni bulk;
+- provare eliminazione libera e bloccata;
+- provare assenza di cancellazioni parziali;
+- provare isolamento account;
+- provare azioni riga e floating bar reali;
+- provare conferme, errori e cleanup della selezione;
+- mantenere verdi A1–A4.
+
+### A5.4 — Collaudo browser azioni edificio
+
+**Dipendenza:** A5.3 completata e verde.
+
+**Modalità:** `DESKTOP_COLLAUDATORE`.
+
+**Obiettivo:**
+
+- archivio singolo;
+- ripristino singolo;
+- eliminazione singola libera;
+- eliminazione singola bloccata da unità;
+- archivio e ripristino bulk;
+- eliminazione bulk libera;
+- eliminazione bulk con almeno un edificio bloccato e nessuna cancellazione parziale;
+- conferme e annullamento;
+- cleanup selezione;
+- reload/persistenza;
+- console;
+- nessuna modifica Git.
+
+A5 si chiude soltanto con PASS di A5.4.
 
 ## TASK A6 — Dettaglio e modifica edificio
 
