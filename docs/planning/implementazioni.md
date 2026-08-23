@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: ea44923d9eb0317728f0f707ea75a30c27139a49
+SHA applicativo esaminato: 8f2049324f2b878ff4c897b7c2078f6fe963956b
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,67 +131,41 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A6.1–A6.4 sono completate.
+A6 è completata integralmente: A6.1–A6.5 sono state implementate e verificate.
 
-Il dettaglio Building mostra le unità collegate tramite `relations.buildingId`, consente la creazione di nuove unità nel contesto del Building, la modifica reale del Building e ora anche il lifecycle completo dal dettaglio.
+Il flusso Building dispone ora di lista reale, dettaglio account-scoped, unità collegate tramite `relations.buildingId`, creazione di nuove unità nel contesto Building, modifica reale, lifecycle protetto e gate tecnico consolidato.
 
-Archive, restore e delete riusano il repository Building account-scoped e i contratti A5. L'archiviazione mantiene intatte le Property collegate, il ripristino aggiorna il dettaglio tramite subscription e la delete è protetta: con unità collegate viene bloccata dal dominio, mentre per un Building libero elimina realmente il record e torna alla lista.
+Il gate A6.5 attraversa lista → dettaglio → dettaglio unità, creazione di più unità nello stesso Building, subscription e remount, modifica senza propagazione automatica dell'indirizzo, archive/restore/delete, delete bloccata e isolamento account.
 
-Il prossimo punto tecnico è A6.5 — Gate tecnico consolidato A6. A6 resta aperta fino al completamento di A6.5.
+La baseline tecnica al termine di A6 è 73 file e 902 test passati, con build e lint positivi.
+
+Il prossimo punto operativo è A7 — Collaudo edifici, da eseguire in modalità `DESKTOP_COLLAUDATORE` senza modifiche al codice.
 
 # BLOCCO A — Edifici
 
-## TASK A6 — Dettaglio e modifica edificio
-
-**Stato:** aperta; suddivisa in A6.1–A6.5.
-
-**Contratto trasversale:**
-
-- il `Building` è il contenitore gestionale delle unità collegate;
-- la lista Edifici mostra una riga per Building;
-- `unitsCount` resta derivato;
-- una Property appartiene al Building esclusivamente tramite `relations.buildingId`;
-- nessun raggruppamento euristico per indirizzo, piano, interno o altri campi;
-- le unità collegate sono mostrate dentro il dettaglio Building;
-- una unità collegata non genera una nuova riga Building;
-- il click sull'unità apre il dettaglio unità;
-- il cambio indirizzo Building non riscrive automaticamente gli indirizzi delle unità;
-- ED-03, ED-04 ed ED-05 restano vincolanti.
-
-### A6.5 — Gate tecnico consolidato A6
-
-**Dipendenza:** A6.4 completata.
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- consolidare lista → dettaglio;
-- Building → unità collegate;
-- unità → dettaglio unità;
-- creazione unità in contesto Building;
-- persistenza `buildingId`;
-- edit;
-- archive/restore/delete;
-- delete bloccata;
-- account isolation;
-- subscription/reload;
-- regressioni A1–A5.
-
 ## TASK A7 — Collaudo edifici
 
-**Dipendenze:** completamento di A1–A6 e decisioni pertinenti al perimetro effettivamente implementato.
+**Dipendenze:** A1–A6 completate.
+
+**Stato:** prossima task.
 
 Verificare:
 
 - create;
 - reload;
 - lista e ricerca;
+- dettaglio Building;
+- unità collegate;
+- navigazione unità;
+- Add Unit dal Building;
+- due unità nello stesso Building;
+- modifica Building;
+- nessuna propagazione automatica dell'indirizzo alle unità esistenti;
 - archivio e ripristino;
 - eliminazione libera e bloccata;
-- edit, se previsto;
 - isolamento tra account;
 - `unitsCount`;
+- persistenza dopo reload;
 - console;
 - nessuna modifica del codice durante il collaudo.
 
