@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 3251b809dce11f91cdb80c353d10b94146fd9859
+SHA applicativo esaminato: aa5ff98ad2c18e2584778e1f09d35e98aaa2f96e
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A5.1 e A5.2 sono completate: il repository dispone di lifecycle bulk atomico account-scoped e la lista edifici collega ora le azioni singole e bulk reali con conferma centralizzata, errori di dominio, toast e cleanup della selezione soltanto dopo successo. Il prossimo punto tecnico è A5.3 — Gate tecnico consolidato A5.
+A5.1–A5.3 sono completate: il repository dispone di lifecycle bulk atomico account-scoped, la lista edifici collega le azioni singole e bulk reali e il gate tecnico consolidato attraversa repository, account scope, subscription e UI verificando lifecycle, atomicità, errori e semantica della selezione. Il prossimo punto tecnico è A5.4 — Collaudo browser azioni edificio.
 
-A5 resta aperta fino al completamento di A5.3 e al PASS browser di A5.4. Dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+A5 resta aperta fino al PASS browser di A5.4. Dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -147,26 +147,11 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 **Stato:** aperta; suddivisa in A5.1–A5.4.
 
-### A5.3 — Gate tecnico consolidato A5
-
-**Dipendenza:** A5.2 completata.
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- consolidare lifecycle singolo e bulk;
-- provare atomicità delle operazioni bulk;
-- provare eliminazione libera e bloccata;
-- provare assenza di cancellazioni parziali;
-- provare isolamento account;
-- provare azioni riga e floating bar reali;
-- provare conferme, errori e cleanup della selezione;
-- mantenere verdi A1–A4.
-
 ### A5.4 — Collaudo browser azioni edificio
 
 **Dipendenza:** A5.3 completata e verde.
+
+**Stato:** prossima task.
 
 **Modalità:** `DESKTOP_COLLAUDATORE`.
 
