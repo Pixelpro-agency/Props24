@@ -81,6 +81,8 @@ interface PropertyFormProviderProps {
     onSubmitError?: (message: string) => void;
     onExitDraft(): void;
     onFormBusyChange?: (busy: boolean) => void;
+    initialState?: PropertyFormState;
+    constrainSnapshot?: (snapshot: PropertyFormState) => PropertyFormState;
 }
 
 export function PropertyFormProvider({
@@ -92,13 +94,18 @@ export function PropertyFormProvider({
     onSubmitError,
     onExitDraft,
     onFormBusyChange,
+    initialState,
+    constrainSnapshot,
 }: PropertyFormProviderProps) {
     const methods = useForm<PropertyFormState>({
         resolver: zodResolver(propertyFormStateSchema) as Resolver<PropertyFormState>,
-        defaultValues: defaultPropertyFormStateValues,
+        defaultValues: initialState ?? defaultPropertyFormStateValues,
         mode: 'onChange',
     });
-    const draft = usePropertyDraftController(methods);
+    const draft = usePropertyDraftController(methods, undefined, {
+        initialState,
+        constrainSnapshot,
+    });
     const [isCleaningDraft, setIsCleaningDraft] = useState(false);
     const [recoveryError, setRecoveryError] = useState<string | null>(null);
     const [isRetryingCleanup, setIsRetryingCleanup] = useState(false);

@@ -70,6 +70,14 @@ export function BuildingDetailPage() {
                         {building.archived ? 'Archiviato' : 'Attivo'}
                     </span>
                 </div>
+                {!building.archived && (
+                    <Link
+                        className="mt-4 inline-flex rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                        to={`/properties/new?buildingId=${encodeURIComponent(building.id)}`}
+                    >
+                        Aggiungi unità
+                    </Link>
+                )}
                 <address className="mt-4 not-italic text-gray-700">
                     <p>{building.address}</p>
                     {building.address2 && <p>{building.address2}</p>}

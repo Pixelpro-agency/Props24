@@ -4,7 +4,7 @@ import { deleteRecord, generateId, getJsonDb, getRecordById, saveJsonDb, updateR
 import type { LeaseRecord, PropertyRecord, TenantRecord } from './database.types';
 import { normalizePropertyFormData, type PropertyFormData } from '../components/property-form/schema';
 import { currentLeasesForProperty, getPropertyFinancialSummary, isLeaseCurrentlyActive, tenantsForLeases } from './dataSelectors';
-import { assertUniquePropertyIdentifier, assertUniquePropertyLocation } from './businessRules';
+import { assertUniquePropertyIdentifier } from './businessRules';
 import { BuildingNotFoundError, PropertyBuildingArchivedError } from './databaseErrors';
 
 export interface PropertyBuildingRelationInput {
@@ -211,7 +211,6 @@ export function createProperty(
     const formData = normalizePropertyFormData(formDataInput);
     const db = getJsonDb();
     assertUniquePropertyIdentifier(db, formData.PropertyTitle);
-    assertUniquePropertyLocation(db, formData);
     const buildingId = relationInput.buildingId ?? null;
     if (buildingId !== null) requireAvailableBuildingForNewRelation(db, buildingId);
     const record: PropertyRecord = {
@@ -243,7 +242,6 @@ export function updateProperty(
     if (!existing) return null;
     const formData = normalizePropertyFormData(formDataInput);
     assertUniquePropertyIdentifier(db, formData.PropertyTitle, id);
-    assertUniquePropertyLocation(db, formData, id);
     const hasBuildingPatch = Object.prototype.hasOwnProperty.call(relationPatch, 'buildingId');
     const requestedBuildingId = hasBuildingPatch ? relationPatch.buildingId : existing.relations.buildingId;
     const nextBuildingId = requestedBuildingId === undefined ? existing.relations.buildingId : requestedBuildingId;

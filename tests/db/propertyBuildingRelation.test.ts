@@ -77,6 +77,35 @@ describe('property-building relation contract', () => {
     expect(relation).toEqual(relationCopy);
   });
 
+  it('allows two linked properties at the same address while preserving identifier uniqueness', async () => {
+    const { storage, jsonDb, properties, buildingRepository } = await environment();
+    const building = buildingRepository.create(buildingInput('Edificio A', 'Via Comune 1'));
+    const sharedLocation = {
+      PropertyAddress: 'Via Comune 1',
+      PropertyCity: 'Milano',
+      PropertyPostalCode: '20100',
+    };
+    storage.resetOperationLogs();
+    const first = properties.createProperty({ ...propertyInput(1), ...sharedLocation }, { buildingId: building.id });
+    expect(storage.writesFor(KEY)).toHaveLength(1);
+    storage.resetOperationLogs();
+    const second = properties.createProperty({ ...propertyInput(2), ...sharedLocation }, { buildingId: building.id });
+    expect(storage.writesFor(KEY)).toHaveLength(1);
+    expect([first, second].map((item) => item.relations.buildingId)).toEqual([building.id, building.id]);
+    expect(buildingRepository.getById(building.id)?.unitsCount).toBe(2);
+    const finalDatabase = jsonDb.getJsonDb();
+    expect(finalDatabase.properties).toHaveLength(2);
+    expect(() => assertDatabaseIntegrity(finalDatabase)).not.toThrow();
+    expect(validateDatabaseRelations(finalDatabase).map((issue) => issue.code))
+      .not.toContain('PROPERTY_LOCATION_DUPLICATE');
+    storage.resetOperationLogs();
+    expect(() => properties.createProperty(
+      { ...propertyInput(3), ...sharedLocation, PropertyTitle: first.formData.PropertyTitle },
+      { buildingId: building.id },
+    )).toThrow();
+    expect(storage.writesFor(KEY)).toHaveLength(0);
+  });
+
   it.each([
     ['missing', 'building-missing', 'BuildingNotFoundError'],
     ['empty', '', 'BuildingNotFoundError'],

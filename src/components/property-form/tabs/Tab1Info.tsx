@@ -6,7 +6,9 @@ import { Select } from '../ui/Select';
 import { ColorPicker } from '../ui/ColorPicker';
 import { AddressAutocomplete } from '../ui/AddressAutocomplete';
 
-export function Tab1Info() {
+export function Tab1Info({ addressReadOnly = false }: {
+    addressReadOnly?: boolean;
+}) {
     return (
         <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -81,6 +83,7 @@ export function Tab1Info() {
                                 label=""
                                 placeholder="Inserisci una posizione"
                                 required
+                                readOnly={addressReadOnly}
                             />
                         </div>
                     </div>
@@ -88,6 +91,7 @@ export function Tab1Info() {
                         name="PropertyAddress2"
                         label="Indirizzo 2"
                         orientation="horizontal"
+                        readOnly={addressReadOnly}
                     />
                     <TextInput
                         name="PropertyFloor"
@@ -104,23 +108,35 @@ export function Tab1Info() {
                         label="Città"
                         required
                         orientation="horizontal"
+                        readOnly={addressReadOnly}
                     />
                     <TextInput
                         name="PropertyPostalCode"
                         label="CAP"
                         required
                         orientation="horizontal"
+                        readOnly={addressReadOnly}
                     />
                     <TextInput
                         name="PropertyCounty"
                         label="Provincia"
                         orientation="horizontal"
+                        readOnly={addressReadOnly}
                     />
                     <TextInput
                         name="PropertyState"
                         label="Regione"
                         orientation="horizontal"
+                        readOnly={addressReadOnly}
                     />
+                    {addressReadOnly ? (
+                        <TextInput
+                            name="PropertyCountry"
+                            label="Paese"
+                            orientation="horizontal"
+                            readOnly
+                        />
+                    ) : (
                     <Select
                         name="PropertyCountry"
                         label="Paese"
@@ -368,6 +384,7 @@ export function Tab1Info() {
                             { value: 'ZW', label: 'Zimbabwe' },
                         ]}
                     />
+                    )}
                 </div>
             </FormSection>
 

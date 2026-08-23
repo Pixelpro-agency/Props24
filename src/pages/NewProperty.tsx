@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Save } from 'lucide-react';
 
 import {
@@ -24,15 +24,25 @@ import { Tab8Contacts } from '../components/property-form/tabs/Tab8Contacts';
 import { Tab9Documents } from '../components/property-form/tabs/Tab9Documents';
 import { StatusToast } from '../components/ui/StatusToast';
 import { createProperty } from '../db/propertyRepository';
+import { useAuth } from '../auth/AuthContext';
+import type { BuildingRecord } from '../db/database.types';
+import { useBuildingDetail } from '../hooks/useBuildingDetail';
+import {
+    defaultPropertyFormStateValues,
+    normalizePropertyDraftState,
+    type PropertyFormState,
+} from '../components/property-form/schema';
 
 interface PropertyFormContentProps {
     activeTab: PropertyTabId;
     submitError: string | null;
+    addressReadOnly?: boolean;
 }
 
 function PropertyFormContent({
     activeTab,
     submitError,
+    addressReadOnly = false,
 }: PropertyFormContentProps) {
     const navigate = useNavigate();
     const draft = usePropertyFormContext();
@@ -64,7 +74,9 @@ function PropertyFormContent({
                     <div className="p-6" id="property-form-content">
                         <PropertyFormErrors submitError={submitError} />
                         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm min-h-[400px]">
-                            {activeTab === 'info1' && <Tab1Info />}
+                            {activeTab === 'info1' && (
+                                <Tab1Info addressReadOnly={addressReadOnly} />
+                            )}
                             {activeTab === 'info2' && <Tab2Additional />}
                             {activeTab === 'info9' && <Tab3Financial />}
                             {activeTab === 'info10' && <Tab4Passwords />}
@@ -120,12 +132,93 @@ function PropertyFormContent({
 }
 
 export function NewProperty() {
+    const { search } = useLocation();
+    const query = new URLSearchParams(search);
+
+    if (!query.has('buildingId')) return <NewPropertyForm />;
+
+    return <BuildingContextNewProperty buildingId={query.get('buildingId') ?? ''} />;
+}
+
+function BuildingContextNewProperty({ buildingId }: { buildingId: string }) {
+    const { account } = useAuth();
+    const { loading, building } = useBuildingDetail(
+        account?.id ?? null,
+        buildingId,
+    );
+
+    if (loading) {
+        return <p role="status" className="p-6">Caricamento edificio...</p>;
+    }
+    if (!building) {
+        return (
+            <div className="p-6">
+                <p role="alert">Edificio non disponibile.</p>
+                <Link to="/properties/buildings">Torna agli edifici</Link>
+            </div>
+        );
+    }
+    if (building.archived) {
+        return (
+            <div className="p-6">
+                <p role="alert">
+                    L'edificio è archiviato e non può ricevere nuove unità.
+                </p>
+                <Link to="/properties/buildings">Torna agli edifici</Link>
+            </div>
+        );
+    }
+
+    return <NewPropertyForm building={building} />;
+}
+
+function NewPropertyForm({ building }: { building?: BuildingRecord }) {
     const navigate = useNavigate();
     const [activeTab, setActiveTabId] = useState<PropertyTabId>(
         PROPERTY_TABS[0].id,
     );
     const [isFormBusy, setIsFormBusy] = useState(true);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    const buildingId = building?.id;
+    const buildingAddress = building?.address;
+    const buildingAddress2 = building?.address2;
+    const buildingCity = building?.city;
+    const buildingPostalCode = building?.postalCode;
+    const buildingCounty = building?.county;
+    const buildingState = building?.state;
+    const buildingCountry = building?.country;
+    const contextFields = useMemo(() => (
+        buildingId ? {
+            PropertyBuildingId: buildingId,
+            PropertyAddress: buildingAddress ?? '',
+            PropertyAddress2: buildingAddress2 ?? '',
+            PropertyCity: buildingCity ?? '',
+            PropertyPostalCode: buildingPostalCode ?? '',
+            PropertyCounty: buildingCounty ?? '',
+            PropertyState: buildingState ?? '',
+            PropertyCountry: buildingCountry ?? '',
+        } : null
+    ), [
+        buildingId,
+        buildingAddress,
+        buildingAddress2,
+        buildingCity,
+        buildingPostalCode,
+        buildingCounty,
+        buildingState,
+        buildingCountry,
+    ]);
+    const initialState = useMemo<PropertyFormState | undefined>(() => (
+        contextFields
+            ? normalizePropertyDraftState({
+                ...defaultPropertyFormStateValues,
+                ...contextFields,
+            })
+            : undefined
+    ), [contextFields]);
+    const constrainSnapshot = useCallback((snapshot: PropertyFormState) => (
+        contextFields ? { ...snapshot, ...contextFields } : snapshot
+    ), [contextFields]);
 
     const setActiveTab = (id: string | PropertyTabId) => {
         setActiveTabId(id as PropertyTabId);
@@ -133,7 +226,9 @@ export function NewProperty() {
 
     const handleCreateProperty = (data: PropertyFormData) => {
         setSubmitError(null);
-        const record = createProperty(data);
+        const record = building
+            ? createProperty(data, { buildingId: building.id })
+            : createProperty(data);
         return { id: record.id };
     };
 
@@ -169,10 +264,13 @@ export function NewProperty() {
                 onSubmitError={setSubmitError}
                 onExitDraft={() => navigate(-1)}
                 onFormBusyChange={setIsFormBusy}
+                initialState={initialState}
+                constrainSnapshot={building ? constrainSnapshot : undefined}
             >
                 <PropertyFormContent
                     activeTab={activeTab}
                     submitError={submitError}
+                    addressReadOnly={Boolean(building)}
                 />
             </PropertyFormProvider>
         </div>

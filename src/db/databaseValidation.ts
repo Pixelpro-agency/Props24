@@ -1,5 +1,5 @@
 import type { LocalDatabase } from './database.types';
-import { findTenantLeaseConflicts, normalizeBuildingIdentifier, normalizeBuildingLocationKey, normalizeFiscalCode, normalizePropertyIdentifier, normalizePropertyLocationKey } from './businessRules';
+import { findTenantLeaseConflicts, normalizeBuildingIdentifier, normalizeBuildingLocationKey, normalizeFiscalCode, normalizePropertyIdentifier } from './businessRules';
 import { isLeaseCurrentlyActive, isValidIsoDate, todayIso } from './dataSelectors';
 import { calculateLeasePeriodicAmount } from '../landlord/leases/schema/leaseFormSchema';
 import { isGeneratedRentPayment } from './paymentRepository';
@@ -75,7 +75,6 @@ export function validateDatabaseRelations(database: LocalDatabase, referenceDate
     const tenantIds = new Set(database.tenants.map((item) => item.id));
     const leaseIds = new Set(database.leases.map((item) => item.id));
     const propertyIdentifiers = new Map<string, string>();
-    const propertyLocations = new Map<string, string>();
     const buildingIdentifiers = new Map<string, string>();
     const buildingLocations = new Map<string, string>();
     const tenantFiscalCodes = new Map<string, string>();
@@ -114,12 +113,6 @@ export function validateDatabaseRelations(database: LocalDatabase, referenceDate
             const existingId = propertyIdentifiers.get(identifier);
             if (existingId) issues.push(issue('error', 'PROPERTY_IDENTIFIER_DUPLICATE', 'properties', property.id, `Identificativo duplicato con ${existingId}.`));
             else propertyIdentifiers.set(identifier, property.id);
-        }
-        const locationKey = normalizePropertyLocationKey(f);
-        if (locationKey) {
-            const existingId = propertyLocations.get(locationKey);
-            if (existingId) issues.push(issue('error', 'PROPERTY_LOCATION_DUPLICATE', 'properties', property.id, `Indirizzo, città e CAP duplicati con ${existingId}.`));
-            else propertyLocations.set(locationKey, property.id);
         }
         checkAddressFields(issues, 'properties', property.id, {
             address: f.PropertyAddress,
