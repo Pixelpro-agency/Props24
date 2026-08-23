@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A5.1–A5.3 sono completate: il repository dispone di lifecycle bulk atomico account-scoped, la lista edifici collega le azioni singole e bulk reali e il gate tecnico consolidato attraversa repository, account scope, subscription e UI verificando lifecycle, atomicità, errori e semantica della selezione. Il prossimo punto tecnico è A5.4 — Collaudo browser azioni edificio.
+A5 — Azioni edificio è completata: lifecycle singolo e bulk, atomicità delle operazioni multiple, eliminazione libera e bloccata, account scope, subscription, conferme, errori di dominio, cleanup della selezione e persistenza dopo reload sono stati verificati. Il collaudo browser A5.4 è PASS senza finding.
 
-A5 resta aperta fino al PASS browser di A5.4. Dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+Il prossimo punto tecnico è A6 — Dettaglio e modifica edificio. Il Building resta l'entità contenitore: le unità collegate tramite `relations.buildingId` devono essere rappresentate all'interno del dettaglio del Building e non trasformate in righe Building autonome.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -141,51 +141,24 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 # BLOCCO A — Edifici
 
-## TASK A5 — Azioni edificio
-
-**Dipendenze:** A4 completata; ED-05 validata.
-
-**Stato:** aperta; suddivisa in A5.1–A5.4.
-
-### A5.4 — Collaudo browser azioni edificio
-
-**Dipendenza:** A5.3 completata e verde.
-
-**Stato:** prossima task.
-
-**Modalità:** `DESKTOP_COLLAUDATORE`.
-
-**Obiettivo:**
-
-- archivio singolo;
-- ripristino singolo;
-- eliminazione singola libera;
-- eliminazione singola bloccata da unità;
-- archivio e ripristino bulk;
-- eliminazione bulk libera;
-- eliminazione bulk con almeno un edificio bloccato e nessuna cancellazione parziale;
-- conferme e annullamento;
-- cleanup selezione;
-- reload/persistenza;
-- console;
-- nessuna modifica Git.
-
-A5 si chiude soltanto con PASS di A5.4.
-
 ## TASK A6 — Dettaglio e modifica edificio
 
-**Stato:** aperta; routing del dettaglio e lifecycle sono definiti da ED-03 ed ED-05 validate.
+**Stato:** prossima task; routing del dettaglio e lifecycle sono definiti da ED-03 ed ED-05 validate.
 
 **Vincoli:**
 
+- il `Building` è il contenitore gestionale delle unità collegate;
+- la lista Edifici continua a mostrare una riga per Building, con `unitsCount` derivato;
+- le Property/Unità con `relations.buildingId === building.id` devono essere mostrate dentro il dettaglio di quel Building;
+- un'unità collegata non deve diventare una nuova riga Building;
+- non raggruppare euristicamente Building distinti già creati: l'appartenenza delle unità è determinata dalla relazione canonica `buildingId`;
 - riusare schema e normalizzatore;
-- mostrare unità tramite relazione canonica;
 - non propagare automaticamente un cambio indirizzo alle unità;
 - mostrare le unità collegate e aprire il dettaglio unità dal relativo click;
-- supportare modifica, archivio, ripristino ed eliminazione protetta.
+- supportare modifica, archivio, ripristino ed eliminazione protetta;
 - dal dettaglio edificio offrire l'azione `Aggiungi unità`;
 - `Aggiungi unità` apre il normale form Nuova unità nel contesto dell'edificio corrente, con `buildingId` preimpostato e indirizzo edificio precompilato e read-only secondo ED-04;
-- non creare unità inline nel dettaglio edificio;
+- non creare unità inline nel dettaglio edificio.
 
 ## TASK A7 — Collaudo edifici
 
