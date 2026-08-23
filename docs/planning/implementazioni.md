@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: aa5ff98ad2c18e2584778e1f09d35e98aaa2f96e
+SHA applicativo esaminato: 39c6b8bb18e6e46d224ee05ecb20a227cb7b64c5
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A5 — Azioni edificio è completata: lifecycle singolo e bulk, atomicità delle operazioni multiple, eliminazione libera e bloccata, account scope, subscription, conferme, errori di dominio, cleanup della selezione e persistenza dopo reload sono stati verificati. Il collaudo browser A5.4 è PASS senza finding.
+A6.1 è completata: la lista Edifici apre ora il dettaglio tramite ID reale e il dettaglio Building usa uno snapshot account-scoped per mostrare tutte e sole le Property collegate tramite `relations.buildingId`, incluse quelle archiviate. Il dettaglio reagisce alle subscription reali, mantiene isolamento account e consente il click unità → dettaglio unità.
 
-Il prossimo punto tecnico è A6 — Dettaglio e modifica edificio. Il Building resta l'entità contenitore: le unità collegate tramite `relations.buildingId` devono essere rappresentate all'interno del dettaglio del Building e non trasformate in righe Building autonome.
+Il prossimo punto tecnico è A6.2 — Aggiungi unità dal Building con contesto `buildingId`. A6 resta aperta fino al completamento di A6.2–A6.5.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -158,25 +158,11 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 - il cambio indirizzo Building non riscrive automaticamente gli indirizzi delle unità;
 - ED-03, ED-04 ed ED-05 restano vincolanti.
 
-### A6.1 — Dettaglio Building reale e unità collegate
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- rendere navigabile il Building dalla lista Edifici;
-- trasformare `BuildingDetailPage` da placeholder a dettaglio reale;
-- leggere Building e unità nello stesso account;
-- mostrare tutte le Property collegate tramite `relations.buildingId`;
-- mantenere coerenza con `unitsCount`;
-- mostrare stato vuoto quando non esistono unità;
-- consentire il click unità → `/properties/units/:id`;
-- aggiornare il dettaglio tramite subscription reale;
-- non implementare ancora Aggiungi unità, edit o lifecycle.
-
 ### A6.2 — Aggiungi unità dal Building con contesto buildingId
 
 **Dipendenza:** A6.1 completata.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 
