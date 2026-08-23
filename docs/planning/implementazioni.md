@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 144ca6500558b577fbe2858f70b9aa2a92a9b3fc
+SHA applicativo esaminato: bf215aef435ee4bb49bc11e08a65c38d2260f32d
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,13 +131,13 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A6.1 e A6.2 sono completate.
+A6.1–A6.3 sono completate.
 
-Il dettaglio Building mostra le unità collegate tramite la relazione canonica `relations.buildingId`. Dal Building attivo è ora possibile aprire il normale form Nuova unità in contesto `buildingId`; il contesto è account-scoped, persiste tramite query string, precompila e vincola l'indirizzo del Building e viene mantenuto correttamente anche nelle bozze.
+Il dettaglio Building mostra le unità collegate tramite `relations.buildingId`, consente la creazione di nuove unità nel contesto del Building e permette ora la modifica reale del Building sulla stessa route di dettaglio.
 
-La creazione produce Property reali figlie del Building, non nuovi Building. Più Property possono condividere lo stesso indirizzo del Building; `unitsCount` resta derivato dalla relazione canonica. Il precedente fallback di duplicato basato su indirizzo/città/CAP è stato rimosso in coerenza con UN-04. La chiave catastale completa resta responsabilità della futura B2.
+La modifica riusa il `BuildingForm` canonico, usa `repository.update` account-scoped, rispetta ED-01/ED-02 con esclusione del record corrente e preserva ID, lifecycle, relazioni e `unitsCount`. Il cambio indirizzo del Building non riscrive automaticamente i dati delle Property già collegate.
 
-Il prossimo punto tecnico è A6.3 — Modifica Building. A6 resta aperta fino al completamento di A6.3–A6.5.
+Il prossimo punto tecnico è A6.4 — Lifecycle dal dettaglio Building. A6 resta aperta fino al completamento di A6.4–A6.5.
 
 # BLOCCO A — Edifici
 
@@ -158,24 +158,11 @@ Il prossimo punto tecnico è A6.3 — Modifica Building. A6 resta aperta fino al
 - il cambio indirizzo Building non riscrive automaticamente gli indirizzi delle unità;
 - ED-03, ED-04 ed ED-05 restano vincolanti.
 
-### A6.3 — Modifica Building
-
-**Dipendenza:** A6.2 completata.
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- riusare schema e `BuildingForm`;
-- precompilare tutti i campi editabili;
-- usare `repository.update`;
-- rispettare ED-01/ED-02 escludendo il record corrente;
-- non propagare automaticamente l'indirizzo alle unità;
-- mostrare errori reali senza falso successo.
-
 ### A6.4 — Lifecycle dal dettaglio Building
 
 **Dipendenza:** A6.3 completata.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 

@@ -20,7 +20,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: A6.3 — Modifica Building
+- Prossimo punto tecnico: A6.4 — Lifecycle dal dettaglio Building
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 57 task non concluse e non vanno sommati nuovamente.
 
@@ -51,11 +51,11 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] A5.2 — Azioni UI singole e bulk — **COMPLETATA; 67 file / 858 test, build e lint positivi**
 >   - [x] A5.3 — Gate tecnico consolidato A5 — **COMPLETATA; 68 file / 864 test, build e lint positivi**
 >   - [x] A5.4 — Collaudo browser azioni edificio — **COMPLETATA; PASS; nessun finding**
-> - [ ] A6 — Dettaglio e modifica edificio — **APERTO; A6.1–A6.2 completate; A6.3 prossima**
+> - [ ] A6 — Dettaglio e modifica edificio — **APERTO; A6.1–A6.3 completate; A6.4 prossima**
 >   - [x] A6.1 — Dettaglio Building reale e unità collegate — **COMPLETATA; 69 file / 870 test, build e lint positivi**
 >   - [x] A6.2 — Aggiungi unità dal Building con contesto `buildingId` — **COMPLETATA; 70 file / 879 test, build e lint positivi**
->   - [ ] A6.3 — Modifica Building — **PROSSIMA TASK**
->   - [ ] A6.4 — Lifecycle dal dettaglio Building — **DOPO A6.3**
+>   - [x] A6.3 — Modifica Building — **COMPLETATA; 71 file / 887 test, build e lint positivi**
+>   - [ ] A6.4 — Lifecycle dal dettaglio Building — **PROSSIMA TASK**
 >   - [ ] A6.5 — Gate tecnico consolidato A6 — **DOPO A6.4**
 > - [ ] A7 — Collaudo edifici — **DOPO A1–A6**
 > - [ ] F3.4 — Integrazione bozze e guard in Nuovo edificio — **DOPO il Blocco A**
@@ -89,11 +89,11 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] A5.2 — Azioni UI singole e bulk — **COMPLETATA**
   - [x] A5.3 — Gate tecnico consolidato A5 — **COMPLETATA**
   - [x] A5.4 — Collaudo browser azioni edificio — **COMPLETATA; PASS; nessun finding**
-- [ ] A6 — Dettaglio e modifica edificio — **APERTO; A6.1–A6.2 completate; A6.3 prossima**
+- [ ] A6 — Dettaglio e modifica edificio — **APERTO; A6.1–A6.3 completate; A6.4 prossima**
   - [x] A6.1 — Dettaglio Building reale e unità collegate — **COMPLETATA**
   - [x] A6.2 — Aggiungi unità dal Building con contesto `buildingId` — **COMPLETATA**
-  - [ ] A6.3 — Modifica Building — **PROSSIMA TASK**
-  - [ ] A6.4 — Lifecycle dal dettaglio Building — **DOPO A6.3**
+  - [x] A6.3 — Modifica Building — **COMPLETATA**
+  - [ ] A6.4 — Lifecycle dal dettaglio Building — **PROSSIMA TASK**
   - [ ] A6.5 — Gate tecnico consolidato A6 — **DOPO A6.4**
 - [ ] A7 — Collaudo edifici — **APERTO; dipende da A1–A6**
 
@@ -268,9 +268,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Collaudo browser azioni edificio — A5.4
   - [x] Dettaglio Building reale e unità collegate — A6.1
   - [x] Aggiungi unità dal Building con contesto `buildingId` — A6.2
+  - [x] Modifica Building dal dettaglio — A6.3
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di A6.2: 70 file, 879 test passati, 0 falliti, 0 saltati; build e lint positivi.
+Baseline verificata al termine di A6.3: 71 file, 887 test passati, 0 falliti, 0 saltati; build e lint positivi.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
