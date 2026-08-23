@@ -10,6 +10,7 @@ import {
     type RowSelectionState,
 } from '@tanstack/react-table';
 import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import type { Building } from '../../types/building';
 
 interface BuildingsTableProps {
@@ -17,6 +18,7 @@ interface BuildingsTableProps {
     pageSize?: number;
     rowSelection: RowSelectionState;
     onRowSelectionChange: (sel: RowSelectionState) => void;
+    onRequestAction?: (operation: 'archive' | 'restore' | 'delete', id: string) => void;
 }
 
 const columnHelper = createColumnHelper<Building>();
@@ -26,6 +28,7 @@ export function BuildingsTable({
     pageSize = 100,
     rowSelection,
     onRowSelectionChange,
+    onRequestAction,
 }: BuildingsTableProps) {
     const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -102,20 +105,46 @@ export function BuildingsTable({
             columnHelper.display({
                 id: 'actions',
                 header: 'Azioni',
-                cell: () => (
-                    <button
-                        type="button"
-                        className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                        title="Altre azioni"
-                    >
-                        <MoreHorizontal className="w-4 h-4" />
-                    </button>
+                cell: ({ row }) => (
+                    <Menu>
+                        <MenuButton
+                            type="button"
+                            aria-label={`Azioni edificio ${row.original.address}`}
+                            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                        >
+                            <MoreHorizontal className="w-4 h-4" aria-hidden="true" />
+                        </MenuButton>
+                        <MenuItems
+                            anchor="bottom end"
+                            portal
+                            className="z-[80] w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-xl focus:outline-none [--anchor-gap:4px]"
+                        >
+                            {row.original.status === 'active' ? (
+                                <MenuItem>
+                                    <button type="button" className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100" onClick={() => onRequestAction?.('archive', row.original.id)}>
+                                        Archivia
+                                    </button>
+                                </MenuItem>
+                            ) : (
+                                <MenuItem>
+                                    <button type="button" className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100" onClick={() => onRequestAction?.('restore', row.original.id)}>
+                                        Ripristina
+                                    </button>
+                                </MenuItem>
+                            )}
+                            <MenuItem>
+                                <button type="button" className="block w-full px-4 py-2 text-left text-sm text-red-700 data-focus:bg-red-50" onClick={() => onRequestAction?.('delete', row.original.id)}>
+                                    Elimina
+                                </button>
+                            </MenuItem>
+                        </MenuItems>
+                    </Menu>
                 ),
                 size: 60,
                 enableSorting: false,
             }),
         ],
-        [],
+        [onRequestAction],
     );
 
     const table = useReactTable({

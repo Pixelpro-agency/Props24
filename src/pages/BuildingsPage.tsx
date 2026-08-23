@@ -1,10 +1,11 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
 import { useBuildings } from '../hooks/useBuildings';
 import { useTableSelection } from '../hooks/useTableSelection';
 import type { BuildingStatus } from '../types/building';
 import { useAuth } from '../auth/AuthContext';
+import { createBuildingRepository } from '../db/buildingRepository';
 
 
 import { BuildingsHeader } from '../components/buildings/BuildingsHeader';
@@ -14,6 +15,8 @@ import { BuildingsTable } from '../components/buildings/BuildingsTable';
 import { EmptyState } from '../components/buildings/EmptyState';
 import { FloatingActions } from '../components/buildings/FloatingActions';
 import { FeedbackBox } from '../components/buildings/FeedbackBox';
+import { BuildingActionModal, type BuildingActionOperation } from '../components/buildings/BuildingActionModal';
+import { StatusToast, type StatusToastState } from '../components/ui/StatusToast';
 
 
 
@@ -38,9 +41,22 @@ const itemVariants: Variants = {
     },
 };
 
+type PendingBuildingAction = {
+    operation: BuildingActionOperation;
+    mode: 'single' | 'bulk';
+    ids: string[];
+} | null;
+
 export function BuildingsPage() {
     const navigate = useNavigate();
     const { account } = useAuth();
+    const accountId = account?.id ?? null;
+    const repository = useMemo(
+        () => accountId ? createBuildingRepository({ accountId }) : null,
+        [accountId],
+    );
+    const [pendingAction, setPendingAction] = useState<PendingBuildingAction>(null);
+    const [toast, setToast] = useState<StatusToastState | null>(null);
     const {
         view,
         searchQuery,
@@ -50,9 +66,9 @@ export function BuildingsPage() {
         setSearchQuery,
         setSortField,
         setPageSize,
-    } = useBuildings(account?.id ?? null);
+    } = useBuildings(accountId);
 
-    const { rowSelection, setRowSelection, selectedCount, clearSelection } = useTableSelection();
+    const { rowSelection, setRowSelection, selectedCount, selectedIds, clearSelection } = useTableSelection();
 
     // Clear selection when view changes
     const handleViewChange = useCallback(
@@ -70,14 +86,50 @@ export function BuildingsPage() {
         navigate('/properties/buildings/new');
     }
 
-    function handleDelete() {
-        console.log(`Eliminati ${selectedCount} edifici`);
-        clearSelection();
+    function requestSingleAction(operation: BuildingActionOperation, id: string) {
+        setToast(null);
+        setPendingAction({ operation, mode: 'single', ids: [id] });
     }
 
-    function handleArchive() {
-        console.log(`Archiviati ${selectedCount} edifici`);
-        clearSelection();
+    function requestBulkAction(operation: BuildingActionOperation) {
+        setToast(null);
+        setPendingAction({ operation, mode: 'bulk', ids: [...selectedIds] });
+    }
+
+    function successMessage(action: Exclude<PendingBuildingAction, null>): string {
+        const count = action.ids.length;
+        const participle = action.operation === 'archive'
+            ? count === 1 ? 'archiviato' : 'archiviati'
+            : action.operation === 'restore'
+                ? count === 1 ? 'ripristinato' : 'ripristinati'
+                : count === 1 ? 'eliminato' : 'eliminati';
+        if (action.mode === 'single') return `Edificio ${participle}.`;
+        return `${count} ${count === 1 ? 'edificio' : 'edifici'} ${participle}.`;
+    }
+
+    function confirmAction() {
+        if (!pendingAction || !repository) return;
+        try {
+            const { operation, mode, ids } = pendingAction;
+            if (mode === 'single') {
+                if (operation === 'archive') repository.archive(ids[0]);
+                if (operation === 'restore') repository.restore(ids[0]);
+                if (operation === 'delete') repository.delete(ids[0]);
+            } else {
+                if (operation === 'archive') repository.archiveMany(ids);
+                if (operation === 'restore') repository.restoreMany(ids);
+                if (operation === 'delete') repository.deleteMany(ids);
+            }
+            setToast({ variant: 'success', title: 'Successo', message: successMessage(pendingAction) });
+            setPendingAction(null);
+            clearSelection();
+        } catch (error) {
+            setToast({
+                variant: 'error',
+                title: 'Errore',
+                message: error instanceof Error ? error.message : "Operazione sull'edificio non riuscita.",
+            });
+        }
     }
 
     return (
@@ -124,6 +176,7 @@ export function BuildingsPage() {
                             pageSize={pageSize}
                             rowSelection={rowSelection}
                             onRowSelectionChange={setRowSelection}
+                            onRequestAction={requestSingleAction}
                         />
                     ) : (
                         <EmptyState onCreateClick={handleNewBuilding} />
@@ -133,9 +186,23 @@ export function BuildingsPage() {
                 {/* Floating actions */}
                 <FloatingActions
                     selectedCount={selectedCount}
-                    onDelete={handleDelete}
-                    onArchive={handleArchive}
+                    view={view}
+                    onDelete={() => requestBulkAction('delete')}
+                    onArchive={() => requestBulkAction('archive')}
+                    onRestore={() => requestBulkAction('restore')}
                 />
+
+                {pendingAction && (
+                    <BuildingActionModal
+                        isOpen
+                        operation={pendingAction.operation}
+                        count={pendingAction.ids.length}
+                        onClose={() => setPendingAction(null)}
+                        onConfirm={confirmAction}
+                    />
+                )}
+
+                <StatusToast toast={toast} onClose={() => setToast(null)} />
 
                 {/* Feedback */}
                 <motion.div variants={itemVariants}>
