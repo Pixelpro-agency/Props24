@@ -22,7 +22,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Di cui ancora senza risposta: 6
 - Prossimo punto tecnico: F3.4 — Integrazione bozze e guard in Nuovo edificio
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 57 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 56 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
