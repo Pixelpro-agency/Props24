@@ -143,22 +143,97 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 ## TASK A6 — Dettaglio e modifica edificio
 
-**Stato:** prossima task; routing del dettaglio e lifecycle sono definiti da ED-03 ed ED-05 validate.
+**Stato:** aperta; suddivisa in A6.1–A6.5.
 
-**Vincoli:**
+**Contratto trasversale:**
 
 - il `Building` è il contenitore gestionale delle unità collegate;
-- la lista Edifici continua a mostrare una riga per Building, con `unitsCount` derivato;
-- le Property/Unità con `relations.buildingId === building.id` devono essere mostrate dentro il dettaglio di quel Building;
-- un'unità collegata non deve diventare una nuova riga Building;
-- non raggruppare euristicamente Building distinti già creati: l'appartenenza delle unità è determinata dalla relazione canonica `buildingId`;
-- riusare schema e normalizzatore;
-- non propagare automaticamente un cambio indirizzo alle unità;
-- mostrare le unità collegate e aprire il dettaglio unità dal relativo click;
-- supportare modifica, archivio, ripristino ed eliminazione protetta;
-- dal dettaglio edificio offrire l'azione `Aggiungi unità`;
-- `Aggiungi unità` apre il normale form Nuova unità nel contesto dell'edificio corrente, con `buildingId` preimpostato e indirizzo edificio precompilato e read-only secondo ED-04;
-- non creare unità inline nel dettaglio edificio.
+- la lista Edifici mostra una riga per Building;
+- `unitsCount` resta derivato;
+- una Property appartiene al Building esclusivamente tramite `relations.buildingId`;
+- nessun raggruppamento euristico per indirizzo, piano, interno o altri campi;
+- le unità collegate sono mostrate dentro il dettaglio Building;
+- una unità collegata non genera una nuova riga Building;
+- il click sull'unità apre il dettaglio unità;
+- il cambio indirizzo Building non riscrive automaticamente gli indirizzi delle unità;
+- ED-03, ED-04 ed ED-05 restano vincolanti.
+
+### A6.1 — Dettaglio Building reale e unità collegate
+
+**Stato:** prossima task.
+
+**Obiettivo:**
+
+- rendere navigabile il Building dalla lista Edifici;
+- trasformare `BuildingDetailPage` da placeholder a dettaglio reale;
+- leggere Building e unità nello stesso account;
+- mostrare tutte le Property collegate tramite `relations.buildingId`;
+- mantenere coerenza con `unitsCount`;
+- mostrare stato vuoto quando non esistono unità;
+- consentire il click unità → `/properties/units/:id`;
+- aggiornare il dettaglio tramite subscription reale;
+- non implementare ancora Aggiungi unità, edit o lifecycle.
+
+### A6.2 — Aggiungi unità dal Building con contesto buildingId
+
+**Dipendenza:** A6.1 completata.
+
+**Obiettivo:**
+
+- aggiungere `Aggiungi unità` al dettaglio;
+- aprire il normale form Nuova unità con contesto Building persistente anche al reload;
+- preimpostare `PropertyBuildingId`;
+- precompilare e rendere read-only i campi indirizzo provenienti dal Building;
+- lasciare modificabili i campi propri dell'unità;
+- passare realmente `buildingId` a `createProperty`;
+- rifiutare Building inesistente o archiviato senza fallback standalone;
+- conservare il normale flusso standalone `/properties/new`;
+- mantenere coerente il sistema bozze.
+
+### A6.3 — Modifica Building
+
+**Dipendenza:** A6.2 completata.
+
+**Obiettivo:**
+
+- riusare schema e `BuildingForm`;
+- precompilare tutti i campi editabili;
+- usare `repository.update`;
+- rispettare ED-01/ED-02 escludendo il record corrente;
+- non propagare automaticamente l'indirizzo alle unità;
+- mostrare errori reali senza falso successo.
+
+### A6.4 — Lifecycle dal dettaglio Building
+
+**Dipendenza:** A6.3 completata.
+
+**Obiettivo:**
+
+- archiviare dal dettaglio;
+- ripristinare dal dettaglio;
+- eliminare con conferma esplicita;
+- riusare i contratti A5;
+- bloccare la delete con unità collegate;
+- dopo delete riuscita tornare alla lista;
+- nessuna cancellazione parziale.
+
+### A6.5 — Gate tecnico consolidato A6
+
+**Dipendenza:** A6.4 completata.
+
+**Obiettivo:**
+
+- consolidare lista → dettaglio;
+- Building → unità collegate;
+- unità → dettaglio unità;
+- creazione unità in contesto Building;
+- persistenza `buildingId`;
+- edit;
+- archive/restore/delete;
+- delete bloccata;
+- account isolation;
+- subscription/reload;
+- regressioni A1–A5.
 
 ## TASK A7 — Collaudo edifici
 

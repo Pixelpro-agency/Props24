@@ -20,7 +20,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: A6 — Dettaglio e modifica edificio
+- Prossimo punto tecnico: A6.1 — Dettaglio Building reale e unità collegate
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 57 task non concluse e non vanno sommati nuovamente.
 
@@ -51,7 +51,12 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] A5.2 — Azioni UI singole e bulk — **COMPLETATA; 67 file / 858 test, build e lint positivi**
 >   - [x] A5.3 — Gate tecnico consolidato A5 — **COMPLETATA; 68 file / 864 test, build e lint positivi**
 >   - [x] A5.4 — Collaudo browser azioni edificio — **COMPLETATA; PASS; nessun finding**
-> - [ ] A6 — Dettaglio e modifica edificio — **PROSSIMA TASK; dettaglio Building come contenitore delle unità collegate**
+> - [ ] A6 — Dettaglio e modifica edificio — **APERTO; suddivisa in A6.1–A6.5; A6.1 prossima**
+>   - [ ] A6.1 — Dettaglio Building reale e unità collegate — **PROSSIMA TASK**
+>   - [ ] A6.2 — Aggiungi unità dal Building con contesto `buildingId` — **DOPO A6.1**
+>   - [ ] A6.3 — Modifica Building — **DOPO A6.2**
+>   - [ ] A6.4 — Lifecycle dal dettaglio Building — **DOPO A6.3**
+>   - [ ] A6.5 — Gate tecnico consolidato A6 — **DOPO A6.4**
 > - [ ] A7 — Collaudo edifici — **DOPO A1–A6**
 > - [ ] F3.4 — Integrazione bozze e guard in Nuovo edificio — **DOPO il Blocco A**
 > - [ ] F4 — Collaudo trasversale delle modifiche non salvate — **DOPO F3.4**
@@ -84,7 +89,12 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] A5.2 — Azioni UI singole e bulk — **COMPLETATA**
   - [x] A5.3 — Gate tecnico consolidato A5 — **COMPLETATA**
   - [x] A5.4 — Collaudo browser azioni edificio — **COMPLETATA; PASS; nessun finding**
-- [ ] A6 — Dettaglio e modifica edificio — **PROSSIMA TASK; ED-03 ed ED-05 validate; il Building è il contenitore delle unità collegate**
+- [ ] A6 — Dettaglio e modifica edificio — **APERTO; suddivisa in A6.1–A6.5; A6.1 prossima**
+  - [ ] A6.1 — Dettaglio Building reale e unità collegate — **PROSSIMA TASK**
+  - [ ] A6.2 — Aggiungi unità dal Building con contesto `buildingId` — **DOPO A6.1**
+  - [ ] A6.3 — Modifica Building — **DOPO A6.2**
+  - [ ] A6.4 — Lifecycle dal dettaglio Building — **DOPO A6.3**
+  - [ ] A6.5 — Gate tecnico consolidato A6 — **DOPO A6.4**
 - [ ] A7 — Collaudo edifici — **APERTO; dipende da A1–A6**
 
 ## Blocco B — Unità
