@@ -23,6 +23,7 @@ interface UseBuildingsReturn {
 }
 
 type BuildingSource = { accountId: string; buildings: Building[] } | null;
+type BuildingSortState = { field: BuildingSortField; direction: 'asc' | 'desc' };
 
 function toBuilding(record: BuildingRecord): Building {
     return {
@@ -38,8 +39,10 @@ function toBuilding(record: BuildingRecord): Building {
 export function useBuildings(accountId: string | null): UseBuildingsReturn {
     const [view, setView] = useState<BuildingStatus>('active');
     const [searchQuery, setSearchQuery] = useState('');
-    const [sortField, setSortFieldState] = useState<BuildingSortField>('BuildingAddress');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [sort, setSort] = useState<BuildingSortState>({
+        field: 'BuildingAddress',
+        direction: 'asc',
+    });
     const [pageSize, setPageSize] = useState(100);
     const [source, setSource] = useState<BuildingSource>(null);
     const repository = useMemo(
@@ -66,14 +69,9 @@ export function useBuildings(accountId: string | null): UseBuildingsReturn {
 
     // Toggle sort direction if same field, otherwise set new field ascending
     const setSortField = useCallback((field: BuildingSortField) => {
-        setSortFieldState((prev) => {
-            if (prev === field) {
-                setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
-                return prev;
-            }
-            setSortDirection('asc');
-            return field;
-        });
+        setSort((current) => current.field === field
+            ? { field, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+            : { field, direction: 'asc' });
     }, []);
 
     const filteredData = useMemo(() => {
@@ -94,7 +92,7 @@ export function useBuildings(accountId: string | null): UseBuildingsReturn {
         // 3. Sort
         result = [...result].sort((a, b) => {
             let cmp = 0;
-            switch (sortField) {
+            switch (sort.field) {
                 case 'BuildingAddress':
                     cmp = a.address.localeCompare(b.address, 'it');
                     break;
@@ -108,23 +106,22 @@ export function useBuildings(accountId: string | null): UseBuildingsReturn {
                     cmp = a.description.localeCompare(b.description, 'it');
                     break;
             }
-            return sortDirection === 'asc' ? cmp : -cmp;
+            return sort.direction === 'asc' ? cmp : -cmp;
         });
 
         return result;
-    }, [buildings, view, searchQuery, sortField, sortDirection]);
+    }, [buildings, view, searchQuery, sort]);
 
     const resetFilters = useCallback(() => {
         setSearchQuery('');
-        setSortFieldState('BuildingAddress');
-        setSortDirection('asc');
+        setSort({ field: 'BuildingAddress', direction: 'asc' });
     }, []);
 
     return {
         view,
         searchQuery,
-        sortField,
-        sortDirection,
+        sortField: sort.field,
+        sortDirection: sort.direction,
         pageSize,
         filteredData,
         setView,

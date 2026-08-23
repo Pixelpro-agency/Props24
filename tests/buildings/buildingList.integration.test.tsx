@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { defaultPropertyValues } from '../../src/components/property-form/schema';
 import { BuildingsTable } from '../../src/components/buildings/BuildingsTable';
+import { BuildingsToolbar } from '../../src/components/buildings/BuildingsToolbar';
 import { createBuildingRepository } from '../../src/db/buildingRepository';
 import type { BuildingRecord, LocalDatabase, PropertyRecord } from '../../src/db/database.types';
 import { useBuildings } from '../../src/hooks/useBuildings';
@@ -98,17 +99,44 @@ describe('A4 real building list', () => {
             building('a', { address: 'Via Alfa', size: 30, description: 'Charlie' }),
             building('c', { address: 'Via Gamma', size: 10, description: 'Alpha' }),
         ], [property('p-a1', 'a'), property('p-a2', 'a'), property('p-b', 'b')]));
-        const { result } = renderHook(() => useBuildings(ACCOUNT_A));
-        await waitFor(() => expect(result.current.filteredData).toHaveLength(3));
-        expect(result.current.filteredData.map((item) => item.id)).toEqual(['a', 'b', 'c']);
-        act(() => result.current.setSortField('BuildingAddress'));
-        expect(result.current.filteredData.map((item) => item.id)).toEqual(['c', 'b', 'a']);
-        act(() => result.current.setSortField('BuildingSize'));
-        expect(result.current.filteredData.map((item) => item.id)).toEqual(['c', 'b', 'a']);
-        act(() => result.current.setSortField('BuildingPropertiesCount'));
-        expect(result.current.filteredData.map((item) => item.id)).toEqual(['c', 'b', 'a']);
-        act(() => result.current.setSortField('BuildingComments'));
-        expect(result.current.filteredData.map((item) => item.id)).toEqual(['c', 'a', 'b']);
+        function SortHarness() {
+            const buildings = useBuildings(ACCOUNT_A);
+            return <>
+                <BuildingsToolbar
+                    pageSize={buildings.pageSize}
+                    onPageSizeChange={buildings.setPageSize}
+                    searchQuery={buildings.searchQuery}
+                    onSearchChange={buildings.setSearchQuery}
+                    onSortChange={buildings.setSortField}
+                />
+                <output data-testid="order">{buildings.filteredData.map((item) => item.id).join(',')}</output>
+                <output data-testid="sort">{`${buildings.sortField}:${buildings.sortDirection}`}</output>
+            </>;
+        }
+        const user = userEvent.setup();
+        render(<SortHarness />);
+        await waitFor(() => expect(screen.getByTestId('order').textContent).toBe('a,b,c'));
+
+        async function selectSort(label: string) {
+            await user.click(screen.getByTitle('Ordina'));
+            await user.click(screen.getByRole('button', { name: label }));
+        }
+
+        await selectSort('Superficie');
+        expect(screen.getByTestId('order').textContent).toBe('c,b,a');
+        expect(screen.getByTestId('sort').textContent).toBe('BuildingSize:asc');
+        await selectSort('Superficie');
+        expect(screen.getByTestId('order').textContent).toBe('a,b,c');
+        expect(screen.getByTestId('sort').textContent).toBe('BuildingSize:desc');
+        await selectSort('Superficie');
+        expect(screen.getByTestId('order').textContent).toBe('c,b,a');
+        expect(screen.getByTestId('sort').textContent).toBe('BuildingSize:asc');
+        await selectSort('Proprietà');
+        expect(screen.getByTestId('order').textContent).toBe('c,b,a');
+        expect(screen.getByTestId('sort').textContent).toBe('BuildingPropertiesCount:asc');
+        await selectSort('Descrizione');
+        expect(screen.getByTestId('order').textContent).toBe('c,a,b');
+        expect(screen.getByTestId('sort').textContent).toBe('BuildingComments:asc');
     });
 
     it('si aggiorna via subscription solo per le mutazioni dello stesso account', async () => {
