@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 39c6b8bb18e6e46d224ee05ecb20a227cb7b64c5
+SHA applicativo esaminato: 144ca6500558b577fbe2858f70b9aa2a92a9b3fc
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,13 +131,13 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A6.1 è completata: la lista Edifici apre ora il dettaglio tramite ID reale e il dettaglio Building usa uno snapshot account-scoped per mostrare tutte e sole le Property collegate tramite `relations.buildingId`, incluse quelle archiviate. Il dettaglio reagisce alle subscription reali, mantiene isolamento account e consente il click unità → dettaglio unità.
+A6.1 e A6.2 sono completate.
 
-Il prossimo punto tecnico è A6.2 — Aggiungi unità dal Building con contesto `buildingId`. A6 resta aperta fino al completamento di A6.2–A6.5.
+Il dettaglio Building mostra le unità collegate tramite la relazione canonica `relations.buildingId`. Dal Building attivo è ora possibile aprire il normale form Nuova unità in contesto `buildingId`; il contesto è account-scoped, persiste tramite query string, precompila e vincola l'indirizzo del Building e viene mantenuto correttamente anche nelle bozze.
 
-Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
+La creazione produce Property reali figlie del Building, non nuovi Building. Più Property possono condividere lo stesso indirizzo del Building; `unitsCount` resta derivato dalla relazione canonica. Il precedente fallback di duplicato basato su indirizzo/città/CAP è stato rimosso in coerenza con UN-04. La chiave catastale completa resta responsabilità della futura B2.
 
-Inviti, portale inquilino, workspace professionali, visure, servizi backend e KPI futuri restano fuori dalla fase tecnica immediata.
+Il prossimo punto tecnico è A6.3 — Modifica Building. A6 resta aperta fino al completamento di A6.3–A6.5.
 
 # BLOCCO A — Edifici
 
@@ -158,27 +158,11 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 - il cambio indirizzo Building non riscrive automaticamente gli indirizzi delle unità;
 - ED-03, ED-04 ed ED-05 restano vincolanti.
 
-### A6.2 — Aggiungi unità dal Building con contesto buildingId
-
-**Dipendenza:** A6.1 completata.
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- aggiungere `Aggiungi unità` al dettaglio;
-- aprire il normale form Nuova unità con contesto Building persistente anche al reload;
-- preimpostare `PropertyBuildingId`;
-- precompilare e rendere read-only i campi indirizzo provenienti dal Building;
-- lasciare modificabili i campi propri dell'unità;
-- passare realmente `buildingId` a `createProperty`;
-- rifiutare Building inesistente o archiviato senza fallback standalone;
-- conservare il normale flusso standalone `/properties/new`;
-- mantenere coerente il sistema bozze.
-
 ### A6.3 — Modifica Building
 
 **Dipendenza:** A6.2 completata.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 
