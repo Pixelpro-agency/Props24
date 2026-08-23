@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 3047179858ef4755a2762c943181c895f18f2a31
+SHA applicativo esaminato: 8f3fba564b1281786307be793c74957b21a2e490
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A3 — Route e accessi edificio è completata: A3.1–A3.3 sono verificate tecnicamente e A3.4 ha concluso il collaudo browser con PASS e nessun finding. Il prossimo punto tecnico è A4 — Lista edifici reale.
+A4 — Lista edifici reale è completata: repository account-scoped, subscription, lista reale, attivi/archivio, ricerca, ordinamenti, ID reali, `unitsCount` derivato e persistenza sono verificati. Il finding browser A4-F01 sull'inversione consecutiva dell'ordinamento è stato corretto e il ricollaudo finale è PASS. Il prossimo punto tecnico è A5 — Azioni edificio.
 
-La lista edifici reale resta A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+Il lifecycle operativo della lista prosegue con A5; dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -141,33 +141,11 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 # BLOCCO A — Edifici
 
-## TASK A4 — Lista edifici reale
-
-**Dipendenze:** A1 e A3 completate.
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- sostituire `mockBuildings`;
-- leggere il repository account-scoped;
-- sottoscrivere le modifiche DB;
-- gestire attivi e archivio;
-- mantenere ricerca e ordinamento;
-- usare ID reali per righe e selezione;
-- mostrare `unitsCount` derivato;
-- aggiornarsi dopo le mutazioni.
-
-**File da verificare:**
-
-- `src/hooks/useBuildings.ts`;
-- `src/pages/BuildingsPage.tsx`;
-- `src/components/buildings/*`;
-- `src/data/mockBuildings.ts`.
-
 ## TASK A5 — Azioni edificio
 
-**Dipendenze:** A4; ED-05 validata.
+**Dipendenze:** A4 completata; ED-05 validata.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 
