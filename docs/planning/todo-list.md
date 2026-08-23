@@ -20,7 +20,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: A5.2 — Azioni UI singole e bulk
+- Prossimo punto tecnico: A5.3 — Gate tecnico consolidato A5
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 58 task non concluse e non vanno sommati nuovamente. A1.1–A1.4, A2.1–A2.4, A3.1–A3.4, A5.1–A5.4, B1.1–B1.4, D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
 
@@ -46,10 +46,10 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] A3.3 — Gate tecnico consolidato A3 — **COMPLETATA; 64 file / 836 test, build e lint positivi**
 >   - [x] A3.4 — Collaudo browser route e accessi — **COMPLETATA; PASS; nessun finding**
 > - [x] A4 — Lista edifici reale — **COMPLETATA; 65 file / 842 test, build e lint positivi; browser QA finale PASS; A4-F01 risolto**
-> - [ ] A5 — Azioni edificio — **APERTO; A5.1 completata; A5.2 prossima; ED-05 validata**
+> - [ ] A5 — Azioni edificio — **APERTO; A5.1–A5.2 completate; A5.3 prossima; ED-05 validata**
 >   - [x] A5.1 — Operazioni bulk atomiche repository edifici — **COMPLETATA; 66 file / 850 test, build e lint positivi**
->   - [ ] A5.2 — Azioni UI singole e bulk — **PROSSIMA TASK**
->   - [ ] A5.3 — Gate tecnico consolidato A5 — **DOPO A5.2**
+>   - [x] A5.2 — Azioni UI singole e bulk — **COMPLETATA; 67 file / 858 test, build e lint positivi**
+>   - [ ] A5.3 — Gate tecnico consolidato A5 — **PROSSIMA TASK**
 >   - [ ] A5.4 — Collaudo browser azioni edificio — **DOPO A5.3; chiude A5 solo con PASS**
 > - [ ] A6 — Dettaglio e modifica edificio — **DOPO il consolidamento del flusso edificio**
 > - [ ] A7 — Collaudo edifici — **DOPO A1–A6**
@@ -79,10 +79,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] A3.3 — Gate tecnico consolidato A3 — **COMPLETATA; 64 file / 836 test, build e lint positivi**
   - [x] A3.4 — Collaudo browser route e accessi — **COMPLETATA; PASS; nessun finding**
 - [x] A4 — Lista edifici reale — **COMPLETATA; repository account-scoped, subscription, attivi/archivio, ricerca, ordinamento, ID reali, unitsCount derivato e browser QA verificati**
-- [ ] A5 — Azioni edificio — **APERTO; A5.1 completata; A5.2 prossima; ED-05 validata**
+- [ ] A5 — Azioni edificio — **APERTO; A5.1–A5.2 completate; A5.3 prossima; ED-05 validata**
   - [x] A5.1 — Operazioni bulk atomiche repository edifici — **COMPLETATA; 66 file / 850 test, build e lint positivi**
-  - [ ] A5.2 — Azioni UI singole e bulk — **PROSSIMA TASK**
-  - [ ] A5.3 — Gate tecnico consolidato A5 — **DOPO A5.2**
+  - [x] A5.2 — Azioni UI singole e bulk — **COMPLETATA; 67 file / 858 test, build e lint positivi**
+  - [ ] A5.3 — Gate tecnico consolidato A5 — **PROSSIMA TASK**
   - [ ] A5.4 — Collaudo browser azioni edificio — **DOPO A5.3; chiude A5 solo con PASS**
 - [ ] A6 — Dettaglio e modifica edificio — **APERTO; ED-03 ed ED-05 validate**
 - [ ] A7 — Collaudo edifici — **APERTO; dipende da A1–A6**
@@ -253,9 +253,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Collaudo browser route e accessi edificio — A3.4
   - [x] Lista edifici reale, gate e collaudo browser — A4
   - [x] Operazioni bulk atomiche repository edifici — A5.1
+  - [x] Azioni UI singole e bulk edifici — A5.2
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di A5.1: 66 file, 850 test passati, 0 falliti, 0 saltati; build e lint positivi.
+Baseline verificata al termine di A5.2: 67 file, 858 test passati, 0 falliti, 0 saltati; build e lint positivi.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**

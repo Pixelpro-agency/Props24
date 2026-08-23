@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 0f332913b84831dcc5428e22ebe547256ace8bf3
+SHA applicativo esaminato: 3251b809dce11f91cdb80c353d10b94146fd9859
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A5.1 — Operazioni bulk atomiche repository edifici è completata: `archiveMany`, `restoreMany` e `deleteMany` sono account-scoped, prevalidano l'intera selezione, producono una sola scrittura e impediscono mutazioni parziali in caso di ID inesistente o eliminazione bloccata. Il prossimo punto tecnico è A5.2 — Azioni UI singole e bulk.
+A5.1 e A5.2 sono completate: il repository dispone di lifecycle bulk atomico account-scoped e la lista edifici collega ora le azioni singole e bulk reali con conferma centralizzata, errori di dominio, toast e cleanup della selezione soltanto dopo successo. Il prossimo punto tecnico è A5.3 — Gate tecnico consolidato A5.
 
-A5 resta aperta fino al completamento di A5.2, A5.3 e al PASS browser di A5.4. Dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+A5 resta aperta fino al completamento di A5.3 e al PASS browser di A5.4. Dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -147,29 +147,11 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 **Stato:** aperta; suddivisa in A5.1–A5.4.
 
-### A5.2 — Azioni UI singole e bulk
-
-**Dipendenza:** A5.1 completata.
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- collegare le azioni reali alle righe della tabella;
-- mostrare `Archivia` per gli attivi e `Ripristina` per gli archiviati;
-- supportare eliminazione protetta singola;
-- rendere la floating bar coerente con Attivi/Archivio;
-- supportare archivio, ripristino ed eliminazione bulk;
-- usare conferma modale reale;
-- mostrare successi soltanto dopo mutazione riuscita;
-- mostrare gli errori di dominio senza falso successo;
-- pulire la selezione soltanto dopo operazione riuscita;
-- eliminare i `console.log` operativi;
-- non anticipare modifica/dettaglio A6.
-
 ### A5.3 — Gate tecnico consolidato A5
 
 **Dipendenza:** A5.2 completata.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 
