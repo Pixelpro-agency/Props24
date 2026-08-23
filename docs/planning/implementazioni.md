@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 8f3fba564b1281786307be793c74957b21a2e490
+SHA applicativo esaminato: 0f332913b84831dcc5428e22ebe547256ace8bf3
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A4 — Lista edifici reale è completata. A5 — Azioni edificio è suddivisa in A5.1–A5.4 per separare il contratto bulk atomico del repository, l'integrazione UI, il gate tecnico e il collaudo browser. Il prossimo punto tecnico è A5.1 — Operazioni bulk atomiche repository edifici.
+A5.1 — Operazioni bulk atomiche repository edifici è completata: `archiveMany`, `restoreMany` e `deleteMany` sono account-scoped, prevalidano l'intera selezione, producono una sola scrittura e impediscono mutazioni parziali in caso di ID inesistente o eliminazione bloccata. Il prossimo punto tecnico è A5.2 — Azioni UI singole e bulk.
 
-Dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+A5 resta aperta fino al completamento di A5.2, A5.3 e al PASS browser di A5.4. Dettaglio e modifica restano A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -147,23 +147,11 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 **Stato:** aperta; suddivisa in A5.1–A5.4.
 
-### A5.1 — Operazioni bulk atomiche repository edifici
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- introdurre operazioni bulk account-scoped per archivio, ripristino ed eliminazione;
-- validare l'intero insieme prima della mutazione;
-- eseguire una sola scrittura per operazione bulk;
-- impedire modifiche parziali se un ID non esiste;
-- impedire qualsiasi eliminazione se almeno un edificio selezionato contiene unità collegate;
-- mantenere invariati i contratti lifecycle singoli esistenti;
-- preservare isolamento account e subscription.
-
 ### A5.2 — Azioni UI singole e bulk
 
 **Dipendenza:** A5.1 completata.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 
