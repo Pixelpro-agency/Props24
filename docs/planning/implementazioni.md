@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A3.2 — Accessi UI al Nuovo edificio è completata. Il prossimo punto tecnico è A3.3 — Gate tecnico consolidato A3.
+A3.3 — Gate tecnico consolidato A3 è completata. Il prossimo punto tecnico è A3.4 — Collaudo browser route e accessi.
 
-A3 resta aperta: A3.3 consolida il gate tecnico e A3.4 esegue il collaudo browser. Lista reale A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+A3 resta aperta esclusivamente per il collaudo browser A3.4. Lista reale A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -145,33 +145,13 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 **Dipendenze:** A2 completata; ED-03 validata.
 
-A3.1 e A3.2 sono completate. Restano A3.3–A3.4 per consolidare il gate tecnico ed eseguire il collaudo browser.
-
-### A3.3 — Gate tecnico consolidato A3
-
-**Dipendenza:** A3.2 completata.
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- verificare route `/properties/buildings/new`;
-- verificare pattern `/properties/buildings/:id`;
-- verificare protezione tramite `AuthenticatedRootRoute`;
-- verificare accountId autenticato → `BuildingCreateForm`;
-- verificare create reale e persistenza;
-- verificare post-submit al dettaglio dell'ID creato;
-- verificare che il dettaglio minimo rilegga realmente il record account-scoped;
-- verificare annullamento/ritorno;
-- verificare header, empty state e quick-add;
-- verificare assenza di false route e falsi `console.log`;
-- rieseguire regressioni A2;
-- eseguire suite completa, build, lint mirato e diff check;
-- non introdurre nuove funzionalità.
+A3.1–A3.3 sono completate. Resta esclusivamente A3.4 per il collaudo browser finale di route e accessi.
 
 ### A3.4 — Collaudo browser route e accessi
 
-**Dipendenza:** A3.3 verde.
+**Dipendenza:** A3.3 completata e verde.
+
+**Stato:** prossima task.
 
 **Modalità:** `DESKTOP_COLLAUDATORE`.
 

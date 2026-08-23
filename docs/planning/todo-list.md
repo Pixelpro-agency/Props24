@@ -20,7 +20,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: A3.3 — Gate tecnico consolidato A3
+- Prossimo punto tecnico: A3.4 — Collaudo browser route e accessi
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 60 task non concluse e non vanno sommati nuovamente. A1.1–A1.4, A2.1–A2.4, A3.1–A3.4, B1.1–B1.4, D1A/D1B, D2A–D2D e F3.1–F3.4 sono sottopunti e non aumentano il numero delle 72 task principali.
 
@@ -43,8 +43,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 > - [ ] A3 — Route e accessi edificio — **APERTO; suddiviso in A3.1–A3.4**
 >   - [x] A3.1 — Route, pagina Nuovo edificio e destinazione dettaglio minima — **COMPLETATA; 62 file / 827 test, build e lint positivi**
 >   - [x] A3.2 — Accessi UI al Nuovo edificio — **COMPLETATA; 63 file / 830 test, build e lint positivi**
->   - [ ] A3.3 — Gate tecnico consolidato A3 — **PROSSIMA TASK**
->   - [ ] A3.4 — Collaudo browser route e accessi — **DOPO A3.3; chiude A3**
+>   - [x] A3.3 — Gate tecnico consolidato A3 — **COMPLETATA; 64 file / 836 test, build e lint positivi**
+>   - [ ] A3.4 — Collaudo browser route e accessi — **PROSSIMA TASK; chiude A3 solo con PASS**
 > - [ ] A4 — Lista edifici reale — **DOPO A1/A3**
 > - [ ] A5 — Azioni edificio — **DOPO A4**
 > - [ ] A6 — Dettaglio e modifica edificio — **DOPO il consolidamento del flusso edificio**
@@ -72,8 +72,8 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
 - [ ] A3 — Route e accessi edificio — **APERTO; suddiviso in A3.1–A3.4; ED-03 validata**
   - [x] A3.1 — Route, pagina Nuovo edificio e destinazione dettaglio minima — **COMPLETATA; 62 file / 827 test, build e lint positivi**
   - [x] A3.2 — Accessi UI al Nuovo edificio — **COMPLETATA; 63 file / 830 test, build e lint positivi**
-  - [ ] A3.3 — Gate tecnico consolidato A3 — **PROSSIMA TASK**
-  - [ ] A3.4 — Collaudo browser route e accessi — **DOPO A3.3; chiude A3**
+  - [x] A3.3 — Gate tecnico consolidato A3 — **COMPLETATA; 64 file / 836 test, build e lint positivi**
+  - [ ] A3.4 — Collaudo browser route e accessi — **PROSSIMA TASK; chiude A3 solo con PASS**
 - [ ] A4 — Lista edifici reale — **APERTO; dipende da A1, A3**
 - [ ] A5 — Azioni edificio — **APERTO; ED-05 validata; dipende da A4**
 - [ ] A6 — Dettaglio e modifica edificio — **APERTO; ED-03 ed ED-05 validate**
@@ -241,9 +241,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Gate tecnico consolidato form edificio — A2.4
   - [x] Route, pagina Nuovo edificio e dettaglio minimo — A3.1
   - [x] Accessi UI al Nuovo edificio — A3.2
+  - [x] Gate tecnico consolidato routing edifici — A3.3
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di A3.2: 63 file, 830 test passati, 0 falliti, 0 saltati; build e lint positivi.
+Baseline verificata al termine di A3.3: 64 file, 836 test passati, 0 falliti, 0 saltati; build e lint positivi.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
