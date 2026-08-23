@@ -131,9 +131,9 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A3.3 — Gate tecnico consolidato A3 è completata. Il prossimo punto tecnico è A3.4 — Collaudo browser route e accessi.
+A3 — Route e accessi edificio è completata: A3.1–A3.3 sono verificate tecnicamente e A3.4 ha concluso il collaudo browser con PASS e nessun finding. Il prossimo punto tecnico è A4 — Lista edifici reale.
 
-A3 resta aperta esclusivamente per il collaudo browser A3.4. Lista reale A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
+La lista edifici reale resta A4; lifecycle A5/A6; integrazione bozza e guard resta F3.4 dopo il completamento del Blocco A.
 
 Nel Blocco F resta aperta F3.4 — integrazione delle modifiche non salvate in Nuovo edificio — dopo il completamento del Blocco A; F4 resta successiva a F3.4.
 
@@ -141,40 +141,11 @@ Inviti, portale inquilino, workspace professionali, visure, servizi backend e KP
 
 # BLOCCO A — Edifici
 
-## TASK A3 — Route e accessi edificio
-
-**Dipendenze:** A2 completata; ED-03 validata.
-
-A3.1–A3.3 sono completate. Resta esclusivamente A3.4 per il collaudo browser finale di route e accessi.
-
-### A3.4 — Collaudo browser route e accessi
-
-**Dipendenza:** A3.3 completata e verde.
-
-**Stato:** prossima task.
-
-**Modalità:** `DESKTOP_COLLAUDATORE`.
-
-**Obiettivo:**
-
-- verificare accesso da `Nuovo edificio` nell'header;
-- verificare accesso dalla CTA dell'empty state;
-- verificare accesso dal quick-add Edifici della sidebar;
-- verificare apertura diretta di `/properties/buildings/new`;
-- verificare protezione della route senza sessione;
-- verificare annullamento/ritorno;
-- creare realmente un edificio di prova;
-- verificare post-submit a `/properties/buildings/:id`;
-- verificare che la destinazione mostri il Building appena creato;
-- verificare reload della destinazione;
-- controllare console ed errori browser;
-- non modificare codice o documentazione.
-
-A3.4 chiude A3 soltanto con collaudo positivo.
-
 ## TASK A4 — Lista edifici reale
 
-**Dipendenze:** A1, A3.
+**Dipendenze:** A1 e A3 completate.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 
