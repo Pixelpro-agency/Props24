@@ -15,6 +15,14 @@ export type BuildingCreateInput = Pick<
 
 export type BuildingUpdateInput = Partial<EditableBuildingFields>;
 
+export type BuildingBulkOperation = 'archive' | 'restore' | 'delete';
+
+export interface BuildingBulkResult {
+    operation: BuildingBulkOperation;
+    ids: string[];
+    count: number;
+}
+
 export interface BuildingRepository {
     list(): BuildingRecord[];
     getById(id: string): BuildingRecord | null;
@@ -23,6 +31,9 @@ export interface BuildingRepository {
     archive(id: string): BuildingRecord;
     restore(id: string): BuildingRecord;
     delete(id: string): boolean;
+    archiveMany(ids: string[]): BuildingBulkResult;
+    restoreMany(ids: string[]): BuildingBulkResult;
+    deleteMany(ids: string[]): BuildingBulkResult;
     subscribe(callback: () => void): () => void;
 }
 
@@ -43,6 +54,14 @@ function requireBuilding(database: LocalDatabase, id: string): BuildingRecord {
 
 function verifiedBuilding(database: LocalDatabase, id: string): BuildingRecord {
     return requireBuilding(database, id);
+}
+
+function uniqueIds(ids: string[]): string[] {
+    return [...new Set(ids)];
+}
+
+function bulkResult(operation: BuildingBulkOperation, ids: string[]): BuildingBulkResult {
+    return { operation, ids, count: ids.length };
 }
 
 function createCandidate(input: BuildingCreateInput, now: string): BuildingRecord {
@@ -85,6 +104,22 @@ export function createBuildingRepositoryOperations(gateway: BuildingDatabaseGate
         const candidate = { ...current, archived, updatedAt: timestamp() };
         const buildings = database.buildings.map((item) => item.id === id ? candidate : item);
         return saveBuilding({ ...database, buildings }, candidate);
+    }
+
+    function setArchivedMany(ids: string[], archived: boolean): BuildingBulkResult {
+        const selectedIds = uniqueIds(ids);
+        const operation = archived ? 'archive' : 'restore';
+        if (selectedIds.length === 0) return bulkResult(operation, selectedIds);
+
+        const database = gateway.getDatabase();
+        selectedIds.forEach((id) => requireBuilding(database, id));
+        const selected = new Set(selectedIds);
+        const now = timestamp();
+        const buildings = database.buildings.map((building) => selected.has(building.id)
+            ? { ...building, archived, updatedAt: now }
+            : building);
+        gateway.saveDatabase({ ...database, buildings });
+        return bulkResult(operation, selectedIds);
     }
 
     return {
@@ -139,6 +174,33 @@ export function createBuildingRepositoryOperations(gateway: BuildingDatabaseGate
                 buildings: database.buildings.filter((building) => building.id !== id),
             });
             return true;
+        },
+        archiveMany(ids: string[]): BuildingBulkResult {
+            return setArchivedMany(ids, true);
+        },
+        restoreMany(ids: string[]): BuildingBulkResult {
+            return setArchivedMany(ids, false);
+        },
+        deleteMany(ids: string[]): BuildingBulkResult {
+            const selectedIds = uniqueIds(ids);
+            if (selectedIds.length === 0) return bulkResult('delete', selectedIds);
+
+            const database = gateway.getDatabase();
+            selectedIds.forEach((id) => requireBuilding(database, id));
+            for (const id of selectedIds) {
+                const linkedPropertyIds = database.properties
+                    .filter((property) => property.relations.buildingId === id)
+                    .map((property) => property.id);
+                if (linkedPropertyIds.length > 0) {
+                    throw new BuildingDeleteBlockedError(id, linkedPropertyIds);
+                }
+            }
+            const selected = new Set(selectedIds);
+            gateway.saveDatabase({
+                ...database,
+                buildings: database.buildings.filter((building) => !selected.has(building.id)),
+            });
+            return bulkResult('delete', selectedIds);
         },
     };
 }
