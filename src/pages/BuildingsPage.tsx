@@ -4,6 +4,7 @@ import { motion, type Variants } from 'framer-motion';
 import { useBuildings } from '../hooks/useBuildings';
 import { useTableSelection } from '../hooks/useTableSelection';
 import type { BuildingStatus } from '../types/building';
+import { useAuth } from '../auth/AuthContext';
 
 
 import { BuildingsHeader } from '../components/buildings/BuildingsHeader';
@@ -39,6 +40,7 @@ const itemVariants: Variants = {
 
 export function BuildingsPage() {
     const navigate = useNavigate();
+    const { account } = useAuth();
     const {
         view,
         searchQuery,
@@ -48,7 +50,7 @@ export function BuildingsPage() {
         setSearchQuery,
         setSortField,
         setPageSize,
-    } = useBuildings();
+    } = useBuildings(account?.id ?? null);
 
     const { rowSelection, setRowSelection, selectedCount, clearSelection } = useTableSelection();
 
@@ -60,6 +62,8 @@ export function BuildingsPage() {
         },
         [setView, clearSelection],
     );
+
+    if (!account) return null;
 
     // Handlers
     function handleNewBuilding() {

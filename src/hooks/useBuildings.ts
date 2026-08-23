@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from 'react';
-import { mockBuildings } from '../data/mockBuildings';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { createBuildingRepository } from '../db/buildingRepository';
+import type { BuildingRecord } from '../db/database.types';
 import type { Building, BuildingStatus, BuildingSortField } from '../types/building';
 
 interface UseBuildingsReturn {
@@ -21,12 +22,47 @@ interface UseBuildingsReturn {
     resetFilters: () => void;
 }
 
-export function useBuildings(): UseBuildingsReturn {
+type BuildingSource = { accountId: string; buildings: Building[] } | null;
+
+function toBuilding(record: BuildingRecord): Building {
+    return {
+        id: record.id,
+        address: [record.address, record.city].map((part) => part.trim()).filter(Boolean).join(', '),
+        size: record.size,
+        unitsCount: record.unitsCount,
+        description: record.description,
+        status: record.archived ? 'archived' : 'active',
+    };
+}
+
+export function useBuildings(accountId: string | null): UseBuildingsReturn {
     const [view, setView] = useState<BuildingStatus>('active');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortField, setSortFieldState] = useState<BuildingSortField>('BuildingAddress');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [pageSize, setPageSize] = useState(100);
+    const [source, setSource] = useState<BuildingSource>(null);
+    const repository = useMemo(
+        () => accountId === null ? null : createBuildingRepository({ accountId }),
+        [accountId],
+    );
+
+    useEffect(() => {
+        if (!repository || accountId === null) {
+            return;
+        }
+
+        const refresh = () => {
+            setSource({ accountId, buildings: repository.list().map(toBuilding) });
+        };
+        refresh();
+        return repository.subscribe(refresh);
+    }, [accountId, repository]);
+
+    const buildings = useMemo(
+        () => source?.accountId === accountId ? source.buildings : [],
+        [accountId, source],
+    );
 
     // Toggle sort direction if same field, otherwise set new field ascending
     const setSortField = useCallback((field: BuildingSortField) => {
@@ -42,7 +78,7 @@ export function useBuildings(): UseBuildingsReturn {
 
     const filteredData = useMemo(() => {
         // 1. Filter by view (active/archived)
-        let result = mockBuildings.filter((b) => b.status === view);
+        let result = buildings.filter((b) => b.status === view);
 
         // 2. Filter by search query
         if (searchQuery.trim()) {
@@ -76,7 +112,7 @@ export function useBuildings(): UseBuildingsReturn {
         });
 
         return result;
-    }, [view, searchQuery, sortField, sortDirection]);
+    }, [buildings, view, searchQuery, sortField, sortDirection]);
 
     const resetFilters = useCallback(() => {
         setSearchQuery('');

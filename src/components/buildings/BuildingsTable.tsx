@@ -121,6 +121,7 @@ export function BuildingsTable({
     const table = useReactTable({
         data,
         columns,
+        getRowId: (row) => row.id,
         state: {
             sorting,
             rowSelection,

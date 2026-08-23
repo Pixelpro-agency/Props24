@@ -4,10 +4,23 @@ import React from 'react';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BuildingsPage } from '../../src/pages/BuildingsPage';
 import { MenuItem } from '../../src/components/layout/MenuItem';
 import { menuData } from '../../src/data/menu';
+
+vi.mock('../../src/auth/AuthContext', () => ({
+    useAuth: () => ({
+        account: {
+            id: 'user-9801', firstName: 'Test', lastName: 'Account',
+            email: 'user-9801@example.test', fiscalCode: 'TSTCCT00A00A000A',
+            password: 'test-password', createdAt: '2026-08-23T00:00:00.000Z',
+        },
+        isAuthenticated: true,
+        isInitializing: false,
+        login: vi.fn(), register: vi.fn(), logout: vi.fn(),
+    }),
+}));
 
 function buildingsRouter(element: React.ReactNode) {
     return createMemoryRouter([
@@ -16,14 +29,21 @@ function buildingsRouter(element: React.ReactNode) {
     ], { initialEntries: ['/properties/buildings'] });
 }
 
-afterEach(cleanup);
+beforeEach(() => localStorage.clear());
+afterEach(() => {
+    cleanup();
+    localStorage.clear();
+});
 
 describe('building create UI access', () => {
     it('naviga dal pulsante Nuovo edificio dell’header', async () => {
         const user = userEvent.setup();
         const router = buildingsRouter(<BuildingsPage />);
         render(<RouterProvider router={router} />);
-        await user.click(screen.getByRole('button', { name: 'Nuovo edificio' }));
+        expect(screen.getByRole('heading', { name: "Qui non c'è nulla…" })).toBeTruthy();
+        const heading = screen.getByRole('heading', { name: 'Edifici' });
+        const header = heading.parentElement!;
+        await user.click(within(header).getByRole('button', { name: 'Nuovo edificio' }));
         expect(await screen.findByText('Destinazione Nuovo edificio')).toBeTruthy();
         expect(router.state.location.pathname).toBe('/properties/buildings/new');
     });

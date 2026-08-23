@@ -115,7 +115,9 @@ describe('A3 consolidated building routing gate', () => {
         const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
         const user = userEvent.setup();
         const router = renderApp('/properties/buildings');
-        await user.click(await screen.findByRole('button', { name: 'Nuovo edificio' }));
+        const heading = await screen.findByRole('heading', { name: 'Edifici' });
+        const header = heading.parentElement!;
+        await user.click(within(header).getByRole('button', { name: 'Nuovo edificio' }));
         expect(router.state.location.pathname).toBe('/properties/buildings/new');
         expect(await screen.findByRole('heading', { name: 'Nuovo edificio' })).toBeTruthy();
         change('identifier', 'Edificio Gate A3');
