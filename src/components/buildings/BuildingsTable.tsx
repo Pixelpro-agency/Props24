@@ -11,6 +11,7 @@ import {
 } from '@tanstack/react-table';
 import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import { Link, useInRouterContext } from 'react-router-dom';
 import type { Building } from '../../types/building';
 
 interface BuildingsTableProps {
@@ -22,6 +23,14 @@ interface BuildingsTableProps {
 }
 
 const columnHelper = createColumnHelper<Building>();
+
+function BuildingAddressLink({ building }: { building: Building }) {
+    const to = `/properties/buildings/${building.id}`;
+    const className = 'font-medium text-gray-800 hover:text-green-700 hover:underline';
+    return useInRouterContext()
+        ? <Link className={className} to={to}>{building.address}</Link>
+        : <a className={className} href={to}>{building.address}</a>;
+}
 
 export function BuildingsTable({
     data,
@@ -62,7 +71,7 @@ export function BuildingsTable({
                 id: 'BuildingAddress',
                 header: 'Edificio',
                 cell: (info) => (
-                    <span className="font-medium text-gray-800">{info.getValue()}</span>
+                    <BuildingAddressLink building={info.row.original} />
                 ),
                 size: 300,
             }),
