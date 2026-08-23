@@ -131,43 +131,13 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A6 è completata integralmente: A6.1–A6.5 sono state implementate e verificate.
+Il Blocco A — Edifici è completato integralmente: A1–A7 sono concluse.
 
-Il flusso Building dispone ora di lista reale, dettaglio account-scoped, unità collegate tramite `relations.buildingId`, creazione di nuove unità nel contesto Building, modifica reale, lifecycle protetto e gate tecnico consolidato.
+La baseline applicativa finale del blocco è 73 file e 902 test passati, con build e lint positivi. Il collaudo browser finale A7 è risultato PASS senza finding.
 
-Il gate A6.5 attraversa lista → dettaglio → dettaglio unità, creazione di più unità nello stesso Building, subscription e remount, modifica senza propagazione automatica dell'indirizzo, archive/restore/delete, delete bloccata e isolamento account.
+Il browser QA ha verificato create e reload, lista e ricerca, dettaglio Building, due unità nello stesso Building, navigazione al dettaglio unità, `unitsCount`, modifica Building, mancata propagazione automatica dell'indirizzo alle unità esistenti, nuovo Add Unit sulla location aggiornata, archive/restore, delete libera e bloccata, persistenza e isolamento tra account.
 
-La baseline tecnica al termine di A6 è 73 file e 902 test passati, con build e lint positivi.
-
-Il prossimo punto operativo è A7 — Collaudo edifici, da eseguire in modalità `DESKTOP_COLLAUDATORE` senza modifiche al codice.
-
-# BLOCCO A — Edifici
-
-## TASK A7 — Collaudo edifici
-
-**Dipendenze:** A1–A6 completate.
-
-**Stato:** prossima task.
-
-Verificare:
-
-- create;
-- reload;
-- lista e ricerca;
-- dettaglio Building;
-- unità collegate;
-- navigazione unità;
-- Add Unit dal Building;
-- due unità nello stesso Building;
-- modifica Building;
-- nessuna propagazione automatica dell'indirizzo alle unità esistenti;
-- archivio e ripristino;
-- eliminazione libera e bloccata;
-- isolamento tra account;
-- `unitsCount`;
-- persistenza dopo reload;
-- console;
-- nessuna modifica del codice durante il collaudo.
+Il prossimo punto tecnico è F3.4 — Integrazione bozze e guard in Nuovo edificio.
 
 # BLOCCO B — Unità
 
@@ -579,9 +549,9 @@ Verificare:
 
 ### F3.4 — Nuovo edificio
 
-**Stato:** APERTA.
+**Stato:** PROSSIMA TASK.
 
-**Dipendenza:** completamento del Blocco A.
+**Dipendenza:** Blocco A completato.
 
 **Obiettivo:**
 

@@ -14,13 +14,13 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 12
+- Completate integralmente: 13
 - Parzialmente completate: 3
-- Non concluse: 57
+- Non concluse: 56
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: A7 — Collaudo edifici
+- Prossimo punto tecnico: F3.4 — Integrazione bozze e guard in Nuovo edificio
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 57 task non concluse e non vanno sommati nuovamente.
 
@@ -56,9 +56,9 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] A6.2 — Aggiungi unità dal Building con contesto `buildingId` — **COMPLETATA; 70 file / 879 test, build e lint positivi**
 >   - [x] A6.3 — Modifica Building — **COMPLETATA; 71 file / 887 test, build e lint positivi**
 >   - [x] A6.4 — Lifecycle dal dettaglio Building — **COMPLETATA; 72 file / 894 test, build e lint positivi**
->   - [x] A6.5 — Gate tecnico consolidato A6 — **COMPLETATA; 73 file / 902 test, build e lint positivi; A6 chiusa**
-> - [ ] A7 — Collaudo edifici — **PROSSIMA TASK**
-> - [ ] F3.4 — Integrazione bozze e guard in Nuovo edificio — **DOPO il Blocco A**
+>   - [x] A6.5 — Gate tecnico consolidato A6 — **COMPLETATA; 73 file / 902 test, build e lint positivi**
+> - [x] A7 — Collaudo edifici — **COMPLETATA; PASS; nessun finding; Blocco A chiuso**
+> - [ ] F3.4 — Integrazione bozze e guard in Nuovo edificio — **PROSSIMA TASK**
 > - [ ] F4 — Collaudo trasversale delle modifiche non salvate — **DOPO F3.4**
 
 Questa sezione mostra soltanto il percorso operativo corrente e non sostituisce stato, dipendenze e criteri di chiusura riportati nei rispettivi blocchi.
@@ -95,7 +95,7 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] A6.3 — Modifica Building — **COMPLETATA**
   - [x] A6.4 — Lifecycle dal dettaglio Building — **COMPLETATA**
   - [x] A6.5 — Gate tecnico consolidato A6 — **COMPLETATA**
-- [ ] A7 — Collaudo edifici — **PROSSIMA TASK; A1–A6 completate**
+- [x] A7 — Collaudo edifici — **COMPLETATA; PASS; nessun finding; Blocco A completato**
 
 ## Blocco B — Unità
 
@@ -176,11 +176,11 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] F2C — Hook React Router, beforeunload e dialog accessibile
   - [x] F2C-FIX1 — Compatibilità reale con React Strict Mode
   - [x] F2D — Integrazione logout e gate finale
-- [ ] F3 — Integrazioni — **APERTO; dipendenze tecniche F1/F2 soddisfatte**
+- [ ] F3 — Integrazioni — **APERTO; resta esclusivamente F3.4**
   - [x] F3.1 — Nuovo inquilino — **COMPLETATA**
   - [x] F3.2 — Nuova unità — **COMPLETATA**
   - [x] F3.3 — Nuova locazione — **COMPLETATA**
-  - [ ] F3.4 — Nuovo edificio, dopo il Blocco A — **APERTO**
+  - [ ] F3.4 — Nuovo edificio — **PROSSIMA TASK; Blocco A completato**
   - [ ] Sostituire i flussi legacy residui e integrare restore/cancellazione delle bozze in Nuovo edificio — **APERTO**
   - [ ] Applicare al form residuo Nuovo edificio il contratto manuale senza debounce o autosave; Nuovo inquilino, Nuova unità e Nuova locazione sono integrati — **APERTO**
   - [ ] Test end-to-end dei form — **APERTO**
@@ -271,9 +271,10 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Modifica Building dal dettaglio — A6.3
   - [x] Lifecycle dal dettaglio Building — A6.4
   - [x] Gate tecnico consolidato A6 — A6.5
+  - [x] Collaudo browser finale edifici — A7
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline verificata al termine di A6.5: 73 file, 902 test passati, 0 falliti, 0 saltati; build e lint positivi.
+Baseline tecnica del Blocco A: 73 file, 902 test passati, 0 falliti, 0 saltati; build e lint positivi; collaudo browser A7 PASS senza finding.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
