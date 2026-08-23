@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: bf215aef435ee4bb49bc11e08a65c38d2260f32d
+SHA applicativo esaminato: ea44923d9eb0317728f0f707ea75a30c27139a49
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,13 +131,13 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-A6.1–A6.3 sono completate.
+A6.1–A6.4 sono completate.
 
-Il dettaglio Building mostra le unità collegate tramite `relations.buildingId`, consente la creazione di nuove unità nel contesto del Building e permette ora la modifica reale del Building sulla stessa route di dettaglio.
+Il dettaglio Building mostra le unità collegate tramite `relations.buildingId`, consente la creazione di nuove unità nel contesto del Building, la modifica reale del Building e ora anche il lifecycle completo dal dettaglio.
 
-La modifica riusa il `BuildingForm` canonico, usa `repository.update` account-scoped, rispetta ED-01/ED-02 con esclusione del record corrente e preserva ID, lifecycle, relazioni e `unitsCount`. Il cambio indirizzo del Building non riscrive automaticamente i dati delle Property già collegate.
+Archive, restore e delete riusano il repository Building account-scoped e i contratti A5. L'archiviazione mantiene intatte le Property collegate, il ripristino aggiorna il dettaglio tramite subscription e la delete è protetta: con unità collegate viene bloccata dal dominio, mentre per un Building libero elimina realmente il record e torna alla lista.
 
-Il prossimo punto tecnico è A6.4 — Lifecycle dal dettaglio Building. A6 resta aperta fino al completamento di A6.4–A6.5.
+Il prossimo punto tecnico è A6.5 — Gate tecnico consolidato A6. A6 resta aperta fino al completamento di A6.5.
 
 # BLOCCO A — Edifici
 
@@ -158,25 +158,11 @@ Il prossimo punto tecnico è A6.4 — Lifecycle dal dettaglio Building. A6 resta
 - il cambio indirizzo Building non riscrive automaticamente gli indirizzi delle unità;
 - ED-03, ED-04 ed ED-05 restano vincolanti.
 
-### A6.4 — Lifecycle dal dettaglio Building
-
-**Dipendenza:** A6.3 completata.
-
-**Stato:** prossima task.
-
-**Obiettivo:**
-
-- archiviare dal dettaglio;
-- ripristinare dal dettaglio;
-- eliminare con conferma esplicita;
-- riusare i contratti A5;
-- bloccare la delete con unità collegate;
-- dopo delete riuscita tornare alla lista;
-- nessuna cancellazione parziale.
-
 ### A6.5 — Gate tecnico consolidato A6
 
 **Dipendenza:** A6.4 completata.
+
+**Stato:** prossima task.
 
 **Obiettivo:**
 
