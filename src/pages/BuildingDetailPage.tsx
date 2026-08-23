@@ -1,9 +1,15 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import type { PropertyRecord } from '../db/database.types';
 import { useBuildingDetail } from '../hooks/useBuildingDetail';
 import { BuildingEditForm } from '../components/building-form/BuildingEditForm';
+import {
+    BuildingActionModal,
+    type BuildingActionOperation,
+} from '../components/buildings/BuildingActionModal';
+import { StatusToast, type StatusToastState } from '../components/ui/StatusToast';
+import { createBuildingRepository } from '../db/buildingRepository';
 
 function UnitCard({ unit }: { unit: PropertyRecord }) {
     const data = unit.formData;
@@ -60,9 +66,16 @@ function BuildingDetailContent({
     accountId: string | null;
     buildingId: string | null;
 }) {
+    const navigate = useNavigate();
     const { loading, building, units } = useBuildingDetail(accountId, buildingId);
     const [isEditing, setIsEditing] = useState(false);
     const [updateSuccess, setUpdateSuccess] = useState(false);
+    const [pendingAction, setPendingAction] = useState<BuildingActionOperation | null>(null);
+    const [lifecycleToast, setLifecycleToast] = useState<StatusToastState | null>(null);
+    const repository = useMemo(
+        () => accountId ? createBuildingRepository({ accountId }) : null,
+        [accountId],
+    );
 
     if (loading) {
         return <main className="mx-auto w-full max-w-5xl p-6"><p role="status">Caricamento edificio...</p></main>;
@@ -82,9 +95,43 @@ function BuildingDetailContent({
     }
 
     const locality = [building.postalCode, building.city].filter(Boolean).join(' ');
+    const requestLifecycleAction = (operation: BuildingActionOperation) => {
+        setLifecycleToast(null);
+        setUpdateSuccess(false);
+        setPendingAction(operation);
+    };
+    const confirmLifecycleAction = () => {
+        if (!pendingAction || !repository) return;
+        try {
+            if (pendingAction === 'archive') {
+                repository.archive(building.id);
+                setPendingAction(null);
+                setLifecycleToast({ title: 'Successo', message: 'Edificio archiviato.' });
+                return;
+            }
+            if (pendingAction === 'restore') {
+                repository.restore(building.id);
+                setPendingAction(null);
+                setLifecycleToast({ title: 'Successo', message: 'Edificio ripristinato.' });
+                return;
+            }
+            repository.delete(building.id);
+            setPendingAction(null);
+            navigate('/properties/buildings', { replace: true });
+        } catch (error) {
+            setLifecycleToast({
+                variant: 'error',
+                title: 'Errore',
+                message: error instanceof Error
+                    ? error.message
+                    : "Operazione sull'edificio non riuscita.",
+            });
+        }
+    };
 
     return (
         <main className="mx-auto w-full max-w-5xl p-6">
+            <StatusToast toast={lifecycleToast} onClose={() => setLifecycleToast(null)} />
             <Link className="text-green-700 hover:underline" to="/properties/buildings">Torna agli edifici</Link>
             {updateSuccess && (
                 <p role="status" className="mt-4 rounded-md border border-green-200 bg-green-50 p-3 text-green-800">
@@ -129,6 +176,30 @@ function BuildingDetailContent({
                 >
                     Modifica
                 </button>
+                {building.archived ? (
+                    <button
+                        type="button"
+                        onClick={() => requestLifecycleAction('restore')}
+                        className="ml-3 mt-4 rounded-md border border-green-600 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50"
+                    >
+                        Ripristina
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => requestLifecycleAction('archive')}
+                        className="ml-3 mt-4 rounded-md border border-amber-500 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50"
+                    >
+                        Archivia
+                    </button>
+                )}
+                <button
+                    type="button"
+                    onClick={() => requestLifecycleAction('delete')}
+                    className="ml-3 mt-4 rounded-md border border-red-500 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+                >
+                    Elimina
+                </button>
                 <address className="mt-4 not-italic text-gray-700">
                     <p>{building.address}</p>
                     {building.address2 && <p>{building.address2}</p>}
@@ -159,6 +230,15 @@ function BuildingDetailContent({
                     </ul>
                 )}
             </section>
+            {pendingAction && (
+                <BuildingActionModal
+                    isOpen
+                    operation={pendingAction}
+                    count={1}
+                    onClose={() => setPendingAction(null)}
+                    onConfirm={confirmLifecycleAction}
+                />
+            )}
         </main>
     );
 }
