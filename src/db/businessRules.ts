@@ -25,6 +25,58 @@ function normalizeCountry(value: string): string {
     return String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, '').toUpperCase();
 }
 
+export type PropertyCadastralIdentity = Pick<
+    PropertyFormData,
+    | 'PropertyCountry'
+    | 'PropertyCadastreMunicipalityCode'
+    | 'PropertyCadastreRegistryType'
+    | 'PropertyCadastreMunicipality'
+    | 'PropertyUrbanSection'
+    | 'PropertyCadastreSheet'
+    | 'PropertyCadastrePart'
+    | 'PropertyCadastreSub'
+>;
+
+function normalizeCadastralCode(value: string): string {
+    return String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, '').toUpperCase();
+}
+
+function normalizeCadastralMunicipality(value: string): string {
+    return String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, ' ').toUpperCase();
+}
+
+export function buildPropertyCadastralKey(identity: PropertyCadastralIdentity): string | null {
+    const country = normalizeCadastralCode(identity.PropertyCountry);
+    const municipalityCode = normalizeCadastralCode(identity.PropertyCadastreMunicipalityCode);
+    const registryType = identity.PropertyCadastreRegistryType;
+    const urbanSection = normalizeCadastralCode(identity.PropertyUrbanSection);
+    const municipality = normalizeCadastralMunicipality(identity.PropertyCadastreMunicipality);
+    const sheet = normalizeCadastralCode(identity.PropertyCadastreSheet);
+    const part = normalizeCadastralCode(identity.PropertyCadastrePart);
+    const sub = normalizeCadastralCode(identity.PropertyCadastreSub);
+
+    if (
+        !country
+        || !municipalityCode
+        || (registryType !== 'terreni' && registryType !== 'urbano')
+        || !sheet
+        || !part
+    ) {
+        return null;
+    }
+
+    return JSON.stringify({
+        country,
+        municipalityCode,
+        registryType,
+        urbanSection: urbanSection || null,
+        municipality: municipality || null,
+        sheet,
+        part,
+        sub: sub || null,
+    });
+}
+
 export type BuildingLocation = Pick<BuildingRecord, 'address' | 'city' | 'postalCode' | 'country'>;
 
 export function normalizeBuildingLocationKey(building: BuildingLocation): string {

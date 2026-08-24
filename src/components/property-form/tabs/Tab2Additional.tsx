@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { FormSection } from '../ui/FormSection';
 import { ToggleSwitch } from '../ui/ToggleSwitch';
 import { CheckboxGrid } from '../ui/CheckboxGrid';
+import { Select } from '../ui/Select';
 import { TextInput } from '../ui/TextInput';
 import type { PropertyFormData, StoredLocalFile } from '../schema';
 
@@ -290,10 +291,22 @@ export function Tab2Additional() {
                         </div>
                     </div>
 
+                    <TextInput name="PropertyCadastreMunicipalityCode" label="Codice Comune" orientation="horizontal" />
+                    <Select
+                        name="PropertyCadastreRegistryType"
+                        label="Tipo catasto"
+                        orientation="horizontal"
+                        options={[
+                            { value: '', label: 'Non specificato' },
+                            { value: 'terreni', label: 'Terreni' },
+                            { value: 'urbano', label: 'Urbano' },
+                        ]}
+                    />
+                    <TextInput name="PropertyCadastreMunicipality" label="Comune catastale" orientation="horizontal" />
+                    <TextInput name="PropertyUrbanSection" label="Sezione urbana" orientation="horizontal" />
                     <TextInput name="PropertyCadastreSheet" label="Foglio" orientation="horizontal" />
                     <TextInput name="PropertyCadastrePart" label="Particella" orientation="horizontal" />
                     <TextInput name="PropertyCadastreSub" label="Subalterno" orientation="horizontal" />
-                    <TextInput name="PropertyUrbanSection" label="Sezione urbana" orientation="horizontal" />
                     <TextInput name="PropertyCadastreCat" label="Categoria catastale" orientation="horizontal" />
                     <TextInput name="PropertyCadastralIncome" label="Rendita catastale" orientation="horizontal" />
                 </div>
