@@ -20,7 +20,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: B2 — Duplicati unità
+- Prossimo punto tecnico: B2.2 — Enforcement repository dei duplicati catastali
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 54 task non concluse e non vanno sommati nuovamente.
 
@@ -60,7 +60,11 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 > - [x] A7 — Collaudo edifici — **COMPLETATA; PASS; nessun finding; Blocco A chiuso**
 > - [x] F3.4 — Integrazione bozze e guard in Nuovo edificio — **COMPLETATA; 76 file / 927 test, build positiva, lint mirato F3.4 positivo; commit dbe8a9a2910848196874305aec57f73e5783aa1a**
 > - [x] F4 — Collaudo trasversale delle modifiche non salvate — **COMPLETATA; PASS; nessun finding; F4-10 limitazione strumentale sul dialog nativo beforeunload; Blocco F chiuso**
-> - [ ] B2 — Duplicati unità — **PROSSIMA TASK**
+> - [ ] B2 — Duplicati unità — **IN CORSO; B2.1 completata**
+>   - [x] B2.1 — Contratto identità catastale delle unità — **COMPLETATA; 77 file / 952 test, build positiva, lint mirato positivo; commit 8fdee1577cdc5a18fff2468a6b4dda1cd826a0fe**
+>   - [ ] B2.2 — Enforcement repository dei duplicati catastali — **PROSSIMA TASK**
+>   - [ ] B2.3 — Gate tecnico consolidato B2 — **APERTO**
+>   - [ ] B2.4 — Collaudo browser duplicati unità — **APERTO**
 
 Questa sezione mostra soltanto il percorso operativo corrente e non sostituisce stato, dipendenze e criteri di chiusura riportati nei rispettivi blocchi.
 
@@ -105,7 +109,11 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] B1.2 — Stato form e bozza della relazione Building — **COMPLETATA**
   - [x] B1.3 — Nuova unità standalone e boundary relazione Building — **COMPLETATA E RIALLINEATA**
   - [x] B1.4 — Gate tecnico consolidato B1 — **COMPLETATA**
-- [ ] B2 — Duplicati unità — **APERTO; UN-04 validata; fallback basato sull'indirizzo rimosso in A6.2, resta da implementare la chiave catastale completa**
+- [ ] B2 — Duplicati unità — **IN CORSO; UN-04 validata; B2.1 completata, resta enforcement repository e gate finale**
+  - [x] B2.1 — Contratto identità catastale delle unità — **COMPLETATA; campi catastali mancanti, chiave canonica pura e copertura automatizzata verificate; 77 file / 952 test**
+  - [ ] B2.2 — Enforcement repository dei duplicati catastali — **PROSSIMA TASK**
+  - [ ] B2.3 — Gate tecnico consolidato B2 — **APERTO**
+  - [ ] B2.4 — Collaudo browser duplicati unità — **APERTO**
 - [ ] B3 — Campi placeholder — **APERTO; UN-01, UN-02 e UN-03 validate**
 - [ ] B4 — ID annidati canonici — **APERTO**
 - [x] B5 — Bozza unità — **COMPLETATA; repository condiviso, salvataggio manuale, restore, guard e cleanup verificati**
@@ -272,11 +280,12 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Collaudo browser finale edifici — A7
   - [x] Integrazione automatizzata bozze e guard Nuovo edificio — F3.4
   - [x] Collaudo browser trasversale modifiche non salvate — F4
+    - [x] Contratto identità catastale delle unità — B2.1
   - [ ] Copertura progressiva delle task future — **APERTO**
 
 Baseline tecnica del Blocco A: 73 file, 902 test passati, 0 falliti, 0 saltati; build e lint positivi; collaudo browser A7 PASS senza finding.
 
-Baseline tecnica corrente post-F3.4: 76 file, 927 test passati; build positiva; lint mirato sui file F3.4 positivo. Il lint globale presenta un'anomalia baseline di 40 errori e 15 warning, tutti in file invariati e fuori scope F3.4.
+Baseline tecnica corrente post-B2.1: 77 file, 952 test passati; build positiva; lint mirato sui file B2.1 positivo. Il lint globale non è stato rieseguito in B2.1; resta registrata l'anomalia baseline già nota di 40 errori e 15 warning in file fuori scope.
 
 Collaudo browser F4: PASS senza finding; create Building, Unit, Tenant e Lease verificati con route, back, annulla, logout, refresh/persistenza, bozze, Resta, Abbandona, submit riuscito e fallito. F4-10 resta una limitazione strumentale relativa alla mancata osservabilità del dialog nativo beforeunload, senza evidenza di difetto applicativo.
 
