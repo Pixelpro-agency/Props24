@@ -14,15 +14,15 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 14
+- Completate integralmente: 15
 - Parzialmente completate: 3
-- Non concluse: 55
+- Non concluse: 54
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: F4 — Collaudo trasversale delle modifiche non salvate
+- Prossimo punto tecnico: B2 — Duplicati unità
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 55 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 54 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
@@ -59,7 +59,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] A6.5 — Gate tecnico consolidato A6 — **COMPLETATA; 73 file / 902 test, build e lint positivi**
 > - [x] A7 — Collaudo edifici — **COMPLETATA; PASS; nessun finding; Blocco A chiuso**
 > - [x] F3.4 — Integrazione bozze e guard in Nuovo edificio — **COMPLETATA; 76 file / 927 test, build positiva, lint mirato F3.4 positivo; commit dbe8a9a2910848196874305aec57f73e5783aa1a**
-> - [ ] F4 — Collaudo trasversale delle modifiche non salvate — **PROSSIMA TASK**
+> - [x] F4 — Collaudo trasversale delle modifiche non salvate — **COMPLETATA; PASS; nessun finding; F4-10 limitazione strumentale sul dialog nativo beforeunload; Blocco F chiuso**
+> - [ ] B2 — Duplicati unità — **PROSSIMA TASK**
 
 Questa sezione mostra soltanto il percorso operativo corrente e non sostituisce stato, dipendenze e criteri di chiusura riportati nei rispettivi blocchi.
 
@@ -181,7 +182,7 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] F3.2 — Nuova unità — **COMPLETATA**
   - [x] F3.3 — Nuova locazione — **COMPLETATA**
   - [x] F3.4 — Nuovo edificio — **COMPLETATA; 76 file / 927 test, build positiva, lint mirato F3.4 positivo; commit dbe8a9a2910848196874305aec57f73e5783aa1a**
-- [ ] F4 — Collaudo trasversale — **PROSSIMA TASK**
+- [x] F4 — Collaudo trasversale — **COMPLETATA; PASS; nessun finding; F4-10 limitazione strumentale beforeunload; Blocco F completato**
 
 ## Blocco G — Azioni simulate, mock e route
 
@@ -270,11 +271,14 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] Gate tecnico consolidato A6 — A6.5
   - [x] Collaudo browser finale edifici — A7
   - [x] Integrazione automatizzata bozze e guard Nuovo edificio — F3.4
+  - [x] Collaudo browser trasversale modifiche non salvate — F4
   - [ ] Copertura progressiva delle task future — **APERTO**
 
 Baseline tecnica del Blocco A: 73 file, 902 test passati, 0 falliti, 0 saltati; build e lint positivi; collaudo browser A7 PASS senza finding.
 
 Baseline tecnica corrente post-F3.4: 76 file, 927 test passati; build positiva; lint mirato sui file F3.4 positivo. Il lint globale presenta un'anomalia baseline di 40 errori e 15 warning, tutti in file invariati e fuori scope F3.4.
+
+Collaudo browser F4: PASS senza finding; create Building, Unit, Tenant e Lease verificati con route, back, annulla, logout, refresh/persistenza, bozze, Resta, Abbandona, submit riuscito e fallito. F4-10 resta una limitazione strumentale relativa alla mancata osservabilità del dialog nativo beforeunload, senza evidenza di difetto applicativo.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**

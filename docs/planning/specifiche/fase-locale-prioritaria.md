@@ -127,7 +127,7 @@ Nella fase locale i relativi controlli rispettano la convenzione gialla e disabi
 
 L'audit del confine repository locale è concluso. Il pilot contacts comprende porta e adapter, isolamento account, provider e hook asincrono, oltre alla migrazione e al collaudo dei consumer dei garanti. Questa baseline non implica che tutti i domini o consumer siano già migrati.
 
-Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato è:
+Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato raggiunto è:
 
 1. repository condiviso delle bozze manuali — implementato;
 2. guard condiviso delle modifiche non salvate — implementato;
@@ -136,12 +136,16 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 5. Nuova locazione — integrata e collaudata;
 6. repository edifici — implementato e verificato;
 7. relazione unità–edificio — implementata, verificata e collaudata;
-8. Nuovo edificio — prossimo blocco tecnico, a partire da A2.1;
-9. route, lista, lifecycle e dettaglio edifici — da completare nel Blocco A;
-10. integrazione bozza e guard di Nuovo edificio — F3.4 dopo il Blocco A;
-11. collaudo trasversale dei quattro CRUD — non avviabile prima di F3.4.
+8. Nuovo edificio — implementato, verificato e collaudato;
+9. route, lista, lifecycle e dettaglio edifici — completati e collaudati;
+10. integrazione bozza e guard di Nuovo edificio — F3.4 completata;
+11. collaudo trasversale dei quattro flussi create — F4 completato con PASS senza finding.
 
-Il comportamento manuale è integrato nei primi tre form e resta da applicare a Nuovo edificio. `Elimina e ricomincia` cancella esplicitamente la bozza persistita. Nuova locazione comprende restore esplicito, riconciliazione dei riferimenti, guard, cleanup/recovery e submit lock; le integrazioni dei form complessi restano task separate.
+Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
+
+`Elimina e ricomincia` cancella esplicitamente la bozza persistita. Il collaudo trasversale F4 ha verificato restore, salvataggio manuale, dirty state, navigazione protetta, `Resta`, `Abbandona`, logout, submit riuscito e fallito, cleanup e persistenza.
+
+Per refresh e chiusura della scheda resta valido il contratto `beforeunload` nativo. Durante F4 il dialog nativo non è stato osservabile dallo strumento di collaudo; la circostanza è stata classificata come limitazione strumentale, senza evidenza di difetto applicativo.
 
 ## Decisioni approvate, futuro e questioni aperte
 

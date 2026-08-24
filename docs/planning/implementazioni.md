@@ -141,7 +141,15 @@ F3.4 — Integrazione bozze e guard in Nuovo edificio è completata e pubblicata
 
 La baseline tecnica corrente dopo F3.4 è 76 file di test e 927 test passati, con build positiva e lint mirato sui file F3.4 positivo. Il lint globale presenta una anomalia baseline di 40 errori e 15 warning esclusivamente in file tracciati, invariati e fuori scope F3.4; l'anomalia non riapre la task e non viene corretta come effetto collaterale.
 
-Il prossimo punto tecnico è F4 — Collaudo trasversale delle modifiche non salvate.
+F4 — Collaudo trasversale delle modifiche non salvate è completata con browser QA PASS senza finding.
+
+Il collaudo ha verificato trasversalmente Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione per navigazione, browser back, annulla, logout, restore e salvataggio manuale delle bozze, Resta, Abbandona, submit riuscito e submit fallito, oltre alle regressioni edit Building e Lease e alla persistenza dopo reload.
+
+F4-10 ha registrato esclusivamente una limitazione strumentale: il browser controllato non ha reso osservabile il dialog nativo `beforeunload`. Non esiste evidenza di difetto applicativo e la limitazione non modifica il contratto approvato.
+
+Il Blocco F — Modifiche non salvate è completato integralmente.
+
+Il prossimo punto tecnico è B2 — Duplicati unità.
 
 # BLOCCO B — Unità
 
@@ -544,16 +552,6 @@ Verificare:
 - preferenze differenti;
 - migrazione idempotente;
 - nessuna lettura o scrittura diretta dalle pagine.
-
-# BLOCCO F — Modifiche non salvate
-
-## TASK F4 — Collaudo trasversale
-
-**Stato:** PROSSIMA TASK.
-
-**Dipendenze:** F1, F2 e F3 completate; F3.4 conclusa e pubblicata.
-
-Verificare create/edit, route, back, annulla, logout, refresh, bozza, abbandona, resta, submit riuscito e fallito.
 
 # BLOCCO G — Azioni simulate, mock e route
 
