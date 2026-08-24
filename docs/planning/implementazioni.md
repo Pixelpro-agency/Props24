@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 8f2049324f2b878ff4c897b7c2078f6fe963956b
+SHA applicativo esaminato: dbe8a9a2910848196874305aec57f73e5783aa1a
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -137,7 +137,11 @@ La baseline applicativa finale del blocco è 73 file e 902 test passati, con bui
 
 Il browser QA ha verificato create e reload, lista e ricerca, dettaglio Building, due unità nello stesso Building, navigazione al dettaglio unità, `unitsCount`, modifica Building, mancata propagazione automatica dell'indirizzo alle unità esistenti, nuovo Add Unit sulla location aggiornata, archive/restore, delete libera e bloccata, persistenza e isolamento tra account.
 
-Il prossimo punto tecnico è F3.4 — Integrazione bozze e guard in Nuovo edificio.
+F3.4 — Integrazione bozze e guard in Nuovo edificio è completata e pubblicata nel commit dbe8a9a2910848196874305aec57f73e5783aa1a.
+
+La baseline tecnica corrente dopo F3.4 è 76 file di test e 927 test passati, con build positiva e lint mirato sui file F3.4 positivo. Il lint globale presenta una anomalia baseline di 40 errori e 15 warning esclusivamente in file tracciati, invariati e fuori scope F3.4; l'anomalia non riapre la task e non viene corretta come effetto collaterale.
+
+Il prossimo punto tecnico è F4 — Collaudo trasversale delle modifiche non salvate.
 
 # BLOCCO B — Unità
 
@@ -543,34 +547,11 @@ Verificare:
 
 # BLOCCO F — Modifiche non salvate
 
-## TASK F3 — Integrazioni
-
-**Dipendenze tecniche:** F1 e F2 sono soddisfatte. F3 resta aperta esclusivamente per l'integrazione Nuovo edificio.
-
-### F3.4 — Nuovo edificio
+## TASK F4 — Collaudo trasversale
 
 **Stato:** PROSSIMA TASK.
 
-**Dipendenza:** Blocco A completato.
-
-**Obiettivo:**
-
-- integrare il repository condiviso delle bozze nel form Nuovo edificio;
-- bozza manuale account-scoped, senza autosalvataggio;
-- ripresa, eliminazione e baseline clean;
-- dirty state;
-- guard condiviso `Resta` / `Abbandona` / `Salva bozza`;
-- `beforeunload`;
-- cleanup della bozza soltanto dopo create riuscita;
-- preservare i dati dopo submit fallito;
-- evitare doppie create durante submit/cleanup/recovery;
-- non modificare il contratto Building definito da A2.
-
-## TASK F4 — Collaudo trasversale
-
-**Stato:** APERTA; non avviabile ora.
-
-**Dipendenze:** completamento dell’integrazione residua F3.4, oltre alla baseline F2 già soddisfatta.
+**Dipendenze:** F1, F2 e F3 completate; F3.4 conclusa e pubblicata.
 
 Verificare create/edit, route, back, annulla, logout, refresh, bozza, abbandona, resta, submit riuscito e fallito.
 
