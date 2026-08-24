@@ -26,9 +26,6 @@ vi.mock('../../src/components/layout/Layout', () => ({
 vi.mock('../../src/contacts/ContactRepositoryContext', () => ({
     ContactRepositoryProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-vi.mock('../../src/drafts/DraftRepositoryContext', () => ({
-    DraftRepositoryProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
 
 const ACCOUNT_A = 'user-9701';
 const ACCOUNT_B = 'user-9702';

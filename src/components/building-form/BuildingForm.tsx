@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FormProvider, useForm, type Resolver } from 'react-hook-form';
+import { FormProvider, useForm, type Resolver, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
     buildingFormSchema,
@@ -21,16 +21,31 @@ export interface BuildingFormProps {
     initialValues?: BuildingFormData;
     mode?: 'create' | 'edit';
     onCancel?: () => void;
+    methods?: UseFormReturn<BuildingFormData>;
+    onSaveDraft?: () => void;
+    isSavingDraft?: boolean;
+    actionsDisabled?: boolean;
 }
 
 export function BuildingForm({
-    onSubmit,
-    initialValues,
-    mode = 'create',
-    onCancel,
+    methods,
+    ...props
 }: BuildingFormProps) {
-    const [activeTab, setActiveTab] = useState<BuildingTabId>('general');
-    const [submissionError, setSubmissionError] = useState<string | null>(null);
+    if (methods) {
+        return <BuildingFormContent {...props} methods={methods} />;
+    }
+
+    return <OwnedBuildingForm {...props} />;
+}
+
+type BuildingFormContentProps = Omit<BuildingFormProps, 'methods'> & {
+    methods: UseFormReturn<BuildingFormData>;
+};
+
+function OwnedBuildingForm({
+    initialValues,
+    ...props
+}: Omit<BuildingFormProps, 'methods'>) {
     const methods = useForm<BuildingFormData>({
         resolver: zodResolver(buildingFormSchema) as Resolver<BuildingFormData>,
         defaultValues: {
@@ -39,6 +54,27 @@ export function BuildingForm({
         },
         mode: 'onChange',
     });
+
+    return (
+        <BuildingFormContent
+            {...props}
+            initialValues={initialValues}
+            methods={methods}
+        />
+    );
+}
+
+function BuildingFormContent({
+    onSubmit,
+    mode = 'create',
+    onCancel,
+    methods,
+    onSaveDraft,
+    isSavingDraft = false,
+    actionsDisabled = false,
+}: BuildingFormContentProps) {
+    const [activeTab, setActiveTab] = useState<BuildingTabId>('general');
+    const [submissionError, setSubmissionError] = useState<string | null>(null);
 
     const focusGeneralField = (field: 'identifier' | 'address') => {
         if (activeTab === 'general') {
@@ -92,11 +128,21 @@ export function BuildingForm({
                 )}
                 <div className="rounded-lg bg-white p-6 shadow-sm">{renderActiveTab()}</div>
                 <div className="flex justify-end gap-3">
+                    {onSaveDraft && (
+                        <button
+                            type="button"
+                            onClick={onSaveDraft}
+                            disabled={actionsDisabled || isSavingDraft}
+                            className="rounded-md border border-green-600 px-5 py-2.5 font-medium text-green-700 disabled:opacity-60"
+                        >
+                            {isSavingDraft ? 'Salvataggio bozza...' : 'Salva bozza'}
+                        </button>
+                    )}
                     {onCancel && (
                         <button
                             type="button"
                             onClick={onCancel}
-                            disabled={methods.formState.isSubmitting}
+                            disabled={actionsDisabled || methods.formState.isSubmitting}
                             className="rounded-md border border-gray-300 px-5 py-2.5 font-medium text-gray-700 disabled:opacity-60"
                         >
                             Annulla
@@ -104,7 +150,7 @@ export function BuildingForm({
                     )}
                     <button
                         type="submit"
-                        disabled={methods.formState.isSubmitting}
+                        disabled={actionsDisabled || methods.formState.isSubmitting}
                         className="rounded-md bg-green-600 px-5 py-2.5 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {methods.formState.isSubmitting

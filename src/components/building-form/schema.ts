@@ -142,6 +142,14 @@ export const buildingFormSchema = z.object({
     imu: nullableNonNegativeNumber(),
 }).strict();
 
+export const buildingDraftSchema = buildingFormSchema.extend({
+    identifier: z.string().trim().default(''),
+    address: z.string().trim().default(''),
+    city: z.string().trim().default(''),
+    postalCode: z.string().trim().default(''),
+    country: z.string().trim().transform((value) => value.toUpperCase()).default('IT'),
+}).strip();
+
 export type BuildingFormData = z.infer<typeof buildingFormSchema>;
 
 export const defaultBuildingValues: BuildingFormData = {
@@ -167,6 +175,10 @@ export const defaultBuildingValues: BuildingFormData = {
 
 export function normalizeBuildingFormData(input: unknown): BuildingFormData {
     return buildingFormSchema.parse(input);
+}
+
+export function normalizeBuildingDraftData(input: unknown): BuildingFormData {
+    return buildingDraftSchema.parse(input) as BuildingFormData;
 }
 
 export function toBuildingCreateInput(data: BuildingFormData): BuildingCreateInput {

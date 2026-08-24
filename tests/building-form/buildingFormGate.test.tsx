@@ -4,7 +4,9 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { RouterProvider, createMemoryRouter } from 'react-router-dom';
 import { BuildingCreateForm } from '../../src/components/building-form/BuildingCreateForm';
+import { DraftRepositoryProvider } from '../../src/drafts/DraftRepositoryContext';
 import { BUILDING_FEATURE_VALUES } from '../../src/components/building-form/schema';
 import type { LocalDatabase } from '../../src/db/database.types';
 import { assertDatabaseIntegrity } from '../../src/db/databaseValidation';
@@ -12,6 +14,14 @@ import { createBuildingRepository } from '../../src/db/buildingRepository';
 import { MemoryStorage, installJsonDbWindow, uninstallJsonDbWindow } from '../db/jsonDbStorageHarness';
 
 const EARLIER = '2026-08-20T12:00:00.000Z';
+
+function renderCreate(accountId: string, onCreated?: (building: ReturnType<ReturnType<typeof createBuildingRepository>['create']>) => void) {
+    const router = createMemoryRouter([{
+        path: '/',
+        element: <DraftRepositoryProvider accountId={accountId}><BuildingCreateForm accountId={accountId} onCreated={onCreated} /></DraftRepositoryProvider>,
+    }], { initialEntries: ['/'] });
+    return render(<RouterProvider router={router} />);
+}
 
 function emptyDatabase(): LocalDatabase {
     return {
@@ -61,7 +71,8 @@ describe('A2 consolidated building form gate', () => {
         createBuildingRepository({ accountId: accountB }).list();
         storage.resetOperationLogs();
         const onCreated = vi.fn();
-        render(<BuildingCreateForm accountId={accountA} onCreated={onCreated} />);
+        renderCreate(accountA, onCreated);
+        await screen.findByRole('button', { name: 'Salva' });
 
         const tabs = screen.getAllByRole('tab');
         expect(tabs).toHaveLength(7);
@@ -143,7 +154,8 @@ describe('A2 consolidated building form gate', () => {
         repository.create({ identifier: 'Palazzo Centro', address: 'Via Uno 1', city: 'Roma', postalCode: '00100', country: 'IT' });
         storage.resetOperationLogs();
         const user = userEvent.setup();
-        render(<BuildingCreateForm accountId={accountA} />);
+        renderCreate(accountA);
+        await screen.findByRole('button', { name: 'Salva' });
         fillRequired('  PALAZZO CENTRO  ', '  Via Due 2  ');
         await user.click(screen.getByRole('button', { name: 'Salva' }));
 
@@ -163,7 +175,8 @@ describe('A2 consolidated building form gate', () => {
         repository.create({ identifier: 'Esistente', address: 'Via Roma 10', city: 'Roma', postalCode: '00100', country: 'IT' });
         storage.resetOperationLogs();
         const user = userEvent.setup();
-        render(<BuildingCreateForm accountId={accountA} />);
+        renderCreate(accountA);
+        await screen.findByRole('button', { name: 'Salva' });
         fillRequired('Nuovo edificio', '  VIA   ROMA 10  ', '  roma ', ' 00100 ', ' it ');
         await user.click(screen.getByRole('button', { name: 'Salva' }));
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -17,6 +18,7 @@ function navigateBackOrBuildings(navigate: ReturnType<typeof useNavigate>) {
 export function NewBuildingPage() {
     const { account } = useAuth();
     const navigate = useNavigate();
+    const [isFormBusy, setIsFormBusy] = useState(true);
 
     if (!account) return null;
 
@@ -28,6 +30,7 @@ export function NewBuildingPage() {
                         <button
                             type="button"
                             onClick={() => navigateBackOrBuildings(navigate)}
+                            disabled={isFormBusy}
                             className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100"
                             aria-label="Indietro"
                         >
@@ -38,6 +41,7 @@ export function NewBuildingPage() {
                     <button
                         type="button"
                         onClick={() => navigateBackOrBuildings(navigate)}
+                        disabled={isFormBusy}
                         className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                     >
                         Annulla
@@ -48,6 +52,8 @@ export function NewBuildingPage() {
                 <BuildingCreateForm
                     accountId={account.id}
                     onCreated={(building) => navigate(`/properties/buildings/${building.id}`)}
+                    onExitDraft={() => navigateBackOrBuildings(navigate)}
+                    onFormBusyChange={setIsFormBusy}
                 />
             </main>
         </div>

@@ -12,6 +12,7 @@ import { createBuildingRepository } from '../../src/db/buildingRepository';
 import type { LocalDatabase } from '../../src/db/database.types';
 import { isKnownRoute } from '../../src/utils/routes';
 import { MemoryStorage, installJsonDbWindow, uninstallJsonDbWindow } from '../db/jsonDbStorageHarness';
+import { DraftRepositoryProvider } from '../../src/drafts/DraftRepositoryContext';
 
 const ACCOUNT_A = 'user-9501';
 const ACCOUNT_B = 'user-9502';
@@ -43,7 +44,7 @@ function emptyDatabase(): LocalDatabase {
 
 function routes(initialEntry: string) {
     return createMemoryRouter([
-        { path: '/properties/buildings/new', element: <NewBuildingPage /> },
+        { path: '/properties/buildings/new', element: <DraftRepositoryProvider accountId={ACCOUNT_A}><NewBuildingPage /></DraftRepositoryProvider> },
         { path: '/properties/buildings/:id', element: <BuildingDetailPage /> },
         { path: '/properties/buildings', element: <div>Lista edifici</div> },
     ], { initialEntries: [initialEntry] });
@@ -74,6 +75,7 @@ describe('building routes integration', () => {
         const router = routes('/properties/buildings/new');
         render(<RouterProvider router={router} />);
         expect(screen.getByRole('heading', { name: 'Nuovo edificio' })).toBeTruthy();
+        await screen.findByRole('button', { name: 'Salva' });
         change('identifier', 'Edificio Route');
         change('address', 'Via Router 10');
         change('city', 'Roma');
