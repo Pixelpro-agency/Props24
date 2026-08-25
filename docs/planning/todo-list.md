@@ -248,12 +248,15 @@ Le attività concluse restano registrate nei rispettivi blocchi; cronologia, evi
   - [x] Collaudo browser finale edifici — A7
   - [x] Integrazione automatizzata bozze e guard Nuovo edificio — F3.4
   - [x] Collaudo browser trasversale modifiche non salvate — F4
-    - [x] Contratto identità catastale delle unità — B2.1
+  - [x] Contratto identità catastale delle unità — B2.1
+  - [x] Enforcement repository dei duplicati catastali — B2.2
+  - [x] Gate tecnico consolidato duplicati unità — B2.3
+  - [x] Collaudo browser duplicati unità — B2.4
   - [ ] Copertura progressiva delle task future — **APERTO**
 
 Baseline tecnica del Blocco A: 73 file, 902 test passati, 0 falliti, 0 saltati; build e lint positivi; collaudo browser A7 PASS senza finding.
 
-Baseline tecnica corrente post-B2.1: 77 file, 952 test passati; build positiva; lint mirato sui file B2.1 positivo. Il lint globale non è stato rieseguito in B2.1; resta registrata l'anomalia baseline già nota di 40 errori e 15 warning in file fuori scope.
+Baseline tecnica corrente post-B2: 78 file, 973 test passati; build positiva; lint mirato B2 positivo. B2.3 ha chiuso il gate tecnico consolidato con tutti i 37 requisiti coperti e B2.4 ha concluso il browser QA con PASS senza finding applicativi. Il lint globale non è stato rieseguito nel ciclo B2; l'ultimo rilievo storico resta 40 errori e 15 warning fuori scope e non costituisce una nuova baseline finché J2 non eseguirà l'audit lint dedicato.
 
 Collaudo browser F4: PASS senza finding; create Building, Unit, Tenant e Lease verificati con route, back, annulla, logout, refresh/persistenza, bozze, Resta, Abbandona, submit riuscito e fallito. F4-10 resta una limitazione strumentale relativa alla mancata osservabilità del dialog nativo beforeunload, senza evidenza di difetto applicativo.
 

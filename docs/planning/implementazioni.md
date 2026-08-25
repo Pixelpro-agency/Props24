@@ -886,7 +886,7 @@ La baseline automatizzata verificata corrente è mantenuta nella Todo list e non
 **Aree residue:**
 
 - repository e consumer ancora da implementare;
-- duplicati e lifecycle non ancora completati;
+- duplicati anagrafici e lifecycle ancora da completare, inclusi C3, B6 e C5;
 - D1B — storico append-only e override motivato;
 - D2D — prepagato, ricevuta e confirmation precedenti;
 - funzioni future gialle e realmente disabilitate;
