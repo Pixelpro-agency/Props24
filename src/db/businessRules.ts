@@ -1,6 +1,6 @@
 import type { BuildingRecord, LeaseRecord, LocalDatabase, PropertyRecord, TenantRecord } from './database.types';
 import type { PropertyFormData } from '../components/property-form/schema';
-import { DuplicateBuildingIdentifierError, DuplicateBuildingLocationError, DuplicatePropertyIdentifierError, DuplicatePropertyLocationError, TenantLeaseConflictError } from './databaseErrors';
+import { DuplicateBuildingIdentifierError, DuplicateBuildingLocationError, DuplicatePropertyCadastralKeyError, DuplicatePropertyIdentifierError, DuplicatePropertyLocationError, TenantLeaseConflictError } from './databaseErrors';
 import { isValidIsoDate } from './dataSelectors';
 
 const ALLOW_OVERLAPPING_TENANT_LEASES = false;
@@ -75,6 +75,21 @@ export function buildPropertyCadastralKey(identity: PropertyCadastralIdentity): 
         part,
         sub: sub || null,
     });
+}
+
+export function findPropertyByCadastralKey(database: LocalDatabase, identity: PropertyCadastralIdentity, excludePropertyId?: string): PropertyRecord | null {
+    const inputKey = buildPropertyCadastralKey(identity);
+    if (inputKey === null) return null;
+    return database.properties.find((property) => {
+        if (property.id === excludePropertyId) return false;
+        const existingKey = buildPropertyCadastralKey(property.formData);
+        return existingKey !== null && existingKey === inputKey;
+    }) || null;
+}
+
+export function assertUniquePropertyCadastralKey(database: LocalDatabase, identity: PropertyCadastralIdentity, excludePropertyId?: string): void {
+    const duplicate = findPropertyByCadastralKey(database, identity, excludePropertyId);
+    if (duplicate) throw new DuplicatePropertyCadastralKeyError(duplicate.id);
 }
 
 export type BuildingLocation = Pick<BuildingRecord, 'address' | 'city' | 'postalCode' | 'country'>;

@@ -16,7 +16,6 @@ import type { TenantInvitation } from '../types/tenant';
 import { defaultPropertyValues, normalizePropertyFormData, type PropertyFormData } from '../components/property-form/schema';
 import { assertDatabaseIntegrity } from './databaseValidation';
 import { recalculateBuildingUnits, todayIso } from './dataSelectors';
-import { normalizePropertyIdentifier } from './businessRules';
 import { LocalStorageQuotaError, isQuotaExceededError } from './databaseErrors';
 import { DraftMigrationError } from './databaseErrors';
 import type { DraftDefinition, DraftFormType, DraftRecord } from './draftRepository.port';
@@ -719,31 +718,10 @@ function rebuildRelationsFromLeases(database: LocalDatabase): LocalDatabase {
     return db;
 }
 
-function makePropertyIdentifiersUnique(database: LocalDatabase): LocalDatabase {
-    const seen = new Map<string, number>();
-    return {
-        ...database,
-        properties: database.properties.map((property) => {
-            const normalized = normalizePropertyIdentifier(property.formData.PropertyTitle);
-            if (!normalized) return property;
-            const count = seen.get(normalized) || 0;
-            seen.set(normalized, count + 1);
-            if (count === 0) return property;
-            return {
-                ...property,
-                formData: normalizePropertyFormData({
-                    ...property.formData,
-                    PropertyTitle: `${property.formData.PropertyTitle} (${count + 1})`,
-                }),
-            };
-        }),
-    };
-}
-
 function repairRecoverableDatabase(database: LocalDatabase): LocalDatabase {
     return ensureAllLeasePaymentSchedules(
         repairRecoverablePayments(
-            recalculateBuildingUnits(makePropertyIdentifiersUnique(rebuildRelationsFromLeases(database))),
+            recalculateBuildingUnits(rebuildRelationsFromLeases(database)),
         ),
     );
 }

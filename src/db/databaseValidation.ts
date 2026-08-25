@@ -1,5 +1,5 @@
 import type { LocalDatabase } from './database.types';
-import { findTenantLeaseConflicts, normalizeBuildingIdentifier, normalizeBuildingLocationKey, normalizeFiscalCode, normalizePropertyIdentifier } from './businessRules';
+import { buildPropertyCadastralKey, findTenantLeaseConflicts, normalizeBuildingIdentifier, normalizeBuildingLocationKey, normalizeFiscalCode } from './businessRules';
 import { isLeaseCurrentlyActive, isValidIsoDate, todayIso } from './dataSelectors';
 import { calculateLeasePeriodicAmount } from '../landlord/leases/schema/leaseFormSchema';
 import { isGeneratedRentPayment } from './paymentRepository';
@@ -74,7 +74,7 @@ export function validateDatabaseRelations(database: LocalDatabase, referenceDate
     const buildingIds = new Set(database.buildings.map((item) => item.id));
     const tenantIds = new Set(database.tenants.map((item) => item.id));
     const leaseIds = new Set(database.leases.map((item) => item.id));
-    const propertyIdentifiers = new Map<string, string>();
+    const propertyCadastralKeys = new Map<string, string>();
     const buildingIdentifiers = new Map<string, string>();
     const buildingLocations = new Map<string, string>();
     const tenantFiscalCodes = new Map<string, string>();
@@ -108,11 +108,11 @@ export function validateDatabaseRelations(database: LocalDatabase, referenceDate
 
     database.properties.forEach((property) => {
         const f = property.formData;
-        const identifier = normalizePropertyIdentifier(f.PropertyTitle);
-        if (identifier) {
-            const existingId = propertyIdentifiers.get(identifier);
-            if (existingId) issues.push(issue('error', 'PROPERTY_IDENTIFIER_DUPLICATE', 'properties', property.id, `Identificativo duplicato con ${existingId}.`));
-            else propertyIdentifiers.set(identifier, property.id);
+        const cadastralKey = buildPropertyCadastralKey(f);
+        if (cadastralKey !== null) {
+            const existingId = propertyCadastralKeys.get(cadastralKey);
+            if (existingId) issues.push(issue('warning', 'PROPERTY_CADASTRAL_KEY_DUPLICATE', 'properties', property.id, `Riferimenti catastali duplicati con ${existingId}.`));
+            else propertyCadastralKeys.set(cadastralKey, property.id);
         }
         checkAddressFields(issues, 'properties', property.id, {
             address: f.PropertyAddress,

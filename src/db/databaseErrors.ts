@@ -10,6 +10,16 @@
     }
 }
 
+export class DuplicatePropertyCadastralKeyError extends Error {
+    readonly existingPropertyId: string;
+
+    constructor(existingPropertyId: string) {
+        super("Esiste già un'unità con gli stessi riferimenti catastali.");
+        this.name = 'DuplicatePropertyCadastralKeyError';
+        this.existingPropertyId = existingPropertyId;
+    }
+}
+
 export class DuplicateBuildingIdentifierError extends Error {
     identifier: string;
     existingBuildingId: string;
