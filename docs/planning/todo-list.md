@@ -14,61 +14,29 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 15
-- Parzialmente completate: 3
+- Completate integralmente: 16
+- Parzialmente completate: 2
 - Non concluse: 54
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: B2.2 — Enforcement repository dei duplicati catastali
+- Prossimo punto tecnico: da definire nel nuovo Percorso operativo immediato
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 54 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
-> - [x] A1.1 — Contratto dati e normalizzazione edificio — **COMPLETATA; 48 file / 686 test, build e lint positivi**
-> - [x] A1.2 — Regole edificio, errori e integrità DB — **COMPLETATA; 50 file / 701 test, build e lint positivi**
-> - [x] A1.3 — Repository edifici account-scoped e lifecycle — **COMPLETATA; 51 file / 715 test, build e lint positivi**
-> - [x] A1.4 — Copertura automatizzata e gate tecnico A1 — **COMPLETATA; 52 file / 723 test, build e lint positivi; A1 chiusa**
-> - [x] B1 — Relazione unità–edificio — **COMPLETATA; B1.1–B1.4 verificate, 57 file / 760 test, build e lint positivi; collaudo browser finale PASS**
->   - [x] B1.1 — Contratto relazione unità–edificio e mutazioni repository — **COMPLETATA; 53 file / 734 test, build e lint positivi**
->   - [x] B1.2 — Stato form e bozza della relazione Building — **COMPLETATA; 55 file / 747 test, build e lint positivi**
->   - [x] B1.3 — Nuova unità standalone e boundary relazione Building — **COMPLETATA E RIALLINEATA; 56 file / 751 test nel tree pubblicato, build e lint positivi**
->   - [x] B1.4 — Gate tecnico consolidato B1 — **COMPLETATA; 57 file / 760 test, build e lint positivi**
-> - [x] A2 — Form Nuovo edificio — **COMPLETATA; A2.1–A2.4 verificate, 61 file / 815 test, build e lint positivi**
->   - [x] A2.1 — Contratto form edificio — **COMPLETATA; 58 file / 796 test, build e lint positivi**
->   - [x] A2.2 — UI completa del form edificio — **COMPLETATA; 59 file / 806 test, build e lint positivi**
->   - [x] A2.3 — Submit reale edificio — **COMPLETATA; 60 file / 812 test, build e lint positivi**
->   - [x] A2.4 — Gate tecnico consolidato A2 — **COMPLETATA; 61 file / 815 test, build e lint positivi; A2 chiusa**
-> - [x] A3 — Route e accessi edificio — **COMPLETATA; A3.1–A3.4 verificate, 64 file / 836 test, build e lint positivi; collaudo browser finale PASS**
->   - [x] A3.1 — Route, pagina Nuovo edificio e destinazione dettaglio minima — **COMPLETATA; 62 file / 827 test, build e lint positivi**
->   - [x] A3.2 — Accessi UI al Nuovo edificio — **COMPLETATA; 63 file / 830 test, build e lint positivi**
->   - [x] A3.3 — Gate tecnico consolidato A3 — **COMPLETATA; 64 file / 836 test, build e lint positivi**
->   - [x] A3.4 — Collaudo browser route e accessi — **COMPLETATA; PASS; nessun finding**
-> - [x] A4 — Lista edifici reale — **COMPLETATA; 65 file / 842 test, build e lint positivi; browser QA finale PASS; A4-F01 risolto**
-> - [x] A5 — Azioni edificio — **COMPLETATA; A5.1–A5.4 verificate, 68 file / 864 test, build e lint positivi; browser QA finale PASS**
->   - [x] A5.1 — Operazioni bulk atomiche repository edifici — **COMPLETATA; 66 file / 850 test, build e lint positivi**
->   - [x] A5.2 — Azioni UI singole e bulk — **COMPLETATA; 67 file / 858 test, build e lint positivi**
->   - [x] A5.3 — Gate tecnico consolidato A5 — **COMPLETATA; 68 file / 864 test, build e lint positivi**
->   - [x] A5.4 — Collaudo browser azioni edificio — **COMPLETATA; PASS; nessun finding**
-> - [x] A6 — Dettaglio e modifica edificio — **COMPLETATA; A6.1–A6.5 verificate, 73 file / 902 test, build e lint positivi**
->   - [x] A6.1 — Dettaglio Building reale e unità collegate — **COMPLETATA; 69 file / 870 test, build e lint positivi**
->   - [x] A6.2 — Aggiungi unità dal Building con contesto `buildingId` — **COMPLETATA; 70 file / 879 test, build e lint positivi**
->   - [x] A6.3 — Modifica Building — **COMPLETATA; 71 file / 887 test, build e lint positivi**
->   - [x] A6.4 — Lifecycle dal dettaglio Building — **COMPLETATA; 72 file / 894 test, build e lint positivi**
->   - [x] A6.5 — Gate tecnico consolidato A6 — **COMPLETATA; 73 file / 902 test, build e lint positivi**
-> - [x] A7 — Collaudo edifici — **COMPLETATA; PASS; nessun finding; Blocco A chiuso**
-> - [x] F3.4 — Integrazione bozze e guard in Nuovo edificio — **COMPLETATA; 76 file / 927 test, build positiva, lint mirato F3.4 positivo; commit dbe8a9a2910848196874305aec57f73e5783aa1a**
-> - [x] F4 — Collaudo trasversale delle modifiche non salvate — **COMPLETATA; PASS; nessun finding; F4-10 limitazione strumentale sul dialog nativo beforeunload; Blocco F chiuso**
-> - [ ] B2 — Duplicati unità — **IN CORSO; B2.1 completata**
->   - [x] B2.1 — Contratto identità catastale delle unità — **COMPLETATA; 77 file / 952 test, build positiva, lint mirato positivo; commit 8fdee1577cdc5a18fff2468a6b4dda1cd826a0fe**
->   - [ ] B2.2 — Enforcement repository dei duplicati catastali — **PROSSIMA TASK**
->   - [ ] B2.3 — Gate tecnico consolidato B2 — **APERTO**
->   - [ ] B2.4 — Collaudo browser duplicati unità — **APERTO**
+> **CICLO CONCLUSO.**
+>
+> Il percorso operativo che ha consolidato il Blocco A — Edifici, F3.4/F4 — Modifiche non salvate e B2 — Duplicati unità è completato.
+>
+> Ultimo SHA applicativo del ciclo: `1834fb8733341673b2f7a1421e64b47c18615a86`.
+>
+> Baseline tecnica finale: 78 file di test / 973 test passati, build positiva e lint mirato positivo. B2.3 ha chiuso il gate tecnico consolidato e B2.4 ha concluso il browser QA con PASS senza finding applicativi.
+>
+> Il prossimo percorso operativo verrà definito dopo il riallineamento della documentazione e una nuova analisi delle attività residue.
 
-Questa sezione mostra soltanto il percorso operativo corrente e non sostituisce stato, dipendenze e criteri di chiusura riportati nei rispettivi blocchi.
-
-Le attività già concluse restano registrate nei rispettivi blocchi; la cronologia delle implementazioni e delle verifiche precedenti è conservata nella storia Git e non viene duplicata in una baseline separata.
+Le attività concluse restano registrate nei rispettivi blocchi; cronologia, evidenze tecniche e modifiche precedenti sono conservate nella storia Git e non vengono duplicate nel percorso operativo.
 
 ## Blocco A — Edifici
 
@@ -109,11 +77,11 @@ Le attività già concluse restano registrate nei rispettivi blocchi; la cronolo
   - [x] B1.2 — Stato form e bozza della relazione Building — **COMPLETATA**
   - [x] B1.3 — Nuova unità standalone e boundary relazione Building — **COMPLETATA E RIALLINEATA**
   - [x] B1.4 — Gate tecnico consolidato B1 — **COMPLETATA**
-- [ ] B2 — Duplicati unità — **IN CORSO; UN-04 validata; B2.1 completata, resta enforcement repository e gate finale**
-  - [x] B2.1 — Contratto identità catastale delle unità — **COMPLETATA; campi catastali mancanti, chiave canonica pura e copertura automatizzata verificate; 77 file / 952 test**
-  - [ ] B2.2 — Enforcement repository dei duplicati catastali — **PROSSIMA TASK**
-  - [ ] B2.3 — Gate tecnico consolidato B2 — **APERTO**
-  - [ ] B2.4 — Collaudo browser duplicati unità — **APERTO**
+- [x] B2 — Duplicati unità — **COMPLETATA; B2.1–B2.4 verificate; identità catastale canonica, enforcement repository, preservazione collisioni legacy, gate tecnico e browser QA completati**
+  - [x] B2.1 — Contratto identità catastale delle unità — **COMPLETATA; campi catastali mancanti, chiave canonica pura e copertura automatizzata verificate; 77 file / 952 test; commit `8fdee1577cdc5a18fff2468a6b4dda1cd826a0fe`**
+  - [x] B2.2 — Enforcement repository dei duplicati catastali — **COMPLETATA; create/update atomiche e account-scoped, nessun fallback, collisioni legacy preservate come warning; commit `1834fb8733341673b2f7a1421e64b47c18615a86`**
+  - [x] B2.3 — Gate tecnico consolidato B2 — **COMPLETATA; PASS; 37 requisiti coperti, 78 file / 973 test, build e lint mirato positivi**
+  - [x] B2.4 — Collaudo browser duplicati unità — **COMPLETATA; PASS; nessun finding applicativo, collisione normalizzata, retry, assenza di falsi positivi, Building e persistenza verificati**
 - [ ] B3 — Campi placeholder — **APERTO; UN-01, UN-02 e UN-03 validate**
 - [ ] B4 — ID annidati canonici — **APERTO**
 - [x] B5 — Bozza unità — **COMPLETATA; repository condiviso, salvataggio manuale, restore, guard e cleanup verificati**

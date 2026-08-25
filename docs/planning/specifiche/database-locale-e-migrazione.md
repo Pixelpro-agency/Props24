@@ -69,7 +69,7 @@ Caricare una bozza non crea entità definitive. La bozza è aggiornata soltanto 
 
 Il repository condiviso è implementato con contratto asincrono e adapter locale account-scoped. Usa chiavi logiche per form, modalità ed eventuale entità, schema canonico versionato e migrazione delle forme legacy; non dipende da una singola chiave globale. I payload restano specifici per ciascun form e vengono validati dalla relativa definition. La baseline persistita è clonata e non viene mutata dalle modifiche dirty del form.
 
-Nuovo inquilino, Nuova unità e Nuova locazione usano il repository condiviso, il caricamento iniziale con ripresa o cancellazione, save manuale, delete esplicita e cleanup post-submit. Nuovo edificio resta da integrare; non esiste alcuna bozza globale.
+Nuovo inquilino, Nuova unità, Nuova locazione e Nuovo edificio usano il repository condiviso, il caricamento iniziale con ripresa o cancellazione, save manuale, delete esplicita e cleanup post-submit. Non esiste alcuna bozza globale.
 
 La bozza create di Nuova locazione è account-scoped e usa la chiave logica `formType: lease`, `mode: create`, `entityId: null`. Il payload è validato e salvato soltanto manualmente; `activeTab` viene persistita senza contribuire al dirty. La riconciliazione preserva gli ID Property, Tenant e Guarantor e il restore non crea entità definitive.
 
@@ -103,6 +103,10 @@ Ogni unità ha sempre un UUID interno. Quando i dati catastali ufficiali sono co
 La normalizzazione gestisce spazi e maiuscole/minuscole, conserva gli zeri significativi, distingue i campi assenti e viene verificata in create ed edit escludendo il record corrente. Indirizzo, piano e interno non costituiscono identità catastale ufficiale.
 
 Senza dati sufficienti per costruire la chiave catastale completa non si esegue alcun controllo duplicati alternativo basato su indirizzo, edificio, scala, piano, interno o fingerprint.
+
+Le nuove mutazioni `create` e `update` bloccano atomicamente una chiave catastale completa già presente nello stesso account mediante un errore di dominio specifico. `PropertyTitle`, indirizzo e relazione con il Building non costituiscono vincoli alternativi di unicità della Unit; in update il record corrente è escluso dal confronto.
+
+Una collisione catastale completa già presente in un database legacy viene invece preservata e segnalata dalla validation come `PROPERTY_CADASTRAL_KEY_DUPLICATE` con severità `warning`: non costituisce corruzione strutturale del database. Il caricamento non elimina record, non rinomina `PropertyTitle`, non modifica i riferimenti catastali e non introduce repair automatici per scegliere o riscrivere una delle unità coinvolte.
 
 ## 8. Edifici e unità
 

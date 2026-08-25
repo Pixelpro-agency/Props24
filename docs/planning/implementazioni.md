@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 8fdee1577cdc5a18fff2468a6b4dda1cd826a0fe
+SHA applicativo esaminato: 1834fb8733341673b2f7a1421e64b47c18615a86
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -149,53 +149,15 @@ F4-10 ha registrato esclusivamente una limitazione strumentale: il browser contr
 
 Il Blocco F — Modifiche non salvate è completato integralmente.
 
-B2 — Duplicati unità è in corso.
+B2 — Duplicati unità è completata integralmente: B2.1–B2.4 sono concluse. La chiave catastale canonica, l'enforcement repository, la preservazione conservativa delle collisioni legacy, il gate tecnico e il browser QA sono stati verificati.
 
-B2.1 — Contratto identità catastale delle unità è completata e pubblicata nel commit 8fdee1577cdc5a18fff2468a6b4dda1cd826a0fe. Il form Unit dispone ora dei campi catastali mancanti e della funzione pura `buildPropertyCadastralKey`; con dati catastali incompleti la chiave non viene costruita e non esiste alcun fallback basato su indirizzo, edificio, piano o interno.
+La baseline tecnica applicativa corrente è 78 file di test e 973 test passati, con build positiva e lint mirato B2 positivo. Il browser QA B2.4 è risultato PASS senza finding applicativi.
 
-La baseline tecnica corrente è 77 file di test e 952 test passati, con build positiva e lint mirato B2.1 positivo. Il lint globale non è stato rieseguito; resta registrata l'anomalia baseline già nota fuori scope.
+Lo SHA applicativo corrente è `1834fb8733341673b2f7a1421e64b47c18615a86`.
 
-Il prossimo punto tecnico è B2.2 — Enforcement repository dei duplicati catastali.
+Nessuna task è marcata come prossimo punto tecnico fino alla definizione del nuovo Percorso operativo immediato.
 
 # BLOCCO B — Unità
-
-## TASK B2 — Duplicati unità
-
-**Stato:** IN CORSO. B2.1 completata e pubblicata; B2.2 è la prossima task.
-
-**Dipendenza già disponibile:** il contratto B2.1 espone la chiave catastale canonica tramite `buildPropertyCadastralKey`. La funzione restituisce `null` quando mancano Paese, Codice Comune, Tipo catasto, Foglio o Particella e non usa indirizzo, edificio, piano, interno o fingerprint.
-
-### B2.2 — Enforcement repository dei duplicati catastali
-
-**Obiettivo residuo:**
-
-- applicare la chiave catastale canonica nelle mutazioni Unit;
-- bloccare il duplicato soltanto quando entrambe le unità hanno una chiave catastale completa coincidente;
-- non eseguire alcun controllo duplicati alternativo quando la chiave non è costruibile;
-- escludere il record corrente durante update/edit;
-- produrre un errore di dominio specifico;
-- riallineare le regole legacy che bloccano duplicati secondo criteri non approvati;
-- preservare unità nello stesso edificio o allo stesso indirizzo quando la chiave catastale non coincide;
-- preservare unità senza edificio.
-
-**Casi obbligatori:**
-
-- chiave catastale completa duplicata in create;
-- chiave equivalente dopo normalizzazione;
-- dati catastali incompleti;
-- stesso edificio e indirizzo con catasto differente o incompleto;
-- edificio differente allo stesso indirizzo;
-- nessun edificio;
-- update che mantiene la propria chiave senza falso positivo;
-- update che collide con un'altra unità.
-
-### B2.3 — Gate tecnico consolidato B2
-
-Consolidare test di business rules, repository, regressioni Property form, Building relation, draft/guard, suite completa, build e lint mirato.
-
-### B2.4 — Collaudo browser duplicati unità
-
-Verificare tramite UI reale i casi create consentiti e bloccati, persistenza dopo reload, messaggio di errore e assenza di falsi positivi.
 
 ## TASK B3 — Campi placeholder
 
