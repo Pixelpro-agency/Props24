@@ -10,13 +10,15 @@ interface SelectOption {
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
     name: string;
     label: string;
-    options: SelectOption[];
+    options: readonly SelectOption[];
     helpText?: string;
     required?: boolean;
+    allowEmpty?: boolean;
+    emptyOptionLabel?: string;
     orientation?: 'vertical' | 'horizontal';
 }
 
-export function Select({ name, label, options, helpText, required, orientation = 'vertical', className, ...props }: SelectProps) {
+export function Select({ name, label, options, helpText, required, allowEmpty = false, emptyOptionLabel = "Seleziona un'opzione", orientation = 'vertical', className, ...props }: SelectProps) {
     const { register, formState: { errors } } = useFormContext();
     const error = errors[name]?.message as string | undefined;
 
@@ -40,7 +42,7 @@ export function Select({ name, label, options, helpText, required, orientation =
                 }}
                 {...props}
             >
-                <option value="" disabled hidden>Seleziona un'opzione</option>
+                <option value="" disabled={!allowEmpty} hidden={!allowEmpty}>{emptyOptionLabel}</option>
                 {options.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                         {opt.label}

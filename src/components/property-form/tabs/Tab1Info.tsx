@@ -5,6 +5,14 @@ import { TextArea } from '../ui/TextArea';
 import { Select } from '../ui/Select';
 import { ColorPicker } from '../ui/ColorPicker';
 import { AddressAutocomplete } from '../ui/AddressAutocomplete';
+import {
+    propertyBillingPeriodCatalog,
+    propertyEnergyClassCatalog,
+    propertyRentTypeCatalog,
+    propertyTypeCatalog,
+} from '../../../data/propertyCatalogs';
+
+const propertyEnergyClassOptions = propertyEnergyClassCatalog.map((value) => ({ value, label: value }));
 
 export function Tab1Info({ addressReadOnly = false }: {
     addressReadOnly?: boolean;
@@ -19,29 +27,7 @@ export function Tab1Info({ addressReadOnly = false }: {
                         name="PropertyTypeID"
                         label="Tipo"
                         orientation="horizontal"
-                        options={[
-                            { value: 'appartamento', label: 'Appartamento' },
-                            { value: 'negozio', label: 'Negozio' },
-                            { value: 'ufficio_condiviso', label: 'Ufficio condiviso' },
-                            { value: 'ufficio', label: 'Ufficio' },
-                            { value: 'roulotte', label: 'Roulotte' },
-                            { value: 'cantina', label: 'Cantina' },
-                            { value: 'chalet', label: 'Chalet' },
-                            { value: 'stanza', label: 'Stanza' },
-                            { value: 'commercio', label: 'Commercio' },
-                            { value: 'magazzino', label: 'Magazzino' },
-                            { value: 'garage', label: 'Garage' },
-                            { value: 'laboratorio', label: 'Laboratorio' },
-                            { value: 'locale_professionale', label: 'Locale professionale' },
-                            { value: 'casa', label: 'Casa' },
-                            { value: 'casa_di_citta', label: 'Casa di città' },
-                            { value: 'mansarda', label: 'Mansarda' },
-                            { value: 'casa_mobile', label: 'Casa mobile' },
-                            { value: 'parcheggio', label: 'Parcheggio' },
-                            { value: 'terreno', label: 'Terreno' },
-                            { value: 'nuda_proprieta', label: 'Nuda proprietà' },
-                            { value: 'altro', label: 'Altro' },
-                        ]}
+                        options={propertyTypeCatalog}
                     />
                 </div>
             </FormSection>
@@ -453,9 +439,9 @@ export function Tab1Info({ addressReadOnly = false }: {
                         name="PropertyRentType"
                         label="Tipo di locazione"
                         orientation="horizontal"
-                        options={[
-                            { value: '', label: 'Scegli' }
-                        ]}
+                        options={propertyRentTypeCatalog}
+                        allowEmpty
+                        emptyOptionLabel="Scegli"
                     />
                     <NumberInput
                         name="PropertyRent"
@@ -477,9 +463,9 @@ export function Tab1Info({ addressReadOnly = false }: {
                         name="PropertyBillingPeriod"
                         label="Frequenza di pagamento"
                         orientation="horizontal"
-                        options={[
-                            { value: '', label: 'Scegli' }
-                        ]}
+                        options={propertyBillingPeriodCatalog}
+                        allowEmpty
+                        emptyOptionLabel="Scegli"
                     />
                 </div>
             </FormSection>
@@ -503,9 +489,9 @@ export function Tab1Info({ addressReadOnly = false }: {
                                 <Select
                                     name="PropertyEnergyConsumption2"
                                     label=""
-                                    options={[
-                                        { value: '', label: 'Scegli' },
-                                    ]}
+                                    options={propertyEnergyClassOptions}
+                                    allowEmpty
+                                    emptyOptionLabel="Scegli"
                                 />
                             </div>
                         </div>
