@@ -34,7 +34,7 @@ export function PropertyInfoCard({ property }: PropertyInfoCardProps) {
                 <h2 className="text-base font-bold text-gray-800 leading-snug">
                     {property.title}
                 </h2>
-                <p className="text-sm text-gray-500 mt-0.5">{property.type}</p>
+                <p className="text-sm text-gray-500 mt-0.5">{property.catalogs.type.label || 'Non specificato'}</p>
                 <div className="flex items-center gap-1.5 mt-1.5 text-sm text-gray-600">
                     <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                     <span>

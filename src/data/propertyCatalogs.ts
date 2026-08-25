@@ -81,3 +81,13 @@ export function normalizeLegacyPropertyEnergyClass(value: unknown): string {
 export const propertyTypeValues = propertyTypeCatalog.map(({ value }) => value);
 export const propertyRentTypeValues = propertyRentTypeCatalog.map(({ value }) => value);
 export const propertyBillingPeriodValues = propertyBillingPeriodCatalog.map(({ value }) => value);
+
+function catalogLabel(value: unknown, catalog: readonly { value: string; label: string }[], normalize: (value: unknown) => string): string {
+    const normalized = normalize(value);
+    return catalog.find((option) => option.value === normalized)?.label ?? normalized;
+}
+
+export const getPropertyTypeLabel = (value: unknown) => catalogLabel(value, propertyTypeCatalog, normalizeLegacyPropertyType);
+export const getPropertyRentTypeLabel = (value: unknown) => catalogLabel(value, propertyRentTypeCatalog, normalizeLegacyPropertyRentType);
+export const getPropertyBillingPeriodLabel = (value: unknown) => catalogLabel(value, propertyBillingPeriodCatalog, normalizeLegacyPropertyBillingPeriod);
+export const getPropertyEnergyClassLabel = (value: unknown) => normalizeLegacyPropertyEnergyClass(value);

@@ -112,15 +112,17 @@ export function PropertyDetails({ property }: PropertyDetailsProps) {
                             Spese accessorie{' '}
                             <span className="font-medium text-gray-800">{formatCurrency(property.rent.utilities)}</span>
                         </dd>
+                        <dd>Tipo di locazione <span className="font-medium text-gray-800">{property.catalogs.rentType.label || 'Non specificato'}</span></dd>
+                        <dd>Frequenza di pagamento <span className="font-medium text-gray-800">{property.catalogs.billingPeriod.label || 'Non specificato'}</span></dd>
                     </dl>
                 </div>
 
                 {/* Informazioni finanziarie */}
                 <div>
                     <h3 className="text-sm font-bold text-gray-800 mb-3 pb-2 border-b border-gray-200">
-                        Informazioni finanziarie
+                        Prestazione energetica
                     </h3>
-                    <p className="text-sm text-gray-400 italic">Nessuna informazione aggiuntiva</p>
+                    <p className="text-sm text-gray-600">Classe energetica <span className="font-medium text-gray-800">{property.catalogs.energyClass.label || 'Non specificato'}</span></p>
                 </div>
             </div>
         </div>

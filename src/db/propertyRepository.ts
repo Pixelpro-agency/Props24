@@ -6,6 +6,7 @@ import { normalizePropertyFormData, normalizePropertyMutationData, type Property
 import { currentLeasesForProperty, getPropertyFinancialSummary, isLeaseCurrentlyActive, tenantsForLeases } from './dataSelectors';
 import { assertUniquePropertyCadastralKey } from './businessRules';
 import { BuildingNotFoundError, PropertyBuildingArchivedError } from './databaseErrors';
+import { getPropertyBillingPeriodLabel, getPropertyEnergyClassLabel, getPropertyRentTypeLabel, getPropertyTypeLabel, propertyTypeValues } from '../data/propertyCatalogs';
 
 export interface PropertyBuildingRelationInput {
     buildingId?: string | null;
@@ -32,30 +33,7 @@ function buildAddress(formData: PropertyFormData): string {
 }
 
 function normalizeType(type: string): PropertyType {
-    const allowed: PropertyType[] = [
-        'appartamento',
-        'negozio',
-        'ufficio_condiviso',
-        'ufficio',
-        'roulotte',
-        'cantina',
-        'chalet',
-        'stanza',
-        'commercio',
-        'magazzino',
-        'garage',
-        'laboratorio',
-        'locale_professionale',
-        'casa',
-        'casa_di_citta',
-        'mansarda',
-        'casa_mobile',
-        'parcheggio',
-        'terreno',
-        'nuda_proprieta',
-        'altro',
-    ];
-    return allowed.includes(type as PropertyType) ? type as PropertyType : 'altro';
+    return propertyTypeValues.includes(type as PropertyType) ? type as PropertyType : 'altro';
 }
 
 function normalizeStatus(status: string, hasCurrentLease: boolean): PropertyStatus {
@@ -126,6 +104,12 @@ export function propertyRecordToDetail(record: PropertyRecord): PropertyDetail {
         id: record.id,
         title: formData.PropertyTitle || 'Nuova proprietà',
         type: formData.PropertyTypeID,
+        catalogs: {
+            type: { value: formData.PropertyTypeID, label: getPropertyTypeLabel(formData.PropertyTypeID) },
+            rentType: { value: formData.PropertyRentType, label: getPropertyRentTypeLabel(formData.PropertyRentType) },
+            billingPeriod: { value: formData.PropertyBillingPeriod, label: getPropertyBillingPeriodLabel(formData.PropertyBillingPeriod) },
+            energyClass: { value: formData.PropertyEnergyConsumption2, label: getPropertyEnergyClassLabel(formData.PropertyEnergyConsumption2) },
+        },
         address: {
             street: formData.PropertyAddress,
             postalCode: formData.PropertyPostalCode,

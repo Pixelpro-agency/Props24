@@ -3,7 +3,13 @@ import type { PropertyDetail } from '../types/propertyDetail';
 export const mockPropertyDetail: PropertyDetail = {
     id: '54707',
     title: 'Largo Luca della Robbia 25 - 2\' Piano - Torino',
-    type: 'Appartamento',
+    type: 'appartamento',
+    catalogs: {
+        type: { value: 'appartamento', label: 'Appartamento' },
+        rentType: { value: '', label: '' },
+        billingPeriod: { value: '', label: '' },
+        energyClass: { value: '', label: '' },
+    },
     address: {
         street: '25 Largo Luca della Robbia',
         postalCode: '10141',

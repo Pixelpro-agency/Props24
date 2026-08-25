@@ -8,6 +8,7 @@ import {
     propertyEnergyClassCatalog,
     propertyRentTypeCatalog,
     propertyTypeCatalog,
+    getPropertyTypeLabel, getPropertyRentTypeLabel, getPropertyBillingPeriodLabel, getPropertyEnergyClassLabel,
 } from '../../src/data/propertyCatalogs';
 import { propertyTypes } from '../../src/data/propertyTypes';
 import {
@@ -76,6 +77,17 @@ describe('cataloghi canonici Unit', () => {
 });
 
 describe('normalizzazione legacy conservativa', () => {
+    it('risolve label canoniche e fallback legacy distinti per dominio', () => {
+        expect(getPropertyTypeLabel('ufficio')).toBe('Ufficio');
+        expect(getPropertyRentTypeLabel('studenti_con_cedolare_secca')).toBe('Studenti con cedolare secca');
+        expect(getPropertyBillingPeriodLabel('quarterly')).toBe('Trimestrale');
+        expect(getPropertyEnergyClassLabel('A2')).toBe('A2');
+        expect(getPropertyBillingPeriodLabel('Mensile')).toBe('Mensile');
+        expect(getPropertyRentTypeLabel('monthly')).toBe('monthly');
+        expect(getPropertyBillingPeriodLabel('monthly')).toBe('Mensile');
+        expect(getPropertyEnergyClassLabel('A++')).toBe('A++');
+        expect(getPropertyTypeLabel('')).toBe('');
+    });
     it('canonicalizza valori e label inequivocabili', () => {
         expect(normalizeLegacyPropertyType('Appartamento')).toBe('appartamento');
         expect(normalizeLegacyPropertyRentType('Canone libero (4+4)')).toBe('canone_libero_4+4');

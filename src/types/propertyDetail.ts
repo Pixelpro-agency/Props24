@@ -21,6 +21,14 @@ export interface PropertyRent {
     utilities: number;     // spese accessorie
 }
 
+export interface PropertyCatalogField { value: string; label: string; }
+export interface PropertyCatalogReadModel {
+    type: PropertyCatalogField;
+    rentType: PropertyCatalogField;
+    billingPeriod: PropertyCatalogField;
+    energyClass: PropertyCatalogField;
+}
+
 export interface PropertyFeatures {
     furnished: boolean;
     smokersAllowed: boolean;
@@ -112,6 +120,7 @@ export interface PropertyDetail {
     id: string;
     title: string;
     type: string;
+    catalogs: PropertyCatalogReadModel;
     address: PropertyAddress;
     specs: PropertySpecs;
     rent: PropertyRent;
