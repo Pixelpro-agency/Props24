@@ -155,8 +155,7 @@ La baseline tecnica applicativa corrente è 78 file di test e 973 test passati, 
 
 Lo SHA applicativo corrente è `1834fb8733341673b2f7a1421e64b47c18615a86`.
 
-Nessuna task è marcata come prossimo punto tecnico fino alla definizione del nuovo Percorso operativo immediato.
-
+Il nuovo Percorso operativo immediato completa il perimetro locale delle Unit attraverso B3, B4, B6 e B9. B7 — Import/Export resta rinviata e B8 — Analisi catastale resta futura/backend e non bloccano il ciclo. Il prossimo punto tecnico è B3.1 — Contratto cataloghi e schema Unit.
 # BLOCCO B — Unità
 
 ## TASK B3 — Campi placeholder
@@ -170,6 +169,31 @@ Nessuna task è marcata come prossimo punto tecnico fino alla definizione del nu
 - normalizzazione legacy;
 - nessun enum duplicato e discordante;
 - round-trip nel dettaglio.
+
+### B3.1 — Contratto cataloghi e schema Unit
+
+- definire una sola fonte canonica per tipi Unit, tipi di locazione, periodicità e classi energetiche;
+- applicare integralmente UN-01, UN-02 e UN-03;
+- rendere `PropertyTypeID` obbligatorio;
+- definire la normalizzazione conservativa dei valori legacy;
+- impedire enum o cataloghi duplicati e discordanti;
+- aggiungere test puri di schema e normalizzazione.
+
+### B3.2 — UI e round-trip campi canonici Unit
+
+- collegare le select del form ai cataloghi canonici;
+- preservare placeholder e validazione coerenti;
+- verificare create, persistenza, reload e rilettura/detail;
+- non duplicare le opzioni direttamente nei componenti.
+
+### B3.3 — Gate tecnico consolidato B3
+
+- test B3 mirati;
+- regressioni property-form;
+- regressioni repository Unit e Building relation;
+- suite completa;
+- build;
+- lint mirato.
 
 ## TASK B4 — ID annidati canonici
 
@@ -191,6 +215,32 @@ Nessuna task è marcata come prossimo punto tecnico fino alla definizione del nu
 - `Tab9Documents.tsx`;
 - `src/db/jsonDb.ts`.
 
+### B4.1 — Generatore canonico e primi ID annidati
+
+Coprire:
+
+- documento catastale;
+- chiavi/password e codici;
+- contratti e relativi file;
+- generazione canonica senza `Date.now()` o `Math.random()` come ID persistiti;
+- stabilità degli ID esistenti.
+
+### B4.2 — ID annidati restanti
+
+Coprire:
+
+- fotografie;
+- contatti Unit;
+- documenti e relativi file;
+- draft;
+- submit;
+- reload;
+- nessuna rigenerazione durante render o normalizzazione.
+
+### B4.3 — Gate tecnico consolidato B4
+
+Verificare ID stabili, round-trip, regressioni form/draft, suite completa, build e lint mirato.
+
 ## TASK B6 — Modifica e lifecycle unità
 
 **Obiettivo:**
@@ -203,6 +253,50 @@ Nessuna task è marcata come prossimo punto tecnico fino alla definizione del nu
 - eliminazione protetta da relazioni;
 - azioni lista e dettaglio reali;
 - rimuovere l’alert mock da `PropertyDetailPage.tsx`.
+
+### B6.1 — Lifecycle repository Unit
+
+- archive e restore reali;
+- mutazioni atomiche;
+- eliminazione protetta dalle relazioni;
+- coerenza `buildingId` e `unitsCount`;
+- errori di dominio;
+- account scope;
+- test repository.
+
+### B6.2 — Route e form Modifica Unit
+
+- route edit reale;
+- caricamento del record esistente;
+- idratazione una sola volta;
+- riuso del form Unit;
+- `updateProperty` reale;
+- gestione record assente o non disponibile;
+- preservazione dell'identità e delle relazioni.
+
+### B6.3 — Guard e bozza edit Unit
+
+- integrare la modalità edit entity-scoped del repository bozze;
+- baseline iniziale dal record persistito;
+- dirty state;
+- `Resta`, `Abbandona` e `Salva bozza`;
+- restore della bozza edit;
+- submit riuscito e fallito;
+- cleanup senza duplicare la mutazione definitiva.
+
+### B6.4 — Azioni reali lista e dettaglio Unit
+
+- Modifica;
+- Archivio;
+- Ripristino;
+- Eliminazione protetta;
+- conferme reali;
+- rimuovere alert e handler mock;
+- aggiornamento coerente di lista e dettaglio.
+
+### B6.5 — Gate tecnico consolidato B6
+
+Consolidare repository lifecycle, edit, draft/guard, lista/dettaglio, Building relation, suite completa, build e lint mirato.
 
 ## TASK B7 — Import ed export unità
 
@@ -237,6 +331,8 @@ Nessuna task è marcata come prossimo punto tecnico fino alla definizione del nu
 Riferimento visuale: [colonne della visura catastale](./riferimenti%20catastali%20-%20colonne%20visura%20catastale%20agenzia%20delle%20entrate%20tramite%20CF.png).
 
 ## TASK B9 — Collaudo unità
+
+**Scope del ciclo locale:** B9 chiude B3, B4 e B6. B7 — Import/Export e B8 — Analisi catastale/OCR restano rispettivamente rinviata e futura/backend e non sono criteri di blocco del collaudo locale.
 
 Verificare:
 
