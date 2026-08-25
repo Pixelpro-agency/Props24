@@ -785,6 +785,7 @@ describe('NewProperty unsaved changes guard', () => {
         repository = makeRepository();
         createProperty.mockReturnValue({ id: 'property-1' });
         const router = renderPage();
+        await userEvent.selectOptions(await screen.findByLabelText('Tipo'), 'appartamento');
         await userEvent.type(
             await screen.findByLabelText(/Identificativo/),
             'Unità 1',
@@ -813,6 +814,7 @@ describe('NewProperty unsaved changes guard', () => {
             throw new Error('submit fallito');
         });
         const router = renderPage();
+        await userEvent.selectOptions(await screen.findByLabelText('Tipo'), 'appartamento');
         await userEvent.type(
             await screen.findByLabelText(/Identificativo/),
             'Unità 1',

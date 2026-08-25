@@ -65,6 +65,7 @@ function mount(entry: string) {
 function input(name: keyof PropertyFormState) { return document.getElementById(name) as HTMLInputElement; }
 async function readyProperty() { await screen.findByRole('button', { name: 'Salva' }, { timeout: 3000 }); }
 async function fillUnit(title: string) {
+    await userEvent.selectOptions(document.getElementById('PropertyTypeID') as HTMLSelectElement, 'appartamento');
     await userEvent.type(input('PropertyTitle'), title);
     await userEvent.type(input('PropertyFloor'), '2');
     await userEvent.type(input('PropertyDoorNum'), '4');

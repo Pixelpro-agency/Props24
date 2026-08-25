@@ -155,6 +155,7 @@ async function readyForm() {
 }
 
 async function fillUnit(title: string) {
+    await userEvent.selectOptions(document.getElementById('PropertyTypeID') as HTMLSelectElement, 'appartamento');
     await userEvent.type(input('PropertyTitle'), title);
     await userEvent.type(input('PropertyFloor'), '3');
     await userEvent.type(input('PropertyDoorNum'), '7');

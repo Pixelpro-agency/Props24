@@ -25,6 +25,7 @@ function database(): LocalDatabase {
 function property(overrides: Partial<PropertyFormData> = {}): PropertyFormData {
     return {
         ...defaultPropertyValues,
+        PropertyTypeID: 'appartamento',
         PropertyTitle: 'Unità condivisa',
         PropertyAddress: 'Via Roma 10',
         PropertyCity: 'Roma',

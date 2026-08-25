@@ -8,28 +8,8 @@ export type PropertyStatus =
     | 'non_disponibile'
     | 'lavori';
 
-export type PropertyType =
-    | 'appartamento'
-    | 'negozio'
-    | 'ufficio_condiviso'
-    | 'ufficio'
-    | 'roulotte'
-    | 'cantina'
-    | 'chalet'
-    | 'stanza'
-    | 'commercio'
-    | 'magazzino'
-    | 'garage'
-    | 'laboratorio'
-    | 'locale_professionale'
-    | 'casa'
-    | 'casa_di_citta'
-    | 'mansarda'
-    | 'casa_mobile'
-    | 'parcheggio'
-    | 'terreno'
-    | 'nuda_proprieta'
-    | 'altro';
+export type { PropertyType } from '../data/propertyCatalogs';
+import type { PropertyType } from '../data/propertyCatalogs';
 
 export type OccupancyFilter = 'all' | 'affittato' | 'non_affittato';
 

@@ -1,5 +1,15 @@
 import { z } from 'zod';
 import type { DefaultValues } from 'react-hook-form';
+import {
+    normalizeLegacyPropertyBillingPeriod,
+    normalizeLegacyPropertyEnergyClass,
+    normalizeLegacyPropertyRentType,
+    normalizeLegacyPropertyType,
+    propertyBillingPeriodValues,
+    propertyEnergyClassCatalog,
+    propertyRentTypeValues,
+    propertyTypeValues,
+} from '../../data/propertyCatalogs';
 
 const emptyToNullNumber = (minimum = 0) => z.preprocess((value) => {
     if (value === '' || value === undefined || value === null) return null;
@@ -59,7 +69,7 @@ export const propertyDocumentSchema = z.object({
 });
 
 export const propertySchema = z.object({
-    PropertyTypeID: stringField,
+    PropertyTypeID: z.preprocess(normalizeLegacyPropertyType, stringField),
     PropertyTitle: z.string().min(1, 'Inserisci un identificativo.').default(''),
     PropertyAvatarHexColor: stringField,
     PropertyAddress: z.string().min(1, "Inserisci l'indirizzo della proprietà.").default(''),
@@ -77,11 +87,11 @@ export const propertySchema = z.object({
     PropertyRoomsNumBaths: emptyToNullNumber(0),
     PropertyComments: stringField,
     PropertyStatusManual: z.string().default('0'),
-    PropertyRentType: stringField,
+    PropertyRentType: z.preprocess(normalizeLegacyPropertyRentType, stringField),
     PropertyRent: emptyToNullNumber(0),
     PropertyMaintenance: emptyToNullNumber(0),
-    PropertyBillingPeriod: stringField,
-    PropertyEnergyConsumption2: stringField,
+    PropertyBillingPeriod: z.preprocess(normalizeLegacyPropertyBillingPeriod, stringField),
+    PropertyEnergyConsumption2: z.preprocess(normalizeLegacyPropertyEnergyClass, stringField),
     PropertyEnergyConsumptionIndex2: stringField,
     PropertyEnergyConsumptionAmountFrom2: emptyToNullNumber(0),
     PropertyEnergyConsumptionAmountTo2: emptyToNullNumber(0),
@@ -134,7 +144,24 @@ export type PropertyContractFormData = z.infer<typeof propertyContractSchema>;
 export type PropertyContactFormData = z.infer<typeof propertyContactSchema>;
 export type PropertyDocumentFormData = z.infer<typeof propertyDocumentSchema>;
 export type PropertyFormData = z.infer<typeof propertySchema>;
+const requiredCatalogValue = (values: readonly string[], message: string) => z.string().refine(
+    (value) => values.includes(value),
+    message,
+);
+const optionalCatalogValue = (values: readonly string[], message: string) => z.string().refine(
+    (value) => value === '' || values.includes(value),
+    message,
+);
+export const propertyMutationSchema = propertySchema.extend({
+    PropertyTypeID: requiredCatalogValue(propertyTypeValues, 'Seleziona un tipo di unità valido.'),
+    PropertyRentType: optionalCatalogValue(propertyRentTypeValues, 'Seleziona un tipo di locazione valido.'),
+    PropertyBillingPeriod: optionalCatalogValue(propertyBillingPeriodValues, 'Seleziona una periodicità di pagamento valida.'),
+    PropertyEnergyConsumption2: optionalCatalogValue(propertyEnergyClassCatalog, 'Seleziona una classe energetica valida.'),
+});
 export const propertyFormStateSchema = propertySchema.extend({
+    PropertyBuildingId: z.string(),
+});
+export const propertyMutationFormStateSchema = propertyMutationSchema.extend({
     PropertyBuildingId: z.string(),
 });
 export type PropertyFormState = z.infer<typeof propertyFormStateSchema>;
@@ -235,6 +262,13 @@ export function normalizePropertyDraft(data: unknown): PropertyFormData {
         ...defaultPropertyValues,
         ...(typeof data === 'object' && data !== null ? data : {}),
     }) as PropertyFormData;
+}
+
+export function normalizePropertyMutationData(data: unknown): PropertyFormData {
+    return propertyMutationSchema.parse({
+        ...defaultPropertyValues,
+        ...(typeof data === 'object' && data !== null ? data : {}),
+    });
 }
 
 export function normalizePropertyFormState(data: unknown): PropertyFormState {

@@ -35,6 +35,8 @@ function Probe() {
     <label>Address probe<input aria-label="Address probe" {...methods.register('PropertyAddress')} /></label>
     <label>City probe<input aria-label="City probe" {...methods.register('PropertyCity')} /></label>
     <label>Postal probe<input aria-label="Postal probe" {...methods.register('PropertyPostalCode')} /></label>
+    <label>Type probe<select aria-label="Type probe" {...methods.register('PropertyTypeID')}><option value="">Nessuno</option><option value="appartamento">Appartamento</option></select></label>
+    {methods.formState.errors.PropertyTypeID?.message && <p>{methods.formState.errors.PropertyTypeID.message}</p>}
     <output data-testid="dirty">{String(methods.formState.isDirty)}</output>
     <button type="button" onClick={() => void form.saveDraft()}>Salva probe</button>
     <button type="submit">Submit probe</button>
@@ -97,10 +99,29 @@ describe('Property Building form state', () => {
     await userEvent.type(screen.getByLabelText('Address probe'), 'Via Roma 1');
     await userEvent.type(screen.getByLabelText('City probe'), 'Roma');
     await userEvent.type(screen.getByLabelText('Postal probe'), '00100');
+    await userEvent.selectOptions(screen.getByLabelText('Type probe'), 'appartamento');
     await userEvent.click(screen.getByRole('button', { name: 'Submit probe' }));
     await waitFor(() => expect(onCreateProperty).toHaveBeenCalledOnce());
     const submitted = onCreateProperty.mock.calls[0][0];
     expect(submitted).toMatchObject({ PropertyTitle: 'Unità prova', PropertyAddress: 'Via Roma 1', PropertyCity: 'Roma', PropertyPostalCode: '00100' });
     expect(submitted).not.toHaveProperty('PropertyBuildingId');
+  });
+
+  it('blocca il submit con tipo vuoto e consente il retry canonico', async () => {
+    repository = makeRepository();
+    const onCreateProperty = vi.fn((data: PropertyFormData) => ({ id: data.PropertyTitle }));
+    const { router } = renderProvider(onCreateProperty);
+    expect((await screen.findByLabelText('Type probe') as HTMLSelectElement).value).toBe('');
+    await userEvent.type(screen.getByLabelText('Title probe'), 'Unità prova');
+    await userEvent.type(screen.getByLabelText('Address probe'), 'Via Roma 1');
+    await userEvent.type(screen.getByLabelText('City probe'), 'Roma');
+    await userEvent.type(screen.getByLabelText('Postal probe'), '00100');
+    await userEvent.click(screen.getByRole('button', { name: 'Submit probe' }));
+    expect(await screen.findByText('Seleziona un tipo di unità valido.')).toBeTruthy();
+    expect(onCreateProperty).not.toHaveBeenCalled();
+    expect(router.state.location.pathname).toBe('/');
+    await userEvent.selectOptions(screen.getByLabelText('Type probe'), 'appartamento');
+    await userEvent.click(screen.getByRole('button', { name: 'Submit probe' }));
+    await waitFor(() => expect(onCreateProperty).toHaveBeenCalledOnce());
   });
 });

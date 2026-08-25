@@ -76,6 +76,7 @@ function draft(): DraftRecord<PropertyFormData> {
         entityId: null,
         payload: {
             ...defaultPropertyValues,
+            PropertyTypeID: 'appartamento',
             PropertyTitle: 'Unità',
             PropertyAddress: 'Via Roma',
             PropertyCity: 'Roma',
@@ -157,6 +158,7 @@ function renderPage(value: DraftRecord<PropertyFormData> | null = null) {
 }
 
 async function fillAndSubmit() {
+    await userEvent.selectOptions(await screen.findByLabelText('Tipo'), 'appartamento');
     await userEvent.type(
         await screen.findByLabelText(/Identificativo/),
         'Unità',
@@ -173,6 +175,7 @@ async function fillRequiredFieldsFast(values?: {
     city?: string;
     postalCode?: string;
 }) {
+    fireEvent.change(await screen.findByLabelText('Tipo'), { target: { value: 'appartamento' } });
     const title = await screen.findByLabelText(/Identificativo/);
     const address = screen.getByLabelText('Indirizzo');
     const city = screen.getByLabelText(/Citt/);
@@ -270,6 +273,7 @@ describe('NewProperty submit recovery', () => {
         await userEvent.type(screen.getByLabelText('Indirizzo'), 'Via Roma');
         await userEvent.type(screen.getByLabelText(/Citt/), 'Roma');
         await userEvent.type(screen.getByLabelText(/CAP/), '00100');
+        await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'appartamento');
         const submit = screen.getByRole('button', { name: 'Salva' });
         fireEvent.click(submit);
         fireEvent.click(submit);
@@ -303,6 +307,7 @@ describe('NewProperty submit recovery', () => {
             name: 'Salva bozza',
         }));
         await screen.findByText('Bozza salvata.');
+        await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'appartamento');
         await userEvent.type(screen.getByLabelText('Indirizzo'), 'Via Roma');
         await userEvent.type(screen.getByLabelText(/Citt/), 'Roma');
         await userEvent.type(screen.getByLabelText(/CAP/), '00100');

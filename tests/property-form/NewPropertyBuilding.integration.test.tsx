@@ -65,6 +65,7 @@ function renderPage() {
 }
 
 async function fillRequired(suffix: string) {
+    await userEvent.selectOptions(await screen.findByLabelText('Tipo'), 'appartamento');
     await userEvent.type(await screen.findByLabelText(/Identificativo/), `Unità ${suffix}`);
     await userEvent.type(screen.getByLabelText('Indirizzo'), `Via ${suffix} 1`);
     await userEvent.type(screen.getByLabelText(/Citt/), 'Milano');
@@ -112,6 +113,7 @@ describe('NewProperty standalone Building contract', () => {
     it('una bozza v2 B1.3 con Building non crea una relazione nascosta', async () => {
         makeDraftRepository(record({
             ...defaultPropertyFormStateValues,
+            PropertyTypeID: 'appartamento',
             PropertyBuildingId: 'building-a',
             PropertyTitle: 'Unità legacy Building',
             PropertyAddress: 'Via Legacy 1',

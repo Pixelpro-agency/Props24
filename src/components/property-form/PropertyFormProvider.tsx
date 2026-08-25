@@ -26,7 +26,7 @@ import type { PropertyTabId } from './PropertyFormTabs';
 import {
     defaultPropertyFormStateValues,
     normalizePropertyFormData,
-    propertyFormStateSchema,
+    propertyMutationFormStateSchema,
     type PropertyFormData,
     type PropertyFormState,
 } from './schema';
@@ -98,7 +98,7 @@ export function PropertyFormProvider({
     constrainSnapshot,
 }: PropertyFormProviderProps) {
     const methods = useForm<PropertyFormState>({
-        resolver: zodResolver(propertyFormStateSchema) as Resolver<PropertyFormState>,
+        resolver: zodResolver(propertyMutationFormStateSchema) as Resolver<PropertyFormState>,
         defaultValues: initialState ?? defaultPropertyFormStateValues,
         mode: 'onChange',
     });

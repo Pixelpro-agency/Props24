@@ -20,6 +20,7 @@ function database(): LocalDatabase {
 function propertyInput(index = 1): PropertyFormData {
   return {
     ...defaultPropertyValues,
+    PropertyTypeID: 'appartamento',
     PropertyTitle: `Unità ${index}`,
     PropertyAddress: `Via Unità ${index}`,
     PropertyCity: 'Milano',

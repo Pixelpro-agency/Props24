@@ -2,7 +2,7 @@ import type { Property, PropertyStatus, PropertyType, VisibilityStatus } from '.
 import type { PropertyDetail } from '../types/propertyDetail';
 import { deleteRecord, generateId, getJsonDb, getRecordById, saveJsonDb, updateRecord } from './jsonDb';
 import type { LeaseRecord, PropertyRecord, TenantRecord } from './database.types';
-import { normalizePropertyFormData, type PropertyFormData } from '../components/property-form/schema';
+import { normalizePropertyFormData, normalizePropertyMutationData, type PropertyFormData } from '../components/property-form/schema';
 import { currentLeasesForProperty, getPropertyFinancialSummary, isLeaseCurrentlyActive, tenantsForLeases } from './dataSelectors';
 import { assertUniquePropertyCadastralKey } from './businessRules';
 import { BuildingNotFoundError, PropertyBuildingArchivedError } from './databaseErrors';
@@ -208,7 +208,7 @@ export function createProperty(
     relationInput: PropertyBuildingRelationInput = {},
 ): PropertyRecord {
     const timestamp = new Date().toISOString();
-    const formData = normalizePropertyFormData(formDataInput);
+    const formData = normalizePropertyMutationData(formDataInput);
     const db = getJsonDb();
     assertUniquePropertyCadastralKey(db, formData);
     const buildingId = relationInput.buildingId ?? null;
@@ -240,7 +240,7 @@ export function updateProperty(
     const db = getJsonDb();
     const existing = db.properties.find((property) => property.id === id) || null;
     if (!existing) return null;
-    const formData = normalizePropertyFormData(formDataInput);
+    const formData = normalizePropertyMutationData(formDataInput);
     assertUniquePropertyCadastralKey(db, formData, id);
     const hasBuildingPatch = Object.prototype.hasOwnProperty.call(relationPatch, 'buildingId');
     const requestedBuildingId = hasBuildingPatch ? relationPatch.buildingId : existing.relations.buildingId;
