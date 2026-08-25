@@ -31,6 +31,9 @@ import { leaseTypeLabel } from '../landlord/leases/data/leaseTypes';
 import { normalizeLeaseFormData, type LeaseDraftSnapshot } from '../landlord/leases/schema/leaseFormSchema';
 import { ensureAllLeasePaymentSchedules, isGeneratedRentPayment } from './paymentRepository';
 import { normalizePaymentConfirmationRecord } from './paymentConfirmation';
+import { generateId } from '../utils/id';
+
+export { generateId } from '../utils/id';
 
 export const LOCAL_DB_KEY = 'props24.localDb';
 const OLD_DB_KEY_V3 = 'rentila.localDb.v3';
@@ -48,7 +51,6 @@ const DEFAULT_DATABASE_ACCOUNT_ID = 'user-001';
 
 let activeDatabaseAccountId: string | null = null;
 let inMemoryDatabase: LocalDatabase | null = null;
-let fallbackIdCounter = 0;
 
 export const LOCATION_DATA: Record<string, { postalCode: string; county: string; state: string; country: string }> = {
     Milano: { postalCode: '20100', county: 'MI', state: 'Lombardia', country: 'IT' },
@@ -208,12 +210,6 @@ function normalizeTenantDocuments(value: unknown): TenantRecord['documents'] {
             file: normalizeStoredLocalFile(source.file),
         };
     });
-}
-
-export function generateId(prefix = 'record'): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
-    fallbackIdCounter += 1;
-    return `${prefix}-${Date.now()}-${fallbackIdCounter}`;
 }
 
 export function normalizeIsoDate(value: unknown): string {

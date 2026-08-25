@@ -7,12 +7,8 @@ import { TextInput } from '../ui/TextInput';
 import { NumberInput } from '../ui/NumberInput';
 import { TextArea } from '../ui/TextArea';
 import { Select } from '../ui/Select';
-import type { PropertyKeyFormData } from '../schema';
-
-function newLocalId(prefix: string): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
-    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
+import type { PropertyFormData, PropertyKeyFormData } from '../schema';
+import { generateId } from '../../../utils/id';
 
 interface KeyModalProps {
     isOpen: boolean;
@@ -43,7 +39,7 @@ function KeyModal({ isOpen, onClose, onSave, initialData }: KeyModalProps) {
     if (!isOpen) return null;
 
     const handleSubmit = methods.handleSubmit((data) => {
-        onSave({ ...data, id: initialData?.id || data.id || newLocalId('key') });
+        onSave({ ...data, id: initialData?.id || data.id || generateId('key') });
         onClose();
     });
 
@@ -124,7 +120,7 @@ function KeyModal({ isOpen, onClose, onSave, initialData }: KeyModalProps) {
 }
 
 export function Tab4Passwords() {
-    const { control } = useFormContext();
+    const { control } = useFormContext<PropertyFormData>();
     const { fields, append, remove, update } = useFieldArray({
         control,
         name: 'PropertyKeys',
@@ -168,7 +164,7 @@ export function Tab4Passwords() {
                         {/* Lista Elementi */}
                         {fields.length > 0 && (
                             <div className="flex flex-col gap-3 mb-4">
-                                {fields.map((field: any, index) => (
+                                {fields.map((field, index) => (
                                     <div key={field._rhfId} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
                                             <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center border shadow-sm text-gray-400">

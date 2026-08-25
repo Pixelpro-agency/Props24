@@ -7,20 +7,13 @@ import { CheckboxGrid } from '../ui/CheckboxGrid';
 import { Select } from '../ui/Select';
 import { TextInput } from '../ui/TextInput';
 import type { PropertyFormData, StoredLocalFile } from '../schema';
+import { generateId } from '../../../utils/id';
 
 // Lista dei PropertyTypeID (dalla Select in Tab1) che richiedono di mostrare
 // i campi extra (Parcheggio, Cantina, Millesimi, ecc.).
 // Tipicamente: Appartamento(1), Casa(2), Stanza(11), ecc.
 // Se non c'è DB, assumiamo che i tipi principali (1-5) e altri residenziali (11-13) abbiano gli extra.
 const typesWithExtras = ['1', '2', '3', '4', '5', '11', '12', '14'];
-
-function newLocalFileId(): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-        return `cadastre-file-${crypto.randomUUID()}`;
-    }
-
-    return `cadastre-file-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
 
 function readFileAsStoredLocalFile(file: File): Promise<StoredLocalFile> {
     return new Promise((resolve, reject) => {
@@ -41,7 +34,7 @@ function readFileAsStoredLocalFile(file: File): Promise<StoredLocalFile> {
             }
 
             resolve({
-                id: newLocalFileId(),
+                id: generateId('cadastre-file'),
                 name: file.name,
                 type: file.type,
                 size: file.size,
