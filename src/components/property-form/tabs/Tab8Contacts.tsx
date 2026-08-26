@@ -6,12 +6,8 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { TextInput } from '../ui/TextInput';
 import { TextArea } from '../ui/TextArea';
 import { Select } from '../ui/Select';
-import type { PropertyContactFormData } from '../schema';
-
-function newLocalId(prefix: string): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
-    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
+import type { PropertyContactFormData, PropertyFormData } from '../schema';
+import { generateId } from '../../../utils/id';
 
 interface ContactModalProps {
     isOpen: boolean;
@@ -41,7 +37,7 @@ function ContactModal({ isOpen, onClose, onSave, initialData }: ContactModalProp
     if (!isOpen) return null;
 
     const handleSubmit = methods.handleSubmit((data) => {
-        onSave({ ...data, id: initialData?.id || data.id || newLocalId('contact') });
+        onSave({ ...data, id: initialData?.id || data.id || generateId('contact') });
         onClose();
     });
 
@@ -133,7 +129,7 @@ function ContactModal({ isOpen, onClose, onSave, initialData }: ContactModalProp
 }
 
 export function Tab8Contacts() {
-    const { control } = useFormContext();
+    const { control } = useFormContext<PropertyFormData>();
     const { fields, append, remove, update } = useFieldArray({
         control,
         name: 'PropertyContacts',
@@ -176,7 +172,7 @@ export function Tab8Contacts() {
 
                         {fields.length > 0 && (
                             <div className="flex flex-col gap-3 mb-4">
-                                {fields.map((field: any, index) => (
+                                {fields.map((field, index) => (
                                     <div key={field._rhfId} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
                                             <div className="h-10 w-10 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-semibold border shadow-sm">

@@ -7,12 +7,8 @@ import { TextInput } from '../ui/TextInput';
 import { Select } from '../ui/Select';
 import { TextArea } from '../ui/TextArea';
 import { ToggleSwitch } from '../ui/ToggleSwitch';
-import type { PropertyDocumentFormData, StoredLocalFile } from '../schema';
-
-function newLocalId(prefix: string): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
-    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
+import type { PropertyDocumentFormData, PropertyFormData, StoredLocalFile } from '../schema';
+import { generateId } from '../../../utils/id';
 
 function readFileAsStoredLocalFile(file: File): Promise<StoredLocalFile> {
     if (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.type)) {
@@ -30,7 +26,7 @@ function readFileAsStoredLocalFile(file: File): Promise<StoredLocalFile> {
                 return;
             }
             resolve({
-                id: newLocalId('file'),
+                id: generateId('file'),
                 name: file.name,
                 type: file.type,
                 size: file.size,
@@ -86,7 +82,7 @@ function DocumentModal({ isOpen, onClose, onSave, initialData }: DocumentModalPr
     };
 
     const handleSubmit = methods.handleSubmit((data) => {
-        onSave({ ...data, id: initialData?.id || data.id || newLocalId('document') });
+        onSave({ ...data, id: initialData?.id || data.id || generateId('document') });
         onClose();
     });
 
@@ -198,7 +194,7 @@ function DocumentModal({ isOpen, onClose, onSave, initialData }: DocumentModalPr
 }
 
 export function Tab9Documents() {
-    const { control } = useFormContext();
+    const { control } = useFormContext<PropertyFormData>();
     const { fields, append, remove, update } = useFieldArray({
         control,
         name: 'PropertyDocuments',
@@ -241,7 +237,7 @@ export function Tab9Documents() {
 
                         {fields.length > 0 && (
                             <div className="flex flex-col gap-3 mb-4">
-                                {fields.map((field: any, index) => (
+                                {fields.map((field, index) => (
                                     <div key={field._rhfId} className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
                                             <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center border shadow-sm text-gray-400">

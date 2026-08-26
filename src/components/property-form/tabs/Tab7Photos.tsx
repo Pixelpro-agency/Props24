@@ -3,16 +3,12 @@ import { UploadCloud, X } from 'lucide-react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import type { PropertyFormData, StoredLocalFile } from '../schema';
+import { generateId } from '../../../utils/id';
 
 const MAX_PHOTOS = 5;
 const MAX_IMAGE_SIZE = 1024 * 1024;
 const MAX_TOTAL_SIZE = 3 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif'];
-
-function newLocalId(prefix: string): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}-${crypto.randomUUID()}`;
-    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
 
 function readFileAsStoredLocalFile(file: File): Promise<StoredLocalFile> {
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
@@ -30,7 +26,7 @@ function readFileAsStoredLocalFile(file: File): Promise<StoredLocalFile> {
                 return;
             }
             resolve({
-                id: newLocalId('photo'),
+                id: generateId('photo'),
                 name: file.name,
                 type: file.type,
                 size: file.size,
@@ -62,9 +58,9 @@ export function Tab7Photos() {
             if (nextTotalSize > MAX_TOTAL_SIZE) {
                 throw new Error('Allegati troppo pesanti. Limite massimo 3 MB complessivi per unità.');
             }
-            const descriptors = await Promise.all(selectedFiles.map(readFileAsStoredLocalFile));
             const existingKeys = new Set(photos.map((photo) => `${photo.name}-${photo.size}-${photo.lastModified}`));
-            const uniqueDescriptors = descriptors.filter((photo) => !existingKeys.has(`${photo.name}-${photo.size}-${photo.lastModified}`));
+            const uniqueFiles = selectedFiles.filter((file) => !existingKeys.has(`${file.name}-${file.size}-${file.lastModified}`));
+            const uniqueDescriptors = await Promise.all(uniqueFiles.map(readFileAsStoredLocalFile));
             setValue('PropertyPhotos', [...photos, ...uniqueDescriptors], { shouldDirty: true, shouldValidate: true });
         } catch (uploadError) {
             setError(uploadError instanceof Error ? uploadError.message : 'Errore durante il caricamento delle foto.');
