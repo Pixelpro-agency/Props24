@@ -64,6 +64,38 @@ export class BuildingDeleteBlockedError extends Error {
     }
 }
 
+export class PropertyNotFoundError extends Error {
+    readonly propertyId: string;
+
+    constructor(propertyId: string) {
+        super(`Unità non trovata: ${propertyId}.`);
+        this.name = 'PropertyNotFoundError';
+        this.propertyId = propertyId;
+    }
+}
+
+export interface PropertyDeleteBlocker {
+    propertyId: string;
+    leaseIds: string[];
+    paymentIds: string[];
+}
+
+export class PropertyDeleteBlockedError extends Error {
+    readonly blockers: PropertyDeleteBlocker[];
+    readonly blockedPropertyIds: string[];
+
+    constructor(blockers: PropertyDeleteBlocker[]) {
+        super("Una o più unità non possono essere eliminate perché conservano storico o relazioni persistenti. L'archiviazione è l'alternativa sicura.");
+        this.name = 'PropertyDeleteBlockedError';
+        this.blockers = blockers.map((blocker) => ({
+            propertyId: blocker.propertyId,
+            leaseIds: [...blocker.leaseIds],
+            paymentIds: [...blocker.paymentIds],
+        }));
+        this.blockedPropertyIds = this.blockers.map((blocker) => blocker.propertyId);
+    }
+}
+
 export class PropertyBuildingArchivedError extends Error {
     readonly buildingId: string;
 

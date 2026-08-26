@@ -1,11 +1,12 @@
 import type { Property, PropertyStatus, PropertyType, VisibilityStatus } from '../types/property';
 import type { PropertyDetail } from '../types/propertyDetail';
-import { deleteRecord, generateId, getJsonDb, getRecordById, saveJsonDb, updateRecord } from './jsonDb';
+import { generateId, getJsonDb, getRecordById, saveJsonDb } from './jsonDb';
 import type { LeaseRecord, PropertyRecord, TenantRecord } from './database.types';
 import { normalizePropertyFormData, normalizePropertyMutationData, type PropertyFormData } from '../components/property-form/schema';
 import { currentLeasesForProperty, getPropertyFinancialSummary, isLeaseCurrentlyActive, tenantsForLeases } from './dataSelectors';
 import { assertUniquePropertyCadastralKey } from './businessRules';
-import { BuildingNotFoundError, PropertyBuildingArchivedError } from './databaseErrors';
+import { BuildingNotFoundError, PropertyBuildingArchivedError, PropertyDeleteBlockedError } from './databaseErrors';
+import { createPropertyLifecycleRepositoryOperations } from './propertyLifecycleRepository';
 import { getPropertyBillingPeriodLabel, getPropertyEnergyClassLabel, getPropertyRentTypeLabel, getPropertyTypeLabel, propertyTypeValues } from '../data/propertyCatalogs';
 
 export interface PropertyBuildingRelationInput {
@@ -243,22 +244,24 @@ export function updateProperty(
 }
 
 export function archiveProperties(ids: string[]): void {
-    ids.forEach((id) => {
-        updateRecord('properties', id, { archived: true, updatedAt: new Date().toISOString() });
-    });
+    createPropertyLifecycleRepositoryOperations({ getDatabase: getJsonDb, saveDatabase: saveJsonDb }).archiveMany(ids);
+}
+
+export function restoreProperties(ids: string[]): void {
+    createPropertyLifecycleRepositoryOperations({ getDatabase: getJsonDb, saveDatabase: saveJsonDb }).restoreMany(ids);
 }
 
 export function deleteProperties(ids: string[]): { deleted: string[]; blocked: string[] } {
-    const db = getJsonDb();
-    const blocked = ids.filter((id) => {
-        const property = db.properties.find((item) => item.id === id);
-        return db.leases.some((lease) => lease.propertyId === id)
-            || db.payments.some((payment) => payment.propertyId === id)
-            || Boolean(property?.relations.tenantIds.length);
-    });
-    const deleted = ids.filter((id) => !blocked.includes(id));
-    deleted.forEach((id) => deleteRecord('properties', id));
-    return { deleted, blocked };
+    const lifecycle = createPropertyLifecycleRepositoryOperations({ getDatabase: getJsonDb, saveDatabase: saveJsonDb });
+    try {
+        const result = lifecycle.deleteMany(ids);
+        return { deleted: result.ids, blocked: [] };
+    } catch (error) {
+        if (error instanceof PropertyDeleteBlockedError) {
+            return { deleted: [], blocked: error.blockedPropertyIds };
+        }
+        throw error;
+    }
 }
 
 export function addPropertyNote(propertyId: string, text: string) {
