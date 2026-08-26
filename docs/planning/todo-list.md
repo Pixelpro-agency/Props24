@@ -341,7 +341,6 @@ Baseline tecnica corrente post-B4: 88 file, 1055 test passati; build positiva e 
 
 ## Decisioni prodotto ancora aperte
 
-- [ ] Azioni lista inquilini — **DECISIONE PRODOTTO; riferimento C6/G3**
-- [ ] Azioni edificio, unità e inquilini — **DECISIONE PRODOTTO; riferimento G3**
+- [ ] Azioni lista inquilini — **DECISIONE PRODOTTO; riferimento C6**
 - [ ] Dashboard e navbar — **DECISIONE PRODOTTO; riferimento G5**
 - [ ] Route future — **DECISIONE PRODOTTO; riferimento G6**

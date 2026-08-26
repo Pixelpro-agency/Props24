@@ -92,7 +92,7 @@ updatedAt
 
 `formType` distingue almeno `building`, `property`, `tenant`, `lease`; `mode` distingue `create` ed `edit`.
 
-Caricare una bozza non crea entità definitive. La bozza è aggiornata soltanto manualmente, resta dopo l'abbandono di modifiche non salvate, viene eliminata dopo submit riuscito ed è eliminabile esplicitamente all'apertura del form. Gli allegati futuri non devono far crescere senza limiti il JSON locale.
+Caricare una bozza non crea entità definitive. La bozza è aggiornata soltanto manualmente, resta dopo l'abbandono di modifiche non salvate, viene eliminata dopo submit riuscito ed è eliminabile esplicitamente all'apertura del form. Gli allegati già supportati localmente possono ancora contribuire alla dimensione del JSON delle bozze; quota, performance e strategia di migrazione restano da verificare nelle task dedicate. Il modello di produzione non deve affidarsi a Data URL persistenti senza limiti.
 
 Il repository condiviso è implementato con contratto asincrono e adapter locale account-scoped. Usa chiavi logiche per form, modalità ed eventuale entità, schema canonico versionato e migrazione delle forme legacy; non dipende da una singola chiave globale. I payload restano specifici per ciascun form e vengono validati dalla relativa definition. La baseline persistita è clonata e non viene mutata dalle modifiche dirty del form.
 

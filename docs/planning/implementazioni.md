@@ -651,7 +651,7 @@ I FeedbackBox restano visibili, gialli e disabilitati, senza falso invio. Import
 
 # BLOCCO H — Sicurezza, backend e storage
 
-Riferimenti: [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md) e [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md). Password e codici, foto, documenti, OCR, PDF, scraping e firme sono funzioni future dipendenti da backend e storage sicuro.
+Riferimenti: [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md) e [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md). Storage documentale definitivo, gestione sicura di password e codici, OCR, PDF, scraping, firme e servizi esterni restano funzioni future dipendenti da backend e storage sicuro. I dati e gli allegati già supportati localmente restano validi nel perimetro di collaudo.
 
 ## TASK H1 — Autenticazione di produzione
 

@@ -144,7 +144,7 @@ Il form segue [la specifica della fase locale](./fase-locale-prioritaria.md): bo
 
 ## 13. Relazioni e unicità
 
-Secondo [Database locale e migrazione futura](./database-locale-e-migrazione.md), edificio e unità usano UUID e `buildingId`; `unitsCount` è derivato. L'identificativo edificio è obbligatorio e univoco per account. Nello stesso account, stesso indirizzo completo e stesso civico identificano lo stesso edificio; `10`, `10 bis` e `10 ter` sono civici distinti. Unità, scala, piano e interno non generano nuovi edifici.
+Secondo [Database locale e migrazione futura](./database-locale-e-migrazione.md), edificio e unità usano identificativi canonici basati su UUID e `buildingId`; `unitsCount` è derivato. L'identificativo edificio è obbligatorio e univoco per account. Nello stesso account, stesso indirizzo completo e stesso civico identificano lo stesso edificio; `10`, `10 bis` e `10 ter` sono civici distinti. Unità, scala, piano e interno non generano nuovi edifici.
 
 ## 14. Destinazione post-submit
 
