@@ -38,7 +38,7 @@ Le task completate non vengono replicate in questo documento. Il loro stato sint
 - [Ruoli, inviti e workspace](./specifiche/ruoli-inviti-e-workspace.md)
 - [Decisioni da validare](./decisioni-da-validare.md)
 
-Questo documento conserva il dettaglio delle task; la Todo list ne mostra lo stato sintetico e il registro delle decisioni contiene le domande professionali complete.
+Questo documento conserva il dettaglio delle task residue; la Todo list ne mostra lo stato sintetico e il registro delle decisioni conserva le decisioni ancora operative per il lavoro non concluso.
 
 ## 2. Regole operative
 
@@ -88,38 +88,19 @@ Non:
 
 ## 3. Decisioni e materiali necessari
 
-### 3.1 Nuovo edificio
-
-La specifica consolidata è disponibile in [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md). ED-01–ED-07 sono validate: identificativo e duplicati sono account-scoped, il post-submit apre il dettaglio, le unità usano il form dedicato, il lifecycle è protetto e Criteri di ripartizione è eliminata. Il campo millesimi esistente resta semplice e facoltativo.
-
-### 3.2 Duplicati delle unità
-
-Ogni unità usa un UUID interno. Il controllo duplicati usa la chiave catastale normalizzata account-scoped solo quando completa; con dati incompleti non usa fingerprint o fallback alternativi.
-
-### 3.3 Campi unità ancora senza valori
-
-Sono validati i cataloghi professionali di:
-
-- tipo di locazione dell’unità;
-- periodicità di pagamento;
-- classe energetica;
-- eventuali valori legacy da normalizzare.
-
-Riferimento: [Decisioni da validare](./decisioni-da-validare.md).
-
-### 3.4 Duplicati anagrafici
+### 3.1 Duplicati anagrafici
 
 La strategia è validata: identificativi fiscali italiani anche nei flussi italiani con soggetti esteri; duplicato fiscale nello stesso account = blocco senza override; email non probatoria; SIREN/SIRET fuori scope. Il CF dell'account Props24, se presente, è invece globalmente univoco fra account.
 
-### 3.5 Modifiche non salvate
+### 3.2 Modifiche non salvate
 
 La decisione è consolidata in [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md): bozza manuale separata, nessun autosalvataggio, stato dirty, modale applicativa `Resta`/`Abbandona`/`Salva bozza`, ripresa o eliminazione della bozza e `beforeunload` nativo per refresh e chiusura.
 
-### 3.6 Funzioni future, route e servizi esterni
+### 3.3 Funzioni future, route e servizi esterni
 
 Le funzioni non disponibili restano visibili quando utili, gialle, realmente disabilitate, non cliccabili e accompagnate da spiegazione. Non usano route fittizie o falsi successi. La convenzione è definita nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
-### 3.7 Backend e produzione
+### 3.4 Backend e produzione
 
 La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md). Restano da definire in task future:
 
@@ -245,7 +226,7 @@ Riferimento visuale: [colonne della visura catastale](./riferimenti%20catastali%
 
 ## TASK B9 — Collaudo unità
 
-**Scope del ciclo locale:** B9 chiude B3, B4 e B6. B7 — Import/Export e B8 — Analisi catastale/OCR restano rispettivamente rinviata e futura/backend e non sono criteri di blocco del collaudo locale.
+**Scope del ciclo locale:** B9 esegue il collaudo browser finale del perimetro Unit coperto da B3, B4 e B6. B3 e B4 sono già chiuse tecnicamente; B7 — Import/Export e B8 — Analisi catastale/OCR non bloccano il collaudo locale.
 
 Verificare:
 
@@ -591,17 +572,13 @@ La task deve:
 - non assegnare priorità di prodotto non approvate dall’utente;
 - non creare un registro parallelo separato dalla documentazione tecnica.
 
-## TASK G3 — Edifici, unità e inquilini
+## TASK G3 — Residui azioni unità e inquilini
 
-Azioni già confermate come non operative:
+**Stato:** da rivalutare dopo G1.
 
-- edifici: create/archive/delete;
-- unità: export e import;
-- dettaglio unità: modifica/eliminazione mock;
-- inquilini: bulk delete/archive/export;
-- download, email e terminazione.
+G3 non deve riaprire il lifecycle degli edifici, già completato e collaudato, né duplicare attività già assegnate a B6, B7, C5 o C6.
 
-Separare una task per area dopo decisione prodotto.
+Dopo G1 devono restare in G3 soltanto eventuali azioni realmente attive ma senza effetto o non ancora classificate che non abbiano già una task owner.
 
 ## TASK G4 — Locazioni
 

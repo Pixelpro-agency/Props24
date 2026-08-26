@@ -2,7 +2,7 @@
 
 ## Scopo
 
-Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementazioni residue](./implementazioni.md) contiene dettaglio, dipendenze e criteri di chiusura; [Decisioni da validare](./decisioni-da-validare.md) contiene le domande professionali complete. Specifiche e codice verificato restano le fonti tecniche. La Todo non sostituisce la futura documentazione architetturale.
+Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementazioni residue](./implementazioni.md) contiene dettaglio, dipendenze e criteri di chiusura; [Decisioni da validare](./decisioni-da-validare.md) contiene le decisioni professionali ancora aperte o rinviate e le decisioni validate ancora rilevanti per task non concluse. Specifiche e codice verificato restano le fonti tecniche. La Todo non sostituisce la futura documentazione architetturale.
 
 - [Implementazioni residue](./implementazioni.md)
 - [Decisioni da validare](./decisioni-da-validare.md)
@@ -15,14 +15,14 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 
 - Task principali: 72
 - Completate integralmente: 18
-- Parzialmente completate: 2
-- Non concluse: 52
+- Parzialmente completate: 4
+- Non concluse: 50
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
 - Prossimo punto tecnico: B6.1 — Lifecycle repository Unit
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 52 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 50 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
@@ -30,9 +30,9 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >
 > Obiettivo: completare il perimetro Unit localmente implementabile consolidando campi canonici, ID annidati, modifica/lifecycle e collaudo finale. B7 — Import/Export resta rinviata e B8 — Analisi catastale resta futura/backend e non bloccano questo ciclo.
 >
-> Baseline applicativa di partenza: `1834fb8733341673b2f7a1421e64b47c18615a86`.
+> Baseline applicativa corrente: `b835d3b5e3a7c3c2b1f93289ed89ca4aa8faf4a6`.
 >
-> Baseline tecnica: 78 file di test / 973 test passati, build positiva e lint mirato B2 positivo.
+> Baseline tecnica corrente: 88 file di test / 1055 test passati, build positiva e lint mirato B4 senza errori.
 >
 > - [x] B3 — Campi canonici Unit
 >   - [x] B3.1 — Contratto cataloghi e schema Unit
@@ -115,7 +115,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [ ] B6.5 — Gate tecnico consolidato B6 — **APERTO**
 - [ ] B7 — Import ed export unità — **RINVIATO**
 - [ ] B8 — Analisi catastale futura — **FUTURO — BACKEND**
-- [ ] B9 — Collaudo unità — **APERTO; dipende dal completamento delle task precedenti del blocco**
+- [ ] B9 — Collaudo unità — **APERTO; dipende dal completamento di B6; B7 e B8 non bloccano il collaudo locale**
   - [ ] B9A — Card unità: Affittate, Valore locativo, Valore patrimoniale, Guadagno lordo e Guadagno netto; Tasso di occupazione solo per futuri affitti brevi e Copertura locativa soprattutto aggregata — **FUTURO; KPI-01 e KPI-02 validate**
 
 ## Blocco C — Inquilini e contatti
@@ -191,7 +191,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
 
 - [ ] G1 — Inventario statico aggiornato — **APERTO**
 - [ ] G2 — Integrare l’inventario route nella documentazione tecnica — **APERTO; dipende da G1 e confluisce in L2**
-- [ ] G3 — Edifici, unità e inquilini — **DECISIONE PRODOTTO**
+- [ ] G3 — Residui azioni unità e inquilini — **DA RIVALUTARE DOPO G1; non deve duplicare B6, B7, C5 o C6**
 - [ ] G4 — Locazioni — **DECISIONE PRODOTTO / FUTURO**
 - [ ] G5 — Dashboard e navbar — **DECISIONE PRODOTTO**
 - [ ] G6 — Route future — **DECISIONE PRODOTTO / FUTURO**

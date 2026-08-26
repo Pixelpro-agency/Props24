@@ -23,8 +23,8 @@ Questo registro contiene le decisioni professionali ancora aperte o rinviate e l
 - Destinatario: commercialista o consulente
 - Domanda: I metodi correnti `Bonifico`, `Contanti`, `Assegno`, `Carta` e `Addebito` restano validi per le funzioni implementate. Dopo lo sviluppo di Finanze / Registra un pagamento, il catalogo dovrà essere mantenuto, modificato o ampliato?
 - Perché serve: definire il catalogo.
-- Task bloccate o influenzate: conferma pagamento.
-- Checklist collegata: D2
+- Task bloccate o influenzate: catalogo futuro dei metodi di pagamento nella sezione Finanze.
+- Checklist collegata: futura sezione Finanze
 - Stato: aperta, rinviata alla sezione Finanze
 - Risposta: decisione sul catalogo futuro rinviata; il catalogo corrente non è riaperto
 - Data validazione: —
@@ -46,7 +46,7 @@ Questo registro contiene le decisioni professionali ancora aperte o rinviate e l
 - Domanda: Come saranno gestiti pagamenti parziali, crediti e debiti?
 - Perché serve: definire il modello futuro.
 - Task bloccate o influenzate: pagamenti successivi alla prima fase.
-- Checklist collegata: D2D, I5
+- Checklist collegata: I5
 - Stato: aperta, rinviata alla sezione Finanze
 - Risposta: pagamenti parziali, crediti e debiti saranno definiti in quella fase; Rentila sarà soltanto un riferimento funzionale da analizzare
 - Data validazione: —
@@ -157,8 +157,8 @@ Questo registro contiene le decisioni professionali ancora aperte o rinviate e l
 - Destinatario: agente immobiliare o amministratore
 - Domanda: Quali periodicità di pagamento devono essere supportate?
 - Perché serve: definire il catalogo canonico.
-- Task bloccate o influenzate: campi unità e locazioni.
-- Checklist collegata: B3, I10
+- Task bloccate o influenzate: periodicità forfettaria futura delle locazioni.
+- Checklist collegata: I10
 - Stato: validata
 - Risposta: catalogo canonico esatto: Mensile, Trimestrale, Semestrale, Annuale.
 - Data validazione: 2026-08-14

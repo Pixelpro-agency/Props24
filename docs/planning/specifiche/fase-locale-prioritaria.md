@@ -18,7 +18,7 @@ Qualunque funzione visibile che non sia ancora implementata, realmente funzionan
 - accompagnata da tooltip o testo chiaro;
 - priva di route fittizie, fallback `#` e falsi messaggi di successo.
 
-La convenzione si applicherà a Importa, Esporta, FeedbackBox, Foto, Documenti, Password e codici, OCR, firme digitali, scraping, automazioni email, generazione documentale e altre integrazioni backend non disponibili.
+La convenzione si applica alle funzioni realmente non disponibili, come Importa, Esporta, FeedbackBox, OCR, firme digitali, scraping, automazioni email, generazione documentale e integrazioni che richiedono backend o storage non ancora implementati. Non disabilita automaticamente i campi e i flussi locali già supportati e persistiti nei form.
 
 Importa ed Esporta devono restare visibili, gialli e disabilitati fino all'implementazione. Anche FeedbackBox deve restare visibile, giallo e disabilitato. Questa task documentale non implementa la convenzione.
 
@@ -116,19 +116,6 @@ La semantica completa di deposito, restituzione e prepagato resta una decisione 
 Sono attività future: pagamenti parziali, crediti, debiti, compensazioni, allegati probatori, richieste di ricevuta, scontrini, documenti ufficiali e generazione automatica di ricevute o fatture.
 
 
-Questo basta. Non serve citare i test.
-
----
-
-# 4. `docs/planning/specifiche/fase-locale-prioritaria.md`
-
-Qui devi aggiungere **il contratto funzionale stabile B3+B4**.
-
-Io aggiungerei una nuova sezione **prima di `## 7. Funzioni documentali future`**.
-
-### Inserisci:
-
-```md
 ## 7. Contratto locale delle Unit
 
 ### Campi canonici
@@ -140,6 +127,8 @@ I valori strutturati delle Unit usano cataloghi canonici condivisi per tipo di u
 La lettura dei dati legacy è conservativa: i valori riconosciuti vengono normalizzati, mentre valori sconosciuti o ambigui vengono preservati e non producono riscritture automatiche.
 
 Il database persiste i machine ID. Le label leggibili vengono costruite nel read-model e nella UI. I percorsi di lettura non modificano il database.
+
+La fonte tecnica dei valori canonici implementati è `src/data/propertyCatalogs.ts`; i cataloghi verificati da B3 non devono essere modificati senza una nuova decisione di prodotto.
 
 ### Identità annidate
 
@@ -157,7 +146,7 @@ La strategia tecnica del generatore canonico è descritta in [Database locale e 
 
 Dipendono dal backend: upload e storage definitivo di immagini, conversione immagini, lettura e creazione PDF, OCR di identità, catasto e visure camerali, scraping, firme digitali, verifica documentale, email e automazioni. Il futuro sistema distingue almeno Ricevuta, Fattura, Quietanza e Allegato del pagamento. Per la ricevuta sono già noti locatore, conduttore, importo, data e tipologia/metodo di pagamento. Restano rinviati prove definitive, momento di emissione, automatismi, regole fiscali, pagamenti parziali, crediti e debiti.
 
-Nella fase locale i relativi controlli rispettano la convenzione gialla e disabilitata.
+Le integrazioni documentali che richiedono backend, storage definitivo, OCR, firme, invio o automazioni rispettano la convenzione delle funzioni non disponibili. I campi e gli allegati già supportati localmente restano utilizzabili nel perimetro locale approvato.
 
 ## 9. Ordine operativo prioritario
 

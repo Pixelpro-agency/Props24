@@ -23,7 +23,7 @@ updatedAt
 archivedAt
 ```
 
-`id` usa UUID canonici; i timestamp sono ISO; `accountId` è obbligatorio sui dati account-scoped. Nessun ID persistito nasce durante il render e `Date.now()` o `Math.random()` non sono ID definitivi. Le relazioni usano ID, non copie incontrollate.
+`id` usa identificativi canonici basati su UUID; i timestamp sono ISO; `accountId` è obbligatorio sui dati account-scoped. Nessun ID persistito nasce durante il render e `Date.now()` o `Math.random()` non sono ID definitivi. Le relazioni usano ID, non copie incontrollate.
 
 La generazione dei nuovi ID persistenti usa l'utility canonica `generateId(prefix)`. La prima sorgente è `globalThis.crypto.randomUUID()`; quando non disponibile viene usato `globalThis.crypto.getRandomValues()` per costruire un UUID v4. Se non è disponibile una sorgente crittografica adeguata, la generazione fallisce esplicitamente invece di ricorrere a timestamp, `Math.random()` o contatori riavviabili.
 
@@ -47,6 +47,10 @@ PropertyContacts[].id
 PropertyDocuments[].id
 PropertyDocuments[].file.id
 ```
+
+L'ID nasce esclusivamente quando viene creato realmente un nuovo oggetto o file. Render, rerender, normalizzazione, draft, validazione della mutation, persistenza e reload non rigenerano un'identità già assegnata.
+
+La modifica di un'entità annidata conserva il suo ID. La sostituzione reale di un file crea invece un nuovo oggetto file e quindi un nuovo file ID, senza modificare l'ID dell'entità parent. Gli ID legacy esistenti vengono preservati senza migrazione automatica del formato.
 
 ## 4. Repository
 
@@ -121,7 +125,7 @@ Gli eventi sono immutabili, cronologici, contengono snapshot precedente e succes
 
 ## 7. Unicità delle unità
 
-Ogni unità ha sempre un UUID interno. Quando i dati catastali ufficiali sono completi, la chiave normalizzata account-scoped usa Paese, Codice Comune, Terreni/Urbano, Sezione Urbana o Comune Catastale quando presente, Foglio, Particella e Subalterno quando presente.
+Ogni unità ha sempre un identificativo interno canonico basato su UUID. Quando i dati catastali ufficiali sono completi, la chiave normalizzata account-scoped usa Paese, Codice Comune, Terreni/Urbano, Sezione Urbana o Comune Catastale quando presente, Foglio, Particella e Subalterno quando presente.
 
 La normalizzazione gestisce spazi e maiuscole/minuscole, conserva gli zeri significativi, distingue i campi assenti e viene verificata in create ed edit escludendo il record corrente. Indirizzo, piano e interno non costituiscono identità catastale ufficiale.
 
@@ -144,7 +148,11 @@ Non si duplicano oggetti edificio nelle unità. `unitsCount` deriva dai dati rea
 
 ## 9. Allegati e storage futuro
 
-I metadati risiedono nel database; i binari in storage dedicato. IndexedDB può essere una soluzione locale temporanea e Supabase Storage è il candidato naturale per il backend. Password e codici sensibili non vanno salvati in chiaro.
+Nella fase locale alcuni allegati supportati possono ancora essere persistiti come Data URL nel database JSON locale. È una soluzione temporanea di collaudo, non il modello di produzione.
+
+Il target prevede metadati nel database e binari in storage dedicato. IndexedDB può essere una soluzione locale temporanea e Supabase Storage è il candidato naturale per il backend.
+
+Password e codici sensibili presenti nei flussi locali sono dati di test e non costituiscono una soluzione di sicurezza di produzione; in produzione non devono essere memorizzati in chiaro.
 
 ## 10. Migrazione verso Supabase/PostgreSQL
 
