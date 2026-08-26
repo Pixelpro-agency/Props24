@@ -297,6 +297,9 @@ describe('B6.3 submit cleanup e recovery', () => {
         await ready();
         await userEvent.click(screen.getByRole('button', { name: 'Salva modifiche' }));
         expect(await screen.findByText('Unità aggiornata, pulizia incompleta')).toBeTruthy();
+        expect(screen.getByText(
+            'Non è stato possibile eliminare la bozza locale. Riprova la pulizia.',
+        )).toBeTruthy();
         expect(router.state.location.pathname).toBe('/properties/units/property-A/edit');
         await userEvent.click(screen.getByRole('button', { name: 'Riprova pulizia' }));
         await waitFor(() => expect(router.state.location.pathname).toBe('/properties/units/property-A'));

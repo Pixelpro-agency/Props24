@@ -37,7 +37,7 @@ import {
 } from './hooks/usePropertyDraftController';
 
 const PROPERTY_CLEANUP_ERROR =
-    'Non Ã¨ stato possibile eliminare la bozza locale. Riprova la pulizia.';
+    'Non è stato possibile eliminare la bozza locale. Riprova la pulizia.';
 
 interface PropertyFormContextProps {
     activeTab: string;
