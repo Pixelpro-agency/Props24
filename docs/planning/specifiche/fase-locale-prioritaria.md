@@ -115,13 +115,51 @@ La semantica completa di deposito, restituzione e prepagato resta una decisione 
 
 Sono attività future: pagamenti parziali, crediti, debiti, compensazioni, allegati probatori, richieste di ricevuta, scontrini, documenti ufficiali e generazione automatica di ricevute o fatture.
 
-## 7. Funzioni documentali future
+
+Questo basta. Non serve citare i test.
+
+---
+
+# 4. `docs/planning/specifiche/fase-locale-prioritaria.md`
+
+Qui devi aggiungere **il contratto funzionale stabile B3+B4**.
+
+Io aggiungerei una nuova sezione **prima di `## 7. Funzioni documentali future`**.
+
+### Inserisci:
+
+```md
+## 7. Contratto locale delle Unit
+
+### Campi canonici
+
+I valori strutturati delle Unit usano cataloghi canonici condivisi per tipo di unità, tipo di locazione, periodicità di pagamento e classe energetica.
+
+`PropertyTypeID` è obbligatorio al submit e alla mutation definitiva. Tipo di locazione, periodicità e classe energetica possono essere vuoti, ma quando valorizzati devono appartenere ai rispettivi cataloghi canonici.
+
+La lettura dei dati legacy è conservativa: i valori riconosciuti vengono normalizzati, mentre valori sconosciuti o ambigui vengono preservati e non producono riscritture automatiche.
+
+Il database persiste i machine ID. Le label leggibili vengono costruite nel read-model e nella UI. I percorsi di lettura non modificano il database.
+
+### Identità annidate
+
+Gli ID persistenti annidati delle Unit vengono generati soltanto quando nasce realmente un nuovo oggetto o file.
+
+Una volta assegnati, edit, rerender, normalizzazione, draft, submit, persistenza e reload devono preservare la stessa identità.
+
+Parser e normalizzatori non generano nuovi ID. La sostituzione reale di un file crea un nuovo file ID, mentre l'ID dell'entità parent resta invariato.
+
+Gli ID legacy già presenti vengono conservati senza migrazione automatica del formato.
+
+La strategia tecnica del generatore canonico è descritta in [Database locale e migrazione futura](./database-locale-e-migrazione.md).
+
+## 8. Funzioni documentali future
 
 Dipendono dal backend: upload e storage definitivo di immagini, conversione immagini, lettura e creazione PDF, OCR di identità, catasto e visure camerali, scraping, firme digitali, verifica documentale, email e automazioni. Il futuro sistema distingue almeno Ricevuta, Fattura, Quietanza e Allegato del pagamento. Per la ricevuta sono già noti locatore, conduttore, importo, data e tipologia/metodo di pagamento. Restano rinviati prove definitive, momento di emissione, automatismi, regole fiscali, pagamenti parziali, crediti e debiti.
 
 Nella fase locale i relativi controlli rispettano la convenzione gialla e disabilitata.
 
-## 8. Ordine operativo prioritario
+## 9. Ordine operativo prioritario
 
 ### Baseline repository già raggiunta
 
@@ -140,6 +178,11 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 9. route, lista, lifecycle e dettaglio edifici — completati e collaudati;
 10. integrazione bozza e guard di Nuovo edificio — F3.4 completata;
 11. collaudo trasversale dei quattro flussi create — F4 completato con PASS senza finding.
+12. duplicati delle Unit — B2 completata e collaudata;
+13. campi e cataloghi canonici delle Unit — B3 completata e verificata;
+14. ID annidati canonici delle Unit — B4 completata e verificata.
+
+Il prossimo blocco operativo locale delle Unit è B6 — Modifica e lifecycle unità.
 
 Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
 

@@ -3,7 +3,7 @@
 - [Todo list e stato di avanzamento](./todo-list.md)
 - [Implementazioni residue](./implementazioni.md)
 
-Questo registro contiene le domande professionali complete e resta l'unico luogo in cui registrarne la risposta. La Todo mostra soltanto l'impatto sintetico. La parte iniziale contiene decisioni ancora aperte, comprese quelle rinviate o parzialmente definite; non tutte devono quindi avere `Risposta: non ancora fornita`. La sezione finale contiene le decisioni validate.
+Questo registro contiene le decisioni professionali ancora aperte o rinviate e le decisioni già validate che influenzano task non ancora concluse. Le decisioni ormai assorbite integralmente da implementazioni e specifiche vengono rimosse dal registro operativo.
 
 ## Decisioni aperte o rinviate
 
@@ -90,7 +90,7 @@ Questo registro contiene le domande professionali complete e resta l'unico luogo
 - Domanda: Il valore IMU rappresenta importo annuale, rata, previsione o costo storico?
 - Perché serve: definire semantica e UI.
 - Task bloccate o influenzate: informazioni finanziarie edificio.
-- Checklist collegata: A2
+- Checklist collegata: futura semantica finanziaria degli edifici
 - Stato: aperta
 - Risposta: non ancora fornita
 - Data validazione: —
@@ -101,7 +101,7 @@ Questo registro contiene le domande professionali complete e resta l'unico luogo
 - Domanda: Prezzo e spese di acquisto richiedono separazione IVA, imposte o costi accessori?
 - Perché serve: definire il modello finanziario.
 - Task bloccate o influenzate: informazioni finanziarie edificio.
-- Checklist collegata: A2
+- Checklist collegata: futura semantica finanziaria degli edifici
 - Stato: aperta
 - Risposta: non ancora fornita
 - Data validazione: —
@@ -152,95 +152,6 @@ Questo registro contiene le domande professionali complete e resta l'unico luogo
 
 ## Decisioni validate
 
-### ED-01
-
-- Area: edifici
-- Destinatario: agente immobiliare o amministratore
-- Domanda: L'identificativo dell'edificio deve essere univoco per account?
-- Perché serve: definire vincolo e gestione duplicati.
-- Task bloccate o influenzate: repository e form edificio.
-- Checklist collegata: A1, A2
-- Stato: validata
-- Risposta: l'identificativo edificio è obbligatorio e univoco soltanto nello stesso account Props24; account differenti possono riusarlo. Non esiste unicità globale. In edit il record corrente è escluso dal controllo duplicati.
-- Data validazione: 2026-08-14
-
-### ED-02
-- Area: edifici
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Sono ammessi più edifici distinti con lo stesso indirizzo?
-- Perché serve: evitare falsi duplicati.
-- Task bloccate o influenzate: repository edifici.
-- Checklist collegata: A1
-- Stato: validata
-- Risposta: nello stesso account, stesso indirizzo completo e stesso civico identificano lo stesso edificio. Unità, scala, piano e interno non giustificano un secondo edificio. I suffissi (`10`, `10 bis`, `10 ter`) distinguono civici. È una regola funzionale Props24, non una regola catastale universale.
-- Data validazione: 2026-08-14
-
-### ED-03
-- Area: routing edifici
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Dopo la creazione dell'edificio si deve aprire la lista o il dettaglio?
-- Perché serve: definire la destinazione post-submit.
-- Task bloccate o influenzate: route Nuovo edificio.
-- Checklist collegata: A3, A6
-- Stato: validata
-- Risposta: dopo la creazione si apre il dettaglio dell’edificio. La lista edifici conduce al dettaglio edificio; il dettaglio mostra la lista delle unità collegate e il click su un’unità apre il dettaglio unità. Edificio/fabbricato è l’aggregato gestionale, mentre l’unità immobiliare è l’elemento atomico gestibile e locabile. Un edificio può avere una o più unità; nessuna classificazione è automatica in base al solo aspetto fisico.
-- Data validazione: 2026-07-28
-
-### ED-04
-- Area: edifici e unità
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Dal form edificio deve essere possibile creare una nuova unità oppure soltanto associare unità esistenti?
-- Perché serve: delimitare il flusso e prevenire entità incomplete.
-- Task bloccate o influenzate: form Nuovo edificio.
-- Checklist collegata: A2
-- Stato: validata
-- Risposta: non creare unità inline nel form Nuovo edificio. Dopo il salvataggio mostrare “Aggiungi unità” e aprire il normale form Nuova unità con `buildingId` preimpostato e indirizzo dell’edificio precompilato e read-only quando il flusso parte dal dettaglio edificio. Resta disponibile la creazione autonoma da Nuova unità. In futuro sarà possibile associare un’unità esistente priva di edificio, senza duplicare il record.
-- Data validazione: 2026-07-28
-
-### ED-05
-- Area: lifecycle edifici
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Quali azioni sono richieste nel dettaglio edificio: modifica, archivio, ripristino, eliminazione?
-- Perché serve: definire il lifecycle approvato.
-- Task bloccate o influenzate: dettaglio e azioni edificio.
-- Checklist collegata: A5, A6, A7
-- Stato: validata
-- Risposta: sono richiesti modifica, archivio, ripristino ed eliminazione protetta con conferma esplicita. L’eliminazione è bloccata in presenza di unità o riferimenti non gestiti e non deve produrre cancellazioni parziali. Quando esiste storico, l’archivio è preferibile.
-- Data validazione: 2026-07-28
-
-### ED-06
-- Area: criteri di ripartizione
-- Destinatario: agente immobiliare o amministratore
-- Domanda: La somma dei millesimi deve essere obbligatoriamente 1.000?
-- Perché serve: definire la validazione.
-- Task bloccate o influenzate: criteri di ripartizione.
-- Checklist collegata: A2
-- Stato: validata
-- Risposta: eliminare dall'attuale progetto l'intera funzionalità Criteri di ripartizione: scheda, persistenza, calcoli, somme, criteri, validazioni e logiche collegate.
-- Data validazione: 2026-08-14
-
-### ED-07
-- Area: millesimi
-- Destinatario: agente immobiliare o amministratore
-- Domanda: I millesimi della scheda Unità e quelli dei criteri di ripartizione hanno significati differenti e devono essere entrambi conservati?
-- Perché serve: evitare perdita o duplicazione semantica.
-- Task bloccate o influenzate: schema edificio.
-- Checklist collegata: A2
-- Stato: validata
-- Risposta: nessuna nuova logica sui millesimi, somma obbligatoria, calcolo speciale o collegamento ai criteri. L'audit del codice conferma il campo `PropertyThousandths`: può restare semplice e facoltativo, senza validazioni speciali.
-- Data validazione: 2026-08-14
-
-### UN-01
-- Area: unità
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Quali valori definitivi deve avere il tipo di locazione dell'unità?
-- Perché serve: definire il catalogo canonico.
-- Task bloccate o influenzate: campi unità.
-- Checklist collegata: B3
-- Stato: validata
-- Risposta: catalogo canonico: Canone libero (4+4); Canone libero (4+4) con cedolare secca; Canone concordato (3+2); Canone concordato (3+2) con cedolare secca; Canone concordato (4+2) con cedolare secca; Canone concordato (5+2) con cedolare secca; Canone concordato (6+2) con cedolare secca; Turistico; Turistico con cedolare; Parziale; Parziale transitoria; Transitorio; Transitorio con cedolare secca; Studenti; Studenti con cedolare secca; Uso commerciale 6+6; Uso commerciale 9+9; Uso commerciale 6+2; Comodato / Usufrutto; Sublocazione; Uso foresteria.
-- Data validazione: 2026-08-14
-
 ### UN-02
 - Area: unità
 - Destinatario: agente immobiliare o amministratore
@@ -250,28 +161,6 @@ Questo registro contiene le domande professionali complete e resta l'unico luogo
 - Checklist collegata: B3, I10
 - Stato: validata
 - Risposta: catalogo canonico esatto: Mensile, Trimestrale, Semestrale, Annuale.
-- Data validazione: 2026-08-14
-
-### UN-03
-- Area: unità
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Quali valori e casi speciali deve supportare la classe energetica?
-- Perché serve: validazione e normalizzazione.
-- Task bloccate o influenzate: campi unità.
-- Checklist collegata: B3
-- Stato: validata
-- Risposta: catalogo canonico esatto: A4, A3, A2, A1, B, C, D, E, F, G. Nessun caso speciale o descrizione estesa nel valore.
-- Data validazione: 2026-08-14
-
-### UN-04
-- Area: catasto
-- Destinatario: agente immobiliare o amministratore
-- Domanda: Come gestire unità estere o prive di dati catastali completi?
-- Perché serve: definire edge case e duplicati.
-- Task bloccate o influenzate: repository unità.
-- Checklist collegata: B2
-- Stato: validata
-- Risposta: eliminata la logica specifica per unità estere. Le unità italiane sono salvabili con dati catastali incompleti; il duplicato si controlla solo con chiave catastale completa. Con dati incompleti nessun fallback basato su indirizzo, buildingId, scala, piano, interno o fingerprint. Nessun reminder corrente.
 - Data validazione: 2026-08-14
 
 ### CT-01

@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 1834fb8733341673b2f7a1421e64b47c18615a86
+SHA applicativo esaminato: b835d3b5e3a7c3c2b1f93289ed89ca4aa8faf4a6
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -131,117 +131,28 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 ## 4. Stato operativo
 
-Il Blocco A — Edifici è completato integralmente: A1–A7 sono concluse.
+Il Blocco A — Edifici e il Blocco F — Modifiche non salvate sono completati e collaudati.
 
-La baseline applicativa finale del blocco è 73 file e 902 test passati, con build e lint positivi. Il collaudo browser finale A7 è risultato PASS senza finding.
+Nel Blocco B — Unità sono completate B1–B5: relazione unità–edificio, duplicati catastali, campi canonici, ID annidati canonici e bozze manuali.
 
-Il browser QA ha verificato create e reload, lista e ricerca, dettaglio Building, due unità nello stesso Building, navigazione al dettaglio unità, `unitsCount`, modifica Building, mancata propagazione automatica dell'indirizzo alle unità esistenti, nuovo Add Unit sulla location aggiornata, archive/restore, delete libera e bloccata, persistenza e isolamento tra account.
+La baseline tecnica corrente è 88 file di test e 1055 test passati, con build positiva e lint mirato B4 senza errori.
 
-F3.4 — Integrazione bozze e guard in Nuovo edificio è completata e pubblicata nel commit dbe8a9a2910848196874305aec57f73e5783aa1a.
+Lo SHA applicativo corrente è `b835d3b5e3a7c3c2b1f93289ed89ca4aa8faf4a6`.
 
-La baseline tecnica corrente dopo F3.4 è 76 file di test e 927 test passati, con build positiva e lint mirato sui file F3.4 positivo. Il lint globale presenta una anomalia baseline di 40 errori e 15 warning esclusivamente in file tracciati, invariati e fuori scope F3.4; l'anomalia non riapre la task e non viene corretta come effetto collaterale.
+Il prossimo punto tecnico è B6.1 — Lifecycle repository Unit. B6 completa modifica e lifecycle delle Unit; successivamente B9 eseguirà il collaudo browser finale. B7 — Import/Export resta rinviata e B8 — Analisi catastale resta futura/backend.
 
-F4 — Collaudo trasversale delle modifiche non salvate è completata con browser QA PASS senza finding.
-
-Il collaudo ha verificato trasversalmente Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione per navigazione, browser back, annulla, logout, restore e salvataggio manuale delle bozze, Resta, Abbandona, submit riuscito e submit fallito, oltre alle regressioni edit Building e Lease e alla persistenza dopo reload.
-
-F4-10 ha registrato esclusivamente una limitazione strumentale: il browser controllato non ha reso osservabile il dialog nativo `beforeunload`. Non esiste evidenza di difetto applicativo e la limitazione non modifica il contratto approvato.
-
-Il Blocco F — Modifiche non salvate è completato integralmente.
-
-B2 — Duplicati unità è completata integralmente: B2.1–B2.4 sono concluse. La chiave catastale canonica, l'enforcement repository, la preservazione conservativa delle collisioni legacy, il gate tecnico e il browser QA sono stati verificati.
-
-La baseline tecnica applicativa corrente è 78 file di test e 973 test passati, con build positiva e lint mirato B2 positivo. Il browser QA B2.4 è risultato PASS senza finding applicativi.
-
-Lo SHA applicativo corrente è `1834fb8733341673b2f7a1421e64b47c18615a86`.
-
-Il nuovo Percorso operativo immediato completa il perimetro locale delle Unit attraverso B3, B4, B6 e B9. B7 — Import/Export resta rinviata e B8 — Analisi catastale resta futura/backend e non bloccano il ciclo. Il prossimo punto tecnico è B3.1 — Contratto cataloghi e schema Unit.
 # BLOCCO B — Unità
 
-## TASK B3 — Campi placeholder
-
-**Dipendenza:** cataloghi professionali in [Decisioni da validare](./decisioni-da-validare.md).
-
-**Obiettivo:**
-
-- opzioni canoniche per tipo locazione, periodicità e classe energetica;
-- `PropertyTypeID` obbligatorio;
-- normalizzazione legacy;
-- nessun enum duplicato e discordante;
-- round-trip nel dettaglio.
-
-### B3.1 — Contratto cataloghi e schema Unit
-
-- definire una sola fonte canonica per tipi Unit, tipi di locazione, periodicità e classi energetiche;
-- applicare integralmente UN-01, UN-02 e UN-03;
-- rendere `PropertyTypeID` obbligatorio;
-- definire la normalizzazione conservativa dei valori legacy;
-- impedire enum o cataloghi duplicati e discordanti;
-- aggiungere test puri di schema e normalizzazione.
-
-### B3.2 — UI e round-trip campi canonici Unit
-
-- collegare le select del form ai cataloghi canonici;
-- preservare placeholder e validazione coerenti;
-- verificare create, persistenza, reload e rilettura/detail;
-- non duplicare le opzioni direttamente nei componenti.
-
-### B3.3 — Gate tecnico consolidato B3
-
-- test B3 mirati;
-- regressioni property-form;
-- regressioni repository Unit e Building relation;
-- suite completa;
-- build;
-- lint mirato.
-
-## TASK B4 — ID annidati canonici
-
-**Obiettivo:**
-
-- sostituire `Date.now()` e `Math.random` nei dati persistiti;
-- usare il generatore canonico;
-- mantenere ID stabili in draft, submit e reload;
-- impedire rigenerazioni durante render o normalizzazione;
-- coprire documento catastale, chiavi, contratti, fotografie, contatti e documenti.
-
-**File da verificare:**
-
-- `src/components/property-form/tabs/Tab2Additional.tsx`;
-- `Tab4Passwords.tsx`;
-- `Tab5Contracts.tsx`;
-- `Tab7Photos.tsx`;
-- `Tab8Contacts.tsx`;
-- `Tab9Documents.tsx`;
-- `src/db/jsonDb.ts`.
-
-### B4.1 — Generatore canonico e primi ID annidati
-
-Coprire:
-
-- documento catastale;
-- chiavi/password e codici;
-- contratti e relativi file;
-- generazione canonica senza `Date.now()` o `Math.random()` come ID persistiti;
-- stabilità degli ID esistenti.
-
-### B4.2 — ID annidati restanti
-
-Coprire:
-
-- fotografie;
-- contatti Unit;
-- documenti e relativi file;
-- draft;
-- submit;
-- reload;
-- nessuna rigenerazione durante render o normalizzazione.
-
-### B4.3 — Gate tecnico consolidato B4
-
-Verificare ID stabili, round-trip, regressioni form/draft, suite completa, build e lint mirato.
-
 ## TASK B6 — Modifica e lifecycle unità
+
+### Contratti Unit già consolidati da preservare in B6
+
+B6 deve mantenere invariati i contratti già verificati:
+
+- B1: relazione canonica `buildingId` e coerenza con il Building;
+- B2: identità catastale canonica, duplicati account-scoped e assenza di fallback alternativi;
+- B3: `PropertyTypeID` strict alla mutation, cataloghi canonici, lettura legacy conservativa, machine ID persistiti e label costruite nel read-model;
+- B4: gli otto ID annidati Unit vengono creati una sola volta e non devono essere rigenerati da hydration, edit, update, draft, normalizzazione o reload; gli ID legacy restano invariati.
 
 **Obiettivo:**
 
@@ -255,6 +166,8 @@ Verificare ID stabili, round-trip, regressioni form/draft, suite completa, build
 - rimuovere l’alert mock da `PropertyDetailPage.tsx`.
 
 ### B6.1 — Lifecycle repository Unit
+
+**Stato:** prossima task.
 
 - archive e restore reali;
 - mutazioni atomiche;
@@ -1031,6 +944,8 @@ File candidati da verificare:
 - `mockUserProfile.ts`.
 
 ## TASK J4 — ID persistiti residui
+
+B4 ha già chiuso e verificato gli otto ID annidati persistenti delle Unit. J4 non riapre B4: resta un audit globale degli ID persistiti residui negli altri domini e nei flussi futuri.
 
 Audit finale di:
 

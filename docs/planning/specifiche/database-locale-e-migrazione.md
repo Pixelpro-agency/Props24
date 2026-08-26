@@ -25,6 +25,29 @@ archivedAt
 
 `id` usa UUID canonici; i timestamp sono ISO; `accountId` è obbligatorio sui dati account-scoped. Nessun ID persistito nasce durante il render e `Date.now()` o `Math.random()` non sono ID definitivi. Le relazioni usano ID, non copie incontrollate.
 
+La generazione dei nuovi ID persistenti usa l'utility canonica `generateId(prefix)`. La prima sorgente è `globalThis.crypto.randomUUID()`; quando non disponibile viene usato `globalThis.crypto.getRandomValues()` per costruire un UUID v4. Se non è disponibile una sorgente crittografica adeguata, la generazione fallisce esplicitamente invece di ricorrere a timestamp, `Math.random()` o contatori riavviabili.
+
+`jsonDb.generateId` resta un re-export compatibile della stessa utility canonica. I prefissi semantici possono identificare il tipo di record, ma non modificano l'identità già assegnata.
+
+Gli ID già persistiti, compresi quelli legacy, non vengono riscritti soltanto per uniformarne il formato. Normalizzazione, draft, validazione delle mutation, lettura e reload preservano l'ID esistente.
+
+### ID annidati delle Unit
+
+Gli ID annidati persistenti delle Unit seguono lo stesso contratto create-once/preserve-thereafter.
+
+Sono coperti:
+
+```text
+PropertyCadastreDocument.id
+PropertyKeys[].id
+PropertyContracts[].id
+PropertyContracts[].file.id
+PropertyPhotos[].id
+PropertyContacts[].id
+PropertyDocuments[].id
+PropertyDocuments[].file.id
+```
+
 ## 4. Repository
 
 La UI non conosce chiavi di storage, formato fisico locale, dettagli Supabase o query SQL future. I repository offrono operazioni di dominio come `list`, `get`, `create`, `update`, `archive`, `restore`, eliminazione protetta e `subscribe` quando necessario. Le mutazioni multirecord sono una singola operazione atomica.
