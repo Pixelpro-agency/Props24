@@ -188,6 +188,10 @@ export function getPropertyById(id: string): PropertyDetail | null {
     return record ? propertyRecordToDetail(record) : null;
 }
 
+export function getPropertyRecordById(id: string): PropertyRecord | null {
+    return getRecordById('properties', id) as PropertyRecord | null;
+}
+
 export function createProperty(
     formDataInput: PropertyFormData,
     relationInput: PropertyBuildingRelationInput = {},

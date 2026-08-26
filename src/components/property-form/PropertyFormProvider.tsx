@@ -70,22 +70,39 @@ interface CreatedProperty {
     id: string;
 }
 
-interface PropertyFormProviderProps {
+interface SharedPropertyFormProviderProps {
     children: ReactNode;
     activeTab: string;
     setActiveTab: (tabId: PropertyTabId | string) => void;
+    onSubmitError?: (message: string) => void;
+    initialState?: PropertyFormState;
+}
+
+interface CreatePropertyFormProviderProps extends SharedPropertyFormProviderProps {
+    mode?: 'create';
     onCreateProperty(
         data: PropertyFormData,
     ): CreatedProperty | Promise<CreatedProperty>;
     onPropertyCreated(property: CreatedProperty): void;
-    onSubmitError?: (message: string) => void;
     onExitDraft(): void;
     onFormBusyChange?: (busy: boolean) => void;
-    initialState?: PropertyFormState;
     constrainSnapshot?: (snapshot: PropertyFormState) => PropertyFormState;
 }
 
-export function PropertyFormProvider({
+interface EditPropertyFormProviderProps extends SharedPropertyFormProviderProps {
+    mode: 'edit';
+    onUpdateProperty(data: PropertyFormData): boolean | Promise<boolean>;
+    onPropertyUpdated(): void;
+}
+
+type PropertyFormProviderProps = CreatePropertyFormProviderProps | EditPropertyFormProviderProps;
+
+export function PropertyFormProvider(props: PropertyFormProviderProps) {
+    if (props.mode === 'edit') return <EditPropertyFormProvider {...props} />;
+    return <CreatePropertyFormProvider {...props} />;
+}
+
+function CreatePropertyFormProvider({
     children,
     activeTab,
     setActiveTab,
@@ -96,7 +113,7 @@ export function PropertyFormProvider({
     onFormBusyChange,
     initialState,
     constrainSnapshot,
-}: PropertyFormProviderProps) {
+}: CreatePropertyFormProviderProps) {
     const methods = useForm<PropertyFormState>({
         resolver: zodResolver(propertyMutationFormStateSchema) as Resolver<PropertyFormState>,
         defaultValues: initialState ?? defaultPropertyFormStateValues,
@@ -321,4 +338,77 @@ export function PropertyFormProvider({
             </FormProvider>
         </PropertyFormContext.Provider>
     );
+}
+
+function EditPropertyFormProvider({
+    children,
+    activeTab,
+    setActiveTab,
+    initialState,
+    onUpdateProperty,
+    onPropertyUpdated,
+    onSubmitError,
+}: EditPropertyFormProviderProps) {
+    const methods = useForm<PropertyFormState>({
+        resolver: zodResolver(propertyMutationFormStateSchema) as Resolver<PropertyFormState>,
+        defaultValues: initialState ?? defaultPropertyFormStateValues,
+        mode: 'onChange',
+    });
+    const submitLockRef = useRef(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleFormSubmit = async (data: PropertyFormState) => {
+        if (submitLockRef.current) return;
+        submitLockRef.current = true;
+        setIsSubmitting(true);
+        onSubmitError?.('');
+        try {
+            const updated = await onUpdateProperty(normalizePropertyFormData(data));
+            if (!updated) {
+                onSubmitError?.('Unità non più disponibile.');
+                submitLockRef.current = false;
+                setIsSubmitting(false);
+                return;
+            }
+            onPropertyUpdated();
+        } catch (error) {
+            const message = error instanceof Error
+                ? error.message
+                : 'Errore durante il salvataggio delle modifiche.';
+            if (error instanceof DuplicatePropertyIdentifierError) {
+                methods.setError('PropertyTitle', { type: 'manual', message });
+                methods.setFocus('PropertyTitle');
+            } else if (error instanceof DuplicatePropertyLocationError) {
+                methods.setError('PropertyAddress', { type: 'manual', message });
+                methods.setFocus('PropertyAddress');
+            }
+            onSubmitError?.(message);
+            submitLockRef.current = false;
+            setIsSubmitting(false);
+        }
+    };
+
+    const contextValue: PropertyFormContextProps = {
+        activeTab,
+        setActiveTab,
+        draftPhase: 'ready',
+        isSavingDraft: false,
+        isDeletingDraft: false,
+        isSubmitting,
+        isSubmitRecovery: false,
+        draftError: null,
+        draftSuccess: null,
+        saveDraft: async () => undefined,
+        clearDraftFeedback: () => undefined,
+    };
+
+    return <PropertyFormContext.Provider value={contextValue}>
+        <FormProvider {...methods}>
+            {/* RHF crea qui l'event handler; handleFormSubmit accede al lock solo quando l'evento viene eseguito. */}
+            {/* eslint-disable-next-line react-hooks/refs */}
+            <form id="property-form" onSubmit={methods.handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 h-full">
+                {children}
+            </form>
+        </FormProvider>
+    </PropertyFormContext.Provider>;
 }

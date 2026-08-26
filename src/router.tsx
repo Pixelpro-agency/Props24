@@ -30,6 +30,7 @@ import { NewBuildingPage } from './pages/NewBuildingPage';
 import { BuildingDetailPage } from './pages/BuildingDetailPage';
 import { PropertiesPage } from './pages/PropertiesPage';
 import { PropertyDetailPage } from './pages/PropertyDetailPage';
+import { EditPropertyPage } from './pages/EditPropertyPage';
 import { TenantDetailPage } from './pages/TenantDetailPage';
 import { TenantsPage } from './pages/TenantsPage';
 
@@ -92,6 +93,10 @@ export function createAppRoutes() {
                 element={<Navigate to="/properties/units" replace />}
             />
             <Route path="/properties/units" element={<PropertiesPage />} />
+            <Route
+                path="/properties/units/:id/edit"
+                element={<EditPropertyPage />}
+            />
             <Route
                 path="/properties/units/:id"
                 element={<PropertyDetailPage />}
