@@ -14,6 +14,13 @@ import type { PropertyRecord } from '../../src/db/database.types';
 import { getJsonDb } from '../../src/db/jsonDb';
 import * as propertyRepository from '../../src/db/propertyRepository';
 
+const draftRepository = vi.hoisted(() => ({
+    get: vi.fn().mockResolvedValue(null),
+    list: vi.fn().mockResolvedValue([]),
+    save: vi.fn(),
+    delete: vi.fn().mockResolvedValue(true),
+}));
+
 const storage = vi.hoisted(() => ({ database: null as Record<string, unknown[]> | null }));
 
 vi.mock('../../src/db/jsonDb', async (importOriginal) => {
@@ -31,6 +38,9 @@ vi.mock('../../src/db/jsonDb', async (importOriginal) => {
 
 vi.mock('../../src/auth/AuthContext', () => ({
     useAuth: () => ({ account: { id: 'user-001' }, isInitializing: false }),
+}));
+vi.mock('../../src/drafts/DraftRepositoryContext', () => ({
+    useDraftRepository: () => draftRepository,
 }));
 vi.mock('../../src/components/property-form/ui/AddressAutocomplete', () => ({
     AddressAutocomplete: ({ name, label }: { name: keyof PropertyFormState; label?: string }) => {
@@ -83,6 +93,9 @@ function renderEdit(id = 'property-edit') {
 }
 
 beforeEach(() => {
+    vi.clearAllMocks();
+    draftRepository.get.mockResolvedValue(null);
+    draftRepository.delete.mockResolvedValue(true);
     seedRecord();
 });
 
@@ -101,7 +114,7 @@ describe('EditProperty route e form', () => {
     it('idrata una sola volta campi generali, indirizzo, canone, catasto e dati annidati', async () => {
         const { router, rerender } = renderEdit();
         expect(await screen.findByRole('heading', { name: 'Modifica unità' })).toBeTruthy();
-        expect(screen.queryByRole('button', { name: 'Salva bozza' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Salva bozza' })).toBeTruthy();
         expect((screen.getByLabelText('Tipo') as HTMLSelectElement).value).toBe('appartamento');
         expect((screen.getByLabelText(/Identificativo/) as HTMLInputElement).value).toBe('Unità originale');
         expect((screen.getByLabelText('Indirizzo') as HTMLInputElement).value).toBe('Via Originale 1');

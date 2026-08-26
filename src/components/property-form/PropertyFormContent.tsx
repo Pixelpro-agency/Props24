@@ -51,9 +51,9 @@ export function PropertyFormContent({ activeTab, submitError, addressReadOnly = 
                     {activeTab === 'info5' && <Tab9Documents />}
                 </div>
                 <div className="mt-8 flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:justify-end">
-                    {mode === 'create' ? <button type="button" onClick={() => { void draft.saveDraft().catch(() => undefined); }} disabled={draft.draftPhase !== 'ready' || operationsPending} className="inline-flex items-center justify-center rounded-md border border-green-600 bg-white px-4 py-2.5 text-sm font-medium text-green-700 shadow-sm transition-colors hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60">
+                    <button type="button" onClick={() => { void draft.saveDraft().catch(() => undefined); }} disabled={draft.draftPhase !== 'ready' || operationsPending} className="inline-flex items-center justify-center rounded-md border border-green-600 bg-white px-4 py-2.5 text-sm font-medium text-green-700 shadow-sm transition-colors hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60">
                         {draft.isSavingDraft ? 'Salvataggio bozza...' : 'Salva bozza'}
-                    </button> : null}
+                    </button>
                     <button type="button" onClick={() => navigate(-1)} disabled={operationsPending} className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">Annulla</button>
                     <button type="submit" disabled={operationsPending} className="inline-flex min-w-[100px] items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60">
                         {draft.isSubmitting ? 'Salvataggio...' : <><Save className="w-4 h-4 ml-[-4px]" />{mode === 'edit' ? 'Salva modifiche' : 'Salva'}</>}

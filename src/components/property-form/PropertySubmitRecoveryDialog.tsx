@@ -8,6 +8,7 @@ import {
 } from '@headlessui/react';
 
 export interface PropertySubmitRecoveryDialogProps {
+    mode?: 'create' | 'edit';
     open: boolean;
     error: string;
     isRetrying: boolean;
@@ -15,6 +16,7 @@ export interface PropertySubmitRecoveryDialogProps {
 }
 
 export function PropertySubmitRecoveryDialog({
+    mode = 'create',
     open,
     error,
     isRetrying,
@@ -36,12 +38,14 @@ export function PropertySubmitRecoveryDialog({
             <div className="fixed inset-0 flex items-center justify-center p-4">
                 <DialogPanel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
                     <DialogTitle className="text-lg font-semibold text-gray-900">
-                        Unità creata, pulizia incompleta
+                        {mode === 'edit'
+                            ? 'Unità aggiornata, pulizia incompleta'
+                            : 'Unità creata, pulizia incompleta'}
                     </DialogTitle>
                     <Description className="mt-2 text-sm text-gray-600">
-                        L’unità è stata creata, ma non è stato possibile
-                        eliminare la bozza locale. Riprova la pulizia per aprire
-                        il dettaglio senza creare duplicati.
+                        {mode === 'edit'
+                            ? 'L’unità è stata aggiornata, ma non è stato possibile eliminare la bozza locale. Riprova la pulizia per aprire il dettaglio senza ripetere l’aggiornamento.'
+                            : 'L’unità è stata creata, ma non è stato possibile eliminare la bozza locale. Riprova la pulizia per aprire il dettaglio senza creare duplicati.'}
                     </Description>
                     <p
                         role="alert"

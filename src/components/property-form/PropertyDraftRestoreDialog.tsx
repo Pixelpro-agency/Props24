@@ -8,6 +8,7 @@ import {
 
 export interface PropertyDraftRestoreDialogProps {
     mode: 'choice' | 'error';
+    formMode?: 'create' | 'edit';
     open: boolean;
     isDeleting?: boolean;
     error?: string | null;
@@ -19,6 +20,7 @@ export interface PropertyDraftRestoreDialogProps {
 
 export function PropertyDraftRestoreDialog({
     mode,
+    formMode = 'create',
     open,
     isDeleting = false,
     error,
@@ -41,12 +43,16 @@ export function PropertyDraftRestoreDialog({
                 <DialogPanel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
                     <DialogTitle className="text-lg font-semibold text-gray-900">
                         {mode === 'choice'
-                            ? 'Bozza unità disponibile'
+                            ? formMode === 'edit'
+                                ? 'Bozza modifica unità disponibile'
+                                : 'Bozza unità disponibile'
                             : 'Impossibile aprire la bozza'}
                     </DialogTitle>
                     <Description className="mt-2 text-sm text-gray-600">
                         {mode === 'choice'
-                            ? 'È presente una bozza salvata per la nuova unità.'
+                            ? formMode === 'edit'
+                                ? 'È presente una bozza salvata per la modifica di questa unità.'
+                                : 'È presente una bozza salvata per la nuova unità.'
                             : 'La bozza non può essere caricata. Puoi riprovare oppure uscire senza modificarla.'}
                     </Description>
                     {error ? (
@@ -77,7 +83,9 @@ export function PropertyDraftRestoreDialog({
                                 >
                                     {isDeleting
                                         ? 'Eliminazione in corso...'
-                                        : 'Elimina e ricomincia'}
+                                        : formMode === 'edit'
+                                            ? 'Elimina bozza e ripristina'
+                                            : 'Elimina e ricomincia'}
                                 </button>
                                 <button
                                     type="button"

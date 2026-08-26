@@ -1,6 +1,7 @@
 import {
     useCallback,
     useEffect,
+    useMemo,
     useRef,
     useState,
 } from 'react';
@@ -31,15 +32,14 @@ export type PropertyDraftPhase =
     | 'ready'
     | 'load_error';
 
-const PROPERTY_DRAFT_KEY = {
-    formType: 'property',
-    mode: 'create',
-    entityId: null,
-} as const;
+export type PropertyDraftTarget =
+    | { mode: 'create' }
+    | { mode: 'edit'; entityId: string };
 
 export interface PropertyDraftContextOptions {
     initialState?: PropertyFormState;
     constrainSnapshot?: (snapshot: PropertyFormState) => PropertyFormState;
+    target?: PropertyDraftTarget;
 }
 
 function cloneSnapshot(
@@ -52,7 +52,10 @@ function cloneSnapshot(
         : snapshot;
 }
 
-function loadErrorMessage(error: unknown): string {
+function loadErrorMessage(
+    error: unknown,
+    targetMode: 'create' | 'edit',
+): string {
     if (error instanceof DraftCorruptedError) {
         return 'La bozza salvata è danneggiata o incompatibile.';
     }
@@ -62,7 +65,9 @@ function loadErrorMessage(error: unknown): string {
     if (error instanceof DraftStorageError) {
         return 'Impossibile accedere alla bozza nel database locale.';
     }
-    return 'Impossibile caricare la bozza della nuova unità.';
+    return targetMode === 'edit'
+        ? 'Impossibile caricare la bozza di modifica dell’unità.'
+        : 'Impossibile caricare la bozza della nuova unità.';
 }
 
 function saveErrorMessage(error: unknown): string {
@@ -113,12 +118,26 @@ export function usePropertyDraftController(
     const loadedDraftRef = useRef<DraftRecord<PropertyFormState> | null>(null);
     const initialState = options.initialState ?? defaultPropertyFormStateValues;
     const constrainSnapshot = options.constrainSnapshot;
+    const targetMode = options.target?.mode ?? 'create';
+    const targetEntityId = options.target?.mode === 'edit'
+        ? options.target.entityId
+        : null;
+    const draftKey = useMemo(() => ({
+        formType: 'property',
+        mode: targetMode,
+        entityId: targetEntityId,
+    } as const), [targetEntityId, targetMode]);
+    const draftLookup = useMemo(() => targetMode === 'edit'
+        ? { mode: 'edit' as const, entityId: targetEntityId as string }
+        : { mode: 'create' as const }, [targetEntityId, targetMode]);
     const lastSavedSnapshotRef = useRef<PropertyFormState>(
         cloneSnapshot(initialState, constrainSnapshot),
     );
     const loadRef = useRef<{
         repository: DraftRepository;
         attempt: number;
+        mode: 'create' | 'edit';
+        entityId: string | null;
         promise: Promise<DraftRecord<PropertyFormState> | null>;
     } | null>(null);
     const requestIdRef = useRef(0);
@@ -144,13 +163,17 @@ export function usePropertyDraftController(
         if (
             loadRef.current?.repository !== repository
             || loadRef.current.attempt !== loadAttempt
+            || loadRef.current.mode !== targetMode
+            || loadRef.current.entityId !== targetEntityId
         ) {
             loadRef.current = {
                 repository,
                 attempt: loadAttempt,
+                mode: targetMode,
+                entityId: targetEntityId,
                 promise: repository.get(
                     propertyDraftDefinition,
-                    { mode: 'create' },
+                    draftLookup,
                 ),
             };
         }
@@ -177,14 +200,23 @@ export function usePropertyDraftController(
                 || requestId !== requestIdRef.current
             ) return;
             loadedDraftRef.current = null;
-            setLoadError(loadErrorMessage(error));
+            setLoadError(loadErrorMessage(error, targetMode));
             setPhase('load_error');
         });
 
         return () => {
             active = false;
         };
-    }, [constrainSnapshot, initialState, loadAttempt, methods, repository]);
+    }, [
+        constrainSnapshot,
+        draftLookup,
+        initialState,
+        loadAttempt,
+        methods,
+        repository,
+        targetEntityId,
+        targetMode,
+    ]);
 
     const resumeDraft = useCallback(() => {
         if (phase !== 'choice_required' || !loadedDraftRef.current) return;
@@ -205,7 +237,7 @@ export function usePropertyDraftController(
         setIsDeletingDraft(true);
         setOperationError(null);
         try {
-            await repository.delete(PROPERTY_DRAFT_KEY);
+            await repository.delete(draftKey);
             if (!mountedRef.current) return;
             const empty = cloneSnapshot(initialState, constrainSnapshot);
             loadedDraftRef.current = null;
@@ -222,7 +254,7 @@ export function usePropertyDraftController(
             deletePendingRef.current = false;
             if (mountedRef.current) setIsDeletingDraft(false);
         }
-    }, [constrainSnapshot, initialState, methods, phase, repository]);
+    }, [constrainSnapshot, draftKey, initialState, methods, phase, repository]);
 
     const retryLoad = useCallback(() => {
         if (phase !== 'load_error') return;
@@ -249,10 +281,12 @@ export function usePropertyDraftController(
             } catch (error) {
                 throw new DraftPayloadValidationError(error);
             }
-            const saved = await repository.save(propertyDraftDefinition, {
-                mode: 'create',
-                payload,
-            });
+            const saved = await repository.save(
+                propertyDraftDefinition,
+                targetMode === 'edit'
+                    ? { mode: 'edit', entityId: targetEntityId as string, payload }
+                    : { mode: 'create', payload },
+            );
             if (!mountedRef.current) return;
             const snapshot = cloneSnapshot(saved.payload, constrainSnapshot);
             lastSavedSnapshotRef.current = cloneSnapshot(snapshot, constrainSnapshot);
@@ -266,20 +300,20 @@ export function usePropertyDraftController(
             savePendingRef.current = false;
             if (mountedRef.current) setIsSavingDraft(false);
         }
-    }, [constrainSnapshot, methods, phase, repository]);
+    }, [constrainSnapshot, methods, phase, repository, targetEntityId, targetMode]);
 
     const deletePersistedDraft = useCallback((): Promise<void> => {
         if (persistedDeletePromiseRef.current) {
             return persistedDeletePromiseRef.current;
         }
-        const operation = repository.delete(PROPERTY_DRAFT_KEY)
+        const operation = repository.delete(draftKey)
             .then(() => undefined)
             .finally(() => {
                 persistedDeletePromiseRef.current = null;
             });
         persistedDeletePromiseRef.current = operation;
         return operation;
-    }, [repository]);
+    }, [draftKey, repository]);
 
     const discardChanges = useCallback(() => {
         methods.reset(cloneSnapshot(lastSavedSnapshotRef.current, constrainSnapshot));
