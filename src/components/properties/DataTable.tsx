@@ -10,11 +10,13 @@ import {
     type VisibilityState,
     type RowSelectionState,
 } from '@tanstack/react-table';
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import type { Property } from '../../types/property';
 import { STATUS_CONFIG } from '../../types/property';
 import { propertyTypes } from '../../data/propertyTypes';
+import type { PropertyActionOperation } from './PropertyActionModal';
 
 interface DataTableProps {
     data: Property[];
@@ -23,6 +25,7 @@ interface DataTableProps {
     onColumnVisibilityChange: (vis: VisibilityState) => void;
     rowSelection: RowSelectionState;
     onRowSelectionChange: (sel: RowSelectionState) => void;
+    onRequestAction: (operation: PropertyActionOperation, id: string) => void;
 }
 
 const columnHelper = createColumnHelper<Property>();
@@ -38,6 +41,7 @@ export function DataTable({
     onColumnVisibilityChange,
     rowSelection,
     onRowSelectionChange,
+    onRequestAction,
 }: DataTableProps) {
     const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -174,8 +178,22 @@ export function DataTable({
                 },
                 size: 120,
             }),
+            columnHelper.display({
+                id: 'actions',
+                header: 'Azioni',
+                enableSorting: false,
+                cell: ({ row }) => <Menu as="div" className="relative">
+                    <MenuButton aria-label={`Azioni ${row.original.title}`} className="rounded-md p-2 hover:bg-gray-100"><MoreHorizontal className="h-4 w-4" /></MenuButton>
+                    <MenuItems anchor="bottom end" className="z-50 min-w-36 rounded-md border border-gray-200 bg-white p-1 shadow-lg">
+                        <MenuItem><Link className="block rounded px-3 py-2 text-sm data-focus:bg-gray-100" to={`/properties/units/${row.original.id}/edit`}>Modifica</Link></MenuItem>
+                        <MenuItem><button className="block w-full rounded px-3 py-2 text-left text-sm data-focus:bg-gray-100" onClick={() => onRequestAction(row.original.archived ? 'restore' : 'archive', row.original.id)}>{row.original.archived ? 'Ripristina' : 'Archivia'}</button></MenuItem>
+                        <MenuItem><button className="block w-full rounded px-3 py-2 text-left text-sm text-red-700 data-focus:bg-red-50" onClick={() => onRequestAction('delete', row.original.id)}>Elimina</button></MenuItem>
+                    </MenuItems>
+                </Menu>,
+                size: 80,
+            }),
         ],
-        [],
+        [onRequestAction],
     );
 
     const table = useReactTable({

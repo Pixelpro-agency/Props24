@@ -2,6 +2,7 @@ import type { PropertyDetail } from '../types/propertyDetail';
 
 export const mockPropertyDetail: PropertyDetail = {
     id: '54707',
+    archived: false,
     title: 'Largo Luca della Robbia 25 - 2\' Piano - Torino',
     type: 'appartamento',
     catalogs: {

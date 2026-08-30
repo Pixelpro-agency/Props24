@@ -103,6 +103,7 @@ export function propertyRecordToDetail(record: PropertyRecord): PropertyDetail {
 
     return {
         id: record.id,
+        archived: record.archived,
         title: formData.PropertyTitle || 'Nuova proprietà',
         type: formData.PropertyTypeID,
         catalogs: {

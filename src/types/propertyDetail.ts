@@ -118,6 +118,7 @@ export interface Activity {
 
 export interface PropertyDetail {
     id: string;
+    archived: boolean;
     title: string;
     type: string;
     catalogs: PropertyCatalogReadModel;
