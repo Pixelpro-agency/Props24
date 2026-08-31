@@ -115,7 +115,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] B6.5 — Gate tecnico consolidato B6 — **COMPLETATA; PASS; 93 file / 1099 test, build e lint mirato positivi**
 - [ ] B7 — Import ed export unità — **RINVIATO**
 - [ ] B8 — Analisi catastale futura — **FUTURO — BACKEND**
-- [ ] B9 — Collaudo unità — **APERTO; dipende dal completamento di B6; B7 e B8 non bloccano il collaudo locale**
+- [ ] B9 — Collaudo unità — **APERTO — PROSSIMA TASK; B6 completata tecnicamente; B7 e B8 non bloccano il collaudo locale**
   - [ ] B9A — Card unità: Affittate, Valore locativo, Valore patrimoniale, Guadagno lordo e Guadagno netto; Tasso di occupazione solo per futuri affitti brevi e Copertura locativa soprattutto aggregata — **FUTURO; KPI-01 e KPI-02 validate**
 
 ## Blocco C — Inquilini e contatti
