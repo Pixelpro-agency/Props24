@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 590204e6482d28b8caa778cc63eec3fc88d4cddb
+SHA applicativo esaminato: 7b6c3f92c1d01e48b5d8904858cfcf79ee40a73e
 Baseline di partenza del ciclo C: 7bbfdab336813f5f075b85223198d446fd252144
 ```
 
@@ -192,106 +192,11 @@ Affittate = unità non archiviate collegate a una locazione attiva secondo lo st
 
 # BLOCCO C — Inquilini e contatti
 
-Il prossimo ciclo locale completa Inquilini e Contatti nell'ordine C1 → C2 → C3 → C4 → C5 → C6 → C10. C1–C3 costituiscono le fondamenta del modello e C4 dipende esplicitamente dal loro completamento. C5 è owner del lifecycle reale Tenant, incluse le mutazioni singole e bulk; C6 non deve duplicare C5 e resta owner soltanto delle ulteriori azioni lista simulate o ancora da classificare.
+C1 — Garanti e rubrica è completata e verificata. Il ciclo locale prosegue nell'ordine C2 → C3 → C4 → C5 → C6 → C10. C2 e C3 completano le fondamenta ancora residue prima di C4; C4 mantiene la dipendenza dal contratto già consolidato in C1 oltre che dal completamento di C2 e C3. C5 è owner del lifecycle reale Tenant, incluse le mutazioni singole e bulk; C6 non deve duplicare C5 e resta owner soltanto delle ulteriori azioni lista simulate o ancora da classificare.
 
 C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano C10 nel perimetro locale. C10 verifica l'invito locale già supportato, non l'invio email backend futuro.
 
 Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale e il guard descritti nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
-
-## TASK C1 — Garanti e rubrica
-
-**Stato:** parziale.
-
-La baseline già completata comprende porta asincrona `ContactRepository`, adapter locale account-scoped, provider autenticato, subscription/store, `useContactList`, creazione Contact persona/società e migrazione dei garanti di Nuova locazione alla rubrica reale.
-
-`ContactRecord` è l'entità canonica della rubrica. La futura pagina/view Rubrica non appartiene a C1: verrà sviluppata in una fase successiva. C1 completa il contratto dati, il repository/lifecycle e i consumer Tenant necessari senza introdurre una nuova route contatti.
-
-C1 viene completata tramite C1.1 → C1.2 → C1.3 → C1.4.
-
-### C1.1 — Contratto Contact–Tenant e lifecycle Contact
-
-**Obiettivo:**
-
-- usare `ContactRecord` come identità canonica condivisa fra Tenant e Lease;
-- mantenere distinta l'identità della relazione annidata Tenant dall'identità del Contact;
-- introdurre sulle relazioni Tenant un `contactId` opzionale per compatibilità legacy;
-- preservare integralmente i record Tenant legacy senza `contactId`;
-- non collegare automaticamente record legacy a Contact tramite euristiche su nome, email, telefono, CF o altri campi;
-- mantenere eventuali metadati specifici della relazione sul Tenant, non sul Contact;
-- in particolare `isPrimary` del contatto di emergenza resta proprietà della relazione col singolo Tenant;
-- preservare riferimenti Contact archived o missing e non cancellarli automaticamente;
-- completare il lifecycle Contact con `restore`;
-- estendere la delete protection Contact ai riferimenti reali provenienti sia da `Lease.guarantorIds` sia dalle relazioni Contact del Tenant;
-- mantenere account isolation e subscription già consolidate;
-- non introdurre la futura view Rubrica;
-- non implementare hard block fiscali CT-01–CT-05, che appartengono a C3;
-- non sostituire gli ID deboli degli elementi annidati Tenant, che appartengono a C2;
-- non implementare edit/lifecycle Tenant, che appartiene a C5.
-
-Un Contact creato esplicitamente nella rubrica è un'entità autonoma. La sua esistenza non dipende dalla successiva creazione di un Tenant e non viene considerata un record orfano soltanto perché il form Tenant viene abbandonato o la create Tenant fallisce.
-
-### C1.2 — Migrazione Garanti di Nuovo inquilino
-
-**Obiettivo:**
-
-- rimuovere `existingContacts` e ogni dipendenza runtime dai mock nel tab Garanti di Nuovo inquilino;
-- usare `useContactList` e `ContactRepository`;
-- mostrare la rubrica account-scoped reale;
-- consentire il collegamento di un Contact esistente tramite `contactId`;
-- consentire la creazione esplicita di un nuovo Contact reale nella rubrica;
-- rendere coerente il testo UI con la mutazione realmente eseguita;
-- gestire loading, error e retry senza perdere i riferimenti già presenti;
-- preservare un Contact archiviato già collegato;
-- preservare un riferimento missing/unverified senza cancellazione silenziosa;
-- il caricamento o refresh della rubrica non deve rendere dirty il form né produrre autosave;
-- draft e restore devono preservare gli identificativi/riferimenti senza creare Contact aggiuntivi.
-
-### C1.3 — Contatti di emergenza e modello comune
-
-**Obiettivo:**
-
-- collegare anche i contatti di emergenza alla stessa rubrica `ContactRecord`;
-- usare `contactId` distinto dall'ID della relazione annidata;
-- mantenere `isPrimary` sul Tenant;
-- preservare il limite corrente di cinque contatti;
-- preservare la logica di un solo contatto principale;
-- preservare la promozione del primo contatto rimasto quando viene rimosso il principale;
-- supportare Contact esistenti e nuova creazione esplicita in rubrica;
-- mantenere compatibilità con record legacy inline privi di `contactId`;
-- nessun collegamento euristico automatico dei legacy.
-
-### C1.4 — Gate tecnico consolidato C1
-
-**Verificare:**
-
-- contratto e lifecycle `ContactRepository`;
-- `restore` reale;
-- delete protection Lease + Tenant;
-- account isolation;
-- subscription e assenza di write nei percorsi read-only;
-- regressioni dei garanti Lease;
-- Garanti di Nuovo inquilino sulla rubrica reale;
-- contatti di emergenza sulla rubrica reale;
-- loading/error/retry;
-- riferimenti active, archived, missing e unverified;
-- preservazione dei legacy senza `contactId`;
-- draft save/restore senza autosave o creazioni Contact implicite;
-- nessuna dipendenza runtime da `existingContacts` nei consumer migrati;
-- nessun hard block fiscale anticipato da C3;
-- nessuna sostituzione degli ID deboli anticipata da C2;
-- suite mirate, suite completa, build, lint mirato e UTF-8.
-
-### Confini rispetto alle task successive
-
-C1 non assorbe:
-
-- C2 — generazione e stabilità degli ID persistenti annidati Tenant;
-- C3 — hard block dei duplicati fiscali secondo CT-01–CT-05;
-- C4 — repository/create Tenant atomica e account-scoped;
-- C5 — edit, archive, restore e delete Tenant;
-- C6 — ulteriori azioni lista simulate o future.
-
-La creazione esplicita di un Contact nella rubrica è una mutazione autonoma e immediata, coerente con il comportamento già consolidato del flusso Lease. C4 non deve tentare di rollbackare tali Contact: il suo vincolo atomico riguarda il Tenant e l'integrità dei riferimenti che persiste.
 
 ## TASK C2 — ID annidati
 

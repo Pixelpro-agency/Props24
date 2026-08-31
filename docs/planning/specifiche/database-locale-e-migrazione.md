@@ -61,7 +61,7 @@ La UI non conosce chiavi di storage, formato fisico locale, dettagli Supabase o 
 Il dominio contatti costituisce il primo pilot concreto del confine repository:
 
 - espone una porta di dominio asincrona `ContactRepository`;
-- offre `list`, `getById`, `create`, `update`, `archive`, `canDelete`, `delete` e `subscribe`;
+- offre `list`, `getById`, `create`, `update`, `archive`, `restore`, `canDelete`, `delete` e `subscribe`;
 - usa `subscribe` come invalidazione senza payload, lasciando al consumer una nuova lettura;
 - l'adapter locale cattura l'`accountId` al momento della composizione;
 - il repository non cambia account quando cambia lo stato globale;
@@ -70,6 +70,8 @@ Il dominio contatti costituisce il primo pilot concreto del confine repository:
 - la composizione del repository avviene sotto l'app autenticata;
 - `useContactList` gestisce caricamento iniziale, conservazione della lista precedente durante loading o error, retry, subscription con reference counting, risposte fuori ordine e completamenti dopo la disconnessione;
 - `LeaseForm` e `AddGuarantorModal` usano il nuovo percorso repository per i garanti;
+- i Garanti di Nuovo inquilino e i Contatti di emergenza usano la stessa rubrica `ContactRecord` tramite `useContactList` e `ContactRepository`, conservando `contactId` come riferimento canonico distinto dall'ID della relazione Tenant;
+- i riferimenti Tenant linked preservano archived, missing e stati temporaneamente non verificabili senza matching euristico o cancellazioni implicite; i dati canonici Contact restano read-only nei consumer Tenant, mentre `comments` e `isPrimary` restano metadata della relazione;
 - proprietà e inquilini usati da `LeaseForm` passano ancora dal gateway globale;
 - il pilot non implica che tutti i domini o consumer siano già migrati;
 - non introduce SDK Supabase, backend, SQL o Realtime.
