@@ -174,6 +174,47 @@ Le relazioni Contact salvate nel Tenant mantengono due identità distinte:
 id
 contactId
 ```
+`id` identifica l'elemento o relazione annidata nel Tenant; `contactId` identifica il `ContactRecord` canonico della rubrica.
+
+`contactId` è opzionale durante la transizione per preservare i record legacy già persistiti. Un record legacy inline privo di `contactId` viene conservato senza tentare collegamenti euristici automatici basati su nome, email, telefono, codice fiscale, partita IVA o altri campi.
+
+I metadati specifici della relazione restano sul Tenant. In particolare `isPrimary` di un contatto di emergenza descrive la relazione con quello specifico Tenant e non modifica il `ContactRecord` globale.
+
+Garanti e contatti di emergenza devono convergere sulla stessa rubrica canonica senza perdere i dati legacy già presenti.
+
+### Creazione dei Contact
+
+La creazione esplicita di un nuovo contatto dal form Tenant produce un vero `ContactRecord` nella rubrica account-scoped, analogamente al flusso già supportato dai garanti della locazione.
+
+Il Contact è un'entità autonoma: può esistere in rubrica anche senza essere successivamente collegato a un Tenant o a una Lease. L'abbandono del form Tenant o un errore della successiva create Tenant non produce rollback o cancellazione automatica del Contact creato esplicitamente.
+
+La bozza Tenant conserva i riferimenti e i dati di relazione, ma il restore della bozza non crea nuovi Contact e il caricamento asincrono della rubrica non produce autosave né dirty state da solo.
+
+### Riferimenti archived e missing
+
+Un riferimento Contact già persistito non viene rimosso automaticamente perché il Contact è archiviato, temporaneamente non disponibile oppure non ancora verificabile durante loading/error della rubrica.
+
+I consumer devono distinguere almeno riferimenti disponibili, archiviati e non risolvibili, preservando l'identificativo finché l'utente non compie un'azione esplicita.
+
+### Lifecycle Contact
+
+Il lifecycle locale della rubrica comprende create, update, archive, restore, delete protetta e subscription account-scoped.
+
+Un Contact non può essere eliminato quando è ancora referenziato da una locazione come garante oppure da una relazione Contact persistita di un Tenant. Non viene eseguito alcun cascade implicito per liberare la delete.
+
+### Confini del ciclo
+
+C1 definisce e integra il modello Contact–Tenant e il lifecycle Contact.
+
+Restano task separate:
+
+- C2 — identità persistenti annidate Tenant;
+- C3 — hard block dei duplicati fiscali secondo CT-01–CT-05;
+- C4 — create Tenant atomica e account-scoped;
+- C5 — edit e lifecycle Tenant;
+- C6 — ulteriori azioni lista.
+
+La presenza di CF e partita IVA nel modello Contact/Tenant non implica che C1 debba già applicare il controllo duplicati: tale enforcement appartiene a C3.
 
 ## 8. Funzioni documentali future
 
@@ -208,7 +249,7 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 
 Il ciclo locale corrente delle Unit è concluso dopo il collaudo B9. B7 — Import/Export resta rinviata, B8 — Analisi catastale/OCR resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non riaprono né bloccano la chiusura del perimetro Unit già verificato.
 
-Il successivo ciclo locale prioritario riguarda Inquilini e Contatti: completare C1–C6 e quindi C10, preservando i contratti già validati CT-01–CT-05. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
+Il successivo ciclo locale prioritario riguarda Inquilini e Contatti: C1 viene completata tramite C1.1 — contratto Contact–Tenant e lifecycle Contact, C1.2 — migrazione Garanti di Nuovo inquilino, C1.3 — contatti di emergenza e modello comune, C1.4 — gate tecnico consolidato; seguono C2–C6 e quindi C10. I contratti professionali CT-01–CT-05 restano validi, ma il loro hard block fiscale viene implementato in C3 e non anticipato da C1. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
 
 Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
 

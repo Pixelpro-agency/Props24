@@ -297,10 +297,16 @@ La creazione esplicita di un Contact nella rubrica è una mutazione autonoma e i
 
 **Obiettivo:**
 
-- sostituire `Math.random` per garanti, emergenze e documenti;
-- mantenere ID stabili in draft e reload;
-- migrare record senza ID valido;
-- evitare rigenerazioni involontarie.
+- applicare il generatore persistente canonico a tutte le identità annidate Tenant;
+- coprire almeno garanti, contatti di emergenza, documenti Tenant, file dei documenti, foto e altri file persistenti del Tenant;
+- eliminare generatori persistenti basati su `Date.now()`, `Math.random()`, nome file, `lastModified`, dimensione o fingerprint analoghi;
+- preservare gli ID esistenti durante draft, normalizzazione, submit e reload;
+- una modifica dell'entità annidata conserva l'ID;
+- una reale sostituzione di file genera soltanto il nuovo file ID necessario;
+- preservare gli ID legacy esistenti senza migrazione cosmetica del formato;
+- evitare rigenerazioni durante render o normalizzazione.
+
+C2 non modifica il modello Contact–Tenant definito da C1 e non implementa duplicati fiscali C3.
 
 ## TASK C3 — Duplicati anagrafici
 
