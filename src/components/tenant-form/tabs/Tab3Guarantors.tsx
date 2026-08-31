@@ -1,6 +1,6 @@
 // Tab 3: Garanti — lista dinamica con modal aggiungi/modifica
 // Gestisce un array di garanti in stato locale con card e azioni
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { TenantFormData } from '../schema';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,13 +9,15 @@ import { Modal } from '../../property-form/ui/Modal';
 import { FormSection } from '../../property-form/ui/FormSection';
 import { COUNTRIES } from '../../../types/tenant';
 import type { Guarantor, ContactType } from '../../../types/tenant';
-import { existingContacts } from '../../../data/mockTenants';
+import type { ContactRecord } from '../../../db/database.types';
+import { useContactRepository } from '../../../contacts/ContactRepositoryContext';
+import { useContactList } from '../../../contacts/useContactList';
 
 // Genera ID univoco
 const generateId = () => `g-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 // Ottieni iniziali dal garante
-function getInitials(g: Guarantor): string {
+function getInitials(g: Omit<Guarantor, 'id'>): string {
     if (g.contactType === 'company' && g.companyName) {
         return g.companyName.substring(0, 2).toUpperCase();
     }
@@ -25,7 +27,7 @@ function getInitials(g: Guarantor): string {
 }
 
 // Ottieni nome display
-function getDisplayName(g: Guarantor): string {
+function getDisplayName(g: Omit<Guarantor, 'id'>): string {
     if (g.contactType === 'company' && g.companyName) return g.companyName;
     return [g.firstName, g.lastName].filter(Boolean).join(' ') || 'Senza nome';
 }
@@ -53,6 +55,7 @@ const emptyGuarantor: Omit<Guarantor, 'id'> = {
 function toFormGuarantor(id: string, data: Omit<Guarantor, 'id'>): TenantFormData['TenantGuarantors'][number] {
     return {
         id,
+        ...(data.contactId ? { contactId: data.contactId } : {}),
         contactType: data.contactType,
         companyName: data.companyName || '',
         firstName: data.firstName || '',
@@ -69,8 +72,29 @@ function toFormGuarantor(id: string, data: Omit<Guarantor, 'id'>): TenantFormDat
     };
 }
 
+function contactSnapshot(contact: ContactRecord, comments = ''): Omit<Guarantor, 'id'> {
+    return {
+        contactId: contact.id,
+        contactType: contact.type,
+        companyName: contact.companyName,
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        birthDate: contact.birthDate,
+        birthPlace: contact.birthPlace,
+        email: contact.email,
+        phone: contact.phone,
+        address: contact.address,
+        city: contact.city,
+        zip: contact.zip,
+        country: contact.country,
+        comments,
+    };
+}
+
 export function Tab3Guarantors() {
     const { control } = useFormContext<TenantFormData>();
+    const contactRepository = useContactRepository();
+    const { contacts, status, error, refresh } = useContactList();
     const { fields: guarantors, append, update, remove } = useFieldArray({ control, name: 'TenantGuarantors', keyName: 'fieldId' });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -79,6 +103,20 @@ export function Tab3Guarantors() {
     const [formData, setFormData] = useState<Omit<Guarantor, 'id'>>(emptyGuarantor);
     const [selectedExisting, setSelectedExisting] = useState<string>('');
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [isSaving, setIsSaving] = useState(false);
+    const submitLock = useRef(false);
+    const activeContacts = contacts.filter((contact) => !contact.archived);
+    const editingLinked = editingIndex !== null && Boolean(guarantors[editingIndex]?.contactId);
+    const hasSelectedContactIdentity = editingIndex === null
+        && selectedExisting !== ''
+        && selectedExisting !== 'new';
+    const selectedContact = hasSelectedContactIdentity
+        ? contacts.find((contact) => contact.id === selectedExisting)
+        : null;
+    const canonicalFieldsLocked = editingLinked || hasSelectedContactIdentity;
+    const presentedFormData = selectedContact
+        ? contactSnapshot(selectedContact, formData.comments)
+        : formData;
 
     // Apri modal per nuovo garante
     const handleAdd = () => {
@@ -86,6 +124,7 @@ export function Tab3Guarantors() {
         setFormData({ ...emptyGuarantor });
         setSelectedExisting('');
         setFormErrors({});
+        setIsSaving(false);
         setIsModalOpen(true);
     };
 
@@ -93,7 +132,8 @@ export function Tab3Guarantors() {
     const handleEdit = (index: number) => {
         setEditingIndex(index);
         const g = guarantors[index];
-        setFormData({ ...g });
+        const canonical = g.contactId ? contacts.find((contact) => contact.id === g.contactId) : null;
+        setFormData(canonical ? contactSnapshot(canonical, g.comments) : { ...g });
         setSelectedExisting('');
         setFormErrors({});
         setIsModalOpen(true);
@@ -116,27 +156,14 @@ export function Tab3Guarantors() {
     // Seleziona garante esistente dalla rubrica
     const handleSelectExisting = (contactId: string) => {
         setSelectedExisting(contactId);
-        if (contactId === 'new') {
+        setFormErrors({});
+        if (contactId === '' || contactId === 'new') {
             setFormData({ ...emptyGuarantor });
             return;
         }
-        const contact = existingContacts.find(c => c.id === contactId);
+        const contact = activeContacts.find(c => c.id === contactId);
         if (contact) {
-            setFormData({
-                contactType: contact.contactType,
-                companyName: contact.contactType === 'company' ? contact.companyName : '',
-                firstName: contact.contactType === 'person' ? contact.firstName : '',
-                lastName: contact.contactType === 'person' ? contact.lastName : '',
-                birthDate: '',
-                birthPlace: '',
-                email: contact.email || '',
-                phone: contact.phone || '',
-                address: '',
-                city: '',
-                zip: '',
-                country: '',
-                comments: '',
-            });
+            setFormData(contactSnapshot(contact));
         }
     };
 
@@ -167,15 +194,73 @@ export function Tab3Guarantors() {
     };
 
     // Salva garante
-    const handleSave = () => {
-        if (!validateForm()) return;
+    const handleSave = async () => {
+        if (submitLock.current) return;
 
         if (editingIndex !== null) {
-            update(editingIndex, toFormGuarantor(guarantors[editingIndex].id, { ...emptyGuarantor, ...formData }));
-        } else {
-            append(toFormGuarantor(generateId(), { ...emptyGuarantor, ...formData }));
+            if (!validateForm()) return;
+            const current = guarantors[editingIndex];
+            const next = current.contactId
+                ? { ...current, comments: formData.comments || '' }
+                : { ...emptyGuarantor, ...formData };
+            update(editingIndex, toFormGuarantor(current.id, next));
+            setIsModalOpen(false);
+            return;
         }
-        setIsModalOpen(false);
+
+        if (hasSelectedContactIdentity) {
+            if (status !== 'ready') {
+                setFormErrors({ submit: 'La rubrica è in aggiornamento. Attendi o scegli un altro percorso.' });
+                return;
+            }
+            if (!selectedContact) {
+                setFormErrors({ submit: 'Contatto non disponibile. Scegli un altro contatto o un nuovo garante.' });
+                return;
+            }
+            if (selectedContact.archived) {
+                setFormErrors({ submit: 'Il contatto selezionato è archiviato e non può essere collegato.' });
+                return;
+            }
+            append(toFormGuarantor(generateId(), contactSnapshot(selectedContact, formData.comments)));
+            setIsModalOpen(false);
+            return;
+        }
+
+        if (!validateForm()) return;
+
+        submitLock.current = true;
+        setIsSaving(true);
+        setFormErrors({});
+        try {
+            const created = await contactRepository.create({
+                type: formData.contactType,
+                companyName: formData.companyName || '',
+                firstName: formData.firstName || '',
+                lastName: formData.lastName || '',
+                birthDate: formData.birthDate || '',
+                birthPlace: formData.birthPlace || '',
+                fiscalCode: '',
+                vatNumber: '',
+                email: formData.email || '',
+                phone: formData.phone || '',
+                address: formData.address || '',
+                city: formData.city || '',
+                zip: formData.zip || '',
+                country: formData.country || 'IT',
+                notes: '',
+            });
+            append(toFormGuarantor(generateId(), contactSnapshot(created, formData.comments)));
+            setIsModalOpen(false);
+        } catch (creationError) {
+            setFormErrors({
+                submit: creationError instanceof Error && creationError.message
+                    ? creationError.message
+                    : 'Non è stato possibile salvare il contatto. Riprova.',
+            });
+        } finally {
+            submitLock.current = false;
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -193,7 +278,13 @@ export function Tab3Guarantors() {
                 <AnimatePresence>
                     {guarantors.length > 0 && (
                         <div className="space-y-3 mb-4">
-                            {guarantors.map((g, index) => (
+                            {guarantors.map((g, index) => {
+                                const resolved = g.contactId
+                                    ? contacts.find((contact) => contact.id === g.contactId)
+                                    : null;
+                                const presented = resolved ? contactSnapshot(resolved, g.comments) : g;
+                                const isMissing = Boolean(g.contactId) && status === 'ready' && !resolved;
+                                return (
                                 <motion.div
                                     key={g.id}
                                     initial={{ opacity: 0, y: -10 }}
@@ -207,27 +298,29 @@ export function Tab3Guarantors() {
                                         className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
                                         style={{ backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] }}
                                     >
-                                        {getInitials(g)}
+                                        {getInitials(presented)}
                                     </div>
 
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                            {g.contactType === 'company' ? (
+                                            {presented.contactType === 'company' ? (
                                                 <Building2 className="w-3.5 h-3.5 text-gray-400" />
                                             ) : (
                                                 <User className="w-3.5 h-3.5 text-gray-400" />
                                             )}
                                             <p className="text-sm font-medium text-gray-900 truncate">
-                                                {getDisplayName(g)}
+                                                {getDisplayName(presented)}
                                             </p>
+                                            {resolved?.archived && <span className="text-xs text-amber-700">Archiviato</span>}
+                                            {isMissing && <span className="text-xs text-red-600">Contatto non disponibile</span>}
                                         </div>
                                         <div className="flex items-center gap-4 mt-0.5">
-                                            {g.email && (
-                                                <p className="text-xs text-gray-500 truncate">{g.email}</p>
+                                            {presented.email && (
+                                                <p className="text-xs text-gray-500 truncate">{presented.email}</p>
                                             )}
-                                            {g.phone && (
-                                                <p className="text-xs text-gray-500">{g.phone}</p>
+                                            {presented.phone && (
+                                                <p className="text-xs text-gray-500">{presented.phone}</p>
                                             )}
                                         </div>
                                     </div>
@@ -252,7 +345,8 @@ export function Tab3Guarantors() {
                                         </button>
                                     </div>
                                 </motion.div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </AnimatePresence>
@@ -271,7 +365,7 @@ export function Tab3Guarantors() {
             {/* === Modal Aggiungi/Modifica Garante === */}
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => { if (!isSaving) setIsModalOpen(false); }}
                 title={editingIndex !== null ? 'Modifica garante' : 'Nuovo garante'}
                 maxWidth="xl"
                 footer={
@@ -279,16 +373,18 @@ export function Tab3Guarantors() {
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
+                            disabled={isSaving}
                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                         >
                             Annulla
                         </button>
                         <button
                             type="button"
-                            onClick={handleSave}
+                            onClick={() => { void handleSave(); }}
+                            disabled={isSaving}
                             className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
                         >
-                            Salva
+                            {isSaving ? 'Salvataggio…' : 'Salva'}
                         </button>
                     </>
                 }
@@ -305,30 +401,58 @@ export function Tab3Guarantors() {
                     {/* Select garante esistente (solo in aggiunta) */}
                     {editingIndex === null && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label htmlFor="tenant-guarantor-contact" className="block text-sm font-medium text-gray-700 mb-1.5">
                                 Garante
                             </label>
                             <select
+                                id="tenant-guarantor-contact"
                                 value={selectedExisting}
                                 onChange={(e) => handleSelectExisting(e.target.value)}
+                                disabled={status === 'idle' || status === 'loading'}
                                 className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
                             >
                                 <option value="">Scegli dalla rubrica o aggiungi nuovo</option>
                                 <option value="new">+ Aggiungi nuovo</option>
-                                {existingContacts.map(c => (
+                                {activeContacts.map(c => (
                                     <option key={c.id} value={c.id}>
-                                        {c.contactType === 'company' ? c.companyName : `${c.firstName} ${c.lastName}`}
+                                        {c.type === 'company' ? c.companyName : `${c.firstName} ${c.lastName}`}
                                     </option>
                                 ))}
+                                {hasSelectedContactIdentity
+                                    && !activeContacts.some((contact) => contact.id === selectedExisting) && (
+                                    <option value={selectedExisting} disabled>
+                                        {selectedContact?.archived
+                                            ? `${getDisplayName(contactSnapshot(selectedContact))} — archiviato`
+                                            : 'Contatto non disponibile'}
+                                    </option>
+                                )}
                             </select>
+                            {(status === 'idle' || status === 'loading') && (
+                                <p className="mt-1 text-sm text-gray-500">Caricamento rubrica…</p>
+                            )}
+                            {status === 'error' && (
+                                <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
+                                    <span>{error || 'Non è stato possibile caricare la rubrica.'}</span>
+                                    <button type="button" onClick={() => { void refresh(); }} className="underline">Riprova</button>
+                                </div>
+                            )}
+                            {hasSelectedContactIdentity && status === 'ready' && selectedContact?.archived && (
+                                <p className="mt-1 text-sm text-amber-700">Il contatto selezionato è archiviato e non è più utilizzabile.</p>
+                            )}
+                            {hasSelectedContactIdentity && status === 'ready' && !selectedContact && (
+                                <p className="mt-1 text-sm text-red-600">Contatto non disponibile</p>
+                            )}
                         </div>
                     )}
 
+                    {formErrors.submit && <p role="alert" className="text-sm text-red-600">{formErrors.submit}</p>}
+
+                    <fieldset disabled={canonicalFieldsLocked} className="space-y-4">
                     {/* Tipo contatto */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo</label>
                         <select
-                            value={formData.contactType}
+                            value={presentedFormData.contactType}
                             onChange={(e) => updateField('contactType', e.target.value as ContactType)}
                             className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
                         >
@@ -338,14 +462,14 @@ export function Tab3Guarantors() {
                     </div>
 
                     {/* Campi condizionali persona/società */}
-                    {formData.contactType === 'company' ? (
+                    {presentedFormData.contactType === 'company' ? (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
                                 Società <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                value={formData.companyName || ''}
+                                value={presentedFormData.companyName || ''}
                                 onChange={(e) => updateField('companyName', e.target.value)}
                                 className={`block w-full rounded-md border text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-opacity-50 ${formErrors.companyName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-green-500 focus:ring-green-500'}`}
                             />
@@ -355,24 +479,26 @@ export function Tab3Guarantors() {
                         <>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                    <label htmlFor="tenant-guarantor-first-name" className="block text-sm font-medium text-gray-700 mb-1.5">
                                         Nome <span className="text-red-500">*</span>
                                     </label>
                                     <input
+                                        id="tenant-guarantor-first-name"
                                         type="text"
-                                        value={formData.firstName || ''}
+                                        value={presentedFormData.firstName || ''}
                                         onChange={(e) => updateField('firstName', e.target.value)}
                                         className={`block w-full rounded-md border text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-opacity-50 ${formErrors.firstName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-green-500 focus:ring-green-500'}`}
                                     />
                                     {formErrors.firstName && <p className="mt-1 text-sm text-red-600">{formErrors.firstName}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                    <label htmlFor="tenant-guarantor-last-name" className="block text-sm font-medium text-gray-700 mb-1.5">
                                         Cognome <span className="text-red-500">*</span>
                                     </label>
                                     <input
+                                        id="tenant-guarantor-last-name"
                                         type="text"
-                                        value={formData.lastName || ''}
+                                        value={presentedFormData.lastName || ''}
                                         onChange={(e) => updateField('lastName', e.target.value)}
                                         className={`block w-full rounded-md border text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-opacity-50 ${formErrors.lastName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-green-500 focus:ring-green-500'}`}
                                     />
@@ -385,7 +511,7 @@ export function Tab3Guarantors() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Data di nascita</label>
                                     <input
                                         type="date"
-                                        value={formData.birthDate || ''}
+                                        value={presentedFormData.birthDate || ''}
                                         onChange={(e) => updateField('birthDate', e.target.value)}
                                         className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                     />
@@ -394,7 +520,7 @@ export function Tab3Guarantors() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Luogo di nascita</label>
                                     <input
                                         type="text"
-                                        value={formData.birthPlace || ''}
+                                        value={presentedFormData.birthPlace || ''}
                                         onChange={(e) => updateField('birthPlace', e.target.value)}
                                         className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                     />
@@ -406,10 +532,11 @@ export function Tab3Guarantors() {
                     {/* Email e telefono (sempre) */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                            <label htmlFor="tenant-guarantor-email" className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
                             <input
+                                id="tenant-guarantor-email"
                                 type="email"
-                                value={formData.email || ''}
+                                value={presentedFormData.email || ''}
                                 onChange={(e) => updateField('email', e.target.value)}
                                 className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             />
@@ -418,7 +545,7 @@ export function Tab3Guarantors() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Cellulare</label>
                             <input
                                 type="tel"
-                                value={formData.phone || ''}
+                                value={presentedFormData.phone || ''}
                                 onChange={(e) => updateField('phone', e.target.value)}
                                 className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             />
@@ -430,7 +557,7 @@ export function Tab3Guarantors() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Indirizzo</label>
                         <input
                             type="text"
-                            value={formData.address || ''}
+                            value={presentedFormData.address || ''}
                             onChange={(e) => updateField('address', e.target.value)}
                             className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         />
@@ -441,7 +568,7 @@ export function Tab3Guarantors() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Città</label>
                             <input
                                 type="text"
-                                value={formData.city || ''}
+                                value={presentedFormData.city || ''}
                                 onChange={(e) => updateField('city', e.target.value)}
                                 className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             />
@@ -450,7 +577,7 @@ export function Tab3Guarantors() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">CAP</label>
                             <input
                                 type="text"
-                                value={formData.zip || ''}
+                                value={presentedFormData.zip || ''}
                                 onChange={(e) => updateField('zip', e.target.value)}
                                 className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             />
@@ -458,7 +585,7 @@ export function Tab3Guarantors() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Paese</label>
                             <select
-                                value={formData.country || ''}
+                                value={presentedFormData.country || ''}
                                 onChange={(e) => updateField('country', e.target.value)}
                                 className="block w-full rounded-md border border-gray-300 text-base py-2.5 px-3 outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
                             >
@@ -470,10 +597,17 @@ export function Tab3Guarantors() {
                         </div>
                     </div>
 
+                    </fieldset>
+
+                    {canonicalFieldsLocked && (
+                        <p className="text-sm text-gray-500">I dati del contatto si modificano dalla rubrica. Qui puoi aggiornare solo le note della relazione.</p>
+                    )}
+
                     {/* Note */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Note</label>
+                        <label htmlFor="tenant-guarantor-comments" className="block text-sm font-medium text-gray-700 mb-1.5">Note</label>
                         <textarea
+                            id="tenant-guarantor-comments"
                             value={formData.comments || ''}
                             onChange={(e) => updateField('comments', e.target.value)}
                             rows={3}
