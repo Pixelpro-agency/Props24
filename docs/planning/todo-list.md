@@ -30,16 +30,20 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >
 > Obiettivo: completare il perimetro locale di Inquilini e Contatti consolidando il boundary con la rubrica, gli ID persistenti annidati, i duplicati fiscali, la creazione atomica, modifica/lifecycle, le azioni UI residue e il collaudo browser finale.
 >
-> Baseline repository corrente: `6ddf80884ece3915d4689ee4d4e79ce6dc6c4199`.
+> Baseline di partenza del ciclo C: `7bbfdab336813f5f075b85223198d446fd252144`.
 >
 > Baseline applicativa verificata: `590204e6482d28b8caa778cc63eec3fc88d4cddb`.
 >
 > Baseline tecnica corrente: 93 file di test / 1099 test passati, build positiva e lint mirato B6 senza errori.
 >
-> - [ ] C1 — Garanti e rubrica — **PROSSIMA TASK; completare la migrazione dei consumer Tenant al ContactRepository, eliminare dipendenze runtime da mock/existingContacts, consolidare il boundary canonico Contact–Tenant e prevenire record orfani**
-> - [ ] C2 — ID annidati canonici Tenant
+> - [ ] C1 — Garanti e rubrica — **PARZIALE; pilot ContactRepository e garanti di Nuova locazione già completati**
+>   - [ ] C1.1 — Contratto Contact–Tenant e lifecycle Contact — **PROSSIMA TASK**
+>   - [ ] C1.2 — Migrazione Garanti di Nuovo inquilino alla rubrica reale
+>   - [ ] C1.3 — Contatti di emergenza e modello Contact comune
+>   - [ ] C1.4 — Gate tecnico consolidato C1
+> - [ ] C2 — ID annidati canonici Tenant — **garanti, contatti di emergenza, documenti e relativi file, foto e altri file persistenti del Tenant**
 > - [ ] C3 — Duplicati anagrafici secondo CT-01–CT-05
-> - [ ] C4 — Creazione atomica Tenant e relazioni — **DIPENDE DA C1–C3**
+> - [ ] C4 — Creazione atomica Tenant e relazioni — **DIPENDE DA C1–C3; nessun Tenant parziale e nessun riferimento Contact dangling. I Contact creati esplicitamente nella rubrica sono entità autonome e non vengono considerati orfani se il successivo form Tenant viene abbandonato o fallisce**
 > - [ ] C5 — Modifica e lifecycle Tenant
 > - [ ] C6 — Chiusura delle azioni lista residue; il lifecycle reale appartiene a C5, mentre le altre azioni devono essere implementate, disabilitate secondo convenzione o rimosse
 > - [ ] C10 — Collaudo browser finale Inquilini e Contatti
@@ -119,27 +123,20 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
 
 ## Blocco C — Inquilini e contatti
 
-- [ ] C1 — Garanti e rubrica — **PARZIALE; CT-01–CT-05 validate e riallineate**
-  - [x] Porta asincrona `ContactRepository`
-  - [x] Adapter locale
-  - [x] Binding immutabile all’account
-  - [x] Subscription account-scoped senza payload
-  - [x] Provider autenticato
-  - [x] Store e hook asincrono
-  - [x] Garanti di Nuova locazione migrati
-  - [x] Creazione persona e società tramite repository
-  - [x] Protezione degli ID garanti nella bozza di Nuova locazione durante il caricamento asincrono dei contatti
-  - [x] Collaudo browser
-  - [x] Click-through del backdrop corretto
-  - [ ] Rimuovere dipendenze residue da `existingContacts` e mock — **APERTO**
-  - [ ] Migrare i consumer contatti di Nuovo inquilino — **APERTO**
-  - [ ] Completare rubrica e lifecycle dei contatti — **APERTO**
-  - [ ] Consolidare il modello canonico tra inquilini e locazioni — **APERTO**
-  - [ ] Gestire contatti di emergenza, duplicati e record orfani — **APERTO**
-  - [ ] Integrare CT-01–CT-05, casi esteri italiani e hard block account-scoped — **DECISIONI VALIDATE**
-- [ ] C2 — ID annidati — **APERTO**
-- [ ] C3 — Duplicati anagrafici — **APERTO; CT-01–CT-05 validate**
-- [ ] C4 — Creazione atomica — **APERTO; dipende da C1–C3**
+- [ ] C1 — Garanti e rubrica — **PARZIALE; pilot ContactRepository, isolamento account, provider/store e garanti di Nuova locazione già completati; CT-01–CT-05 validate**
+  - [x] Pilot `ContactRepository` asincrono e adapter locale account-scoped
+  - [x] Provider autenticato, subscription e `useContactList`
+  - [x] Garanti di Nuova locazione migrati alla rubrica reale
+  - [x] Creazione persona e società tramite repository nel flusso Lease
+  - [x] Protezione dei riferimenti garanti nelle bozze Lease durante loading/error della rubrica
+  - [x] Collaudo browser del pilot contacts
+  - [ ] C1.1 — Contratto Contact–Tenant e lifecycle Contact — **PROSSIMA TASK; introdurre il riferimento canonico `contactId` distinto dall'ID della relazione Tenant, preservare i legacy inline, completare restore e delete protection Contact senza implementare duplicati C3**
+  - [ ] C1.2 — Migrazione Garanti di Nuovo inquilino — **rimuovere `existingContacts`/mock, usare ContactRepository reale, supportare contatti esistenti e creazione esplicita in rubrica, preservare riferimenti archived/missing senza autosave**
+  - [ ] C1.3 — Contatti di emergenza e modello comune — **collegare i contatti di emergenza alla stessa rubrica Contact preservando `isPrimary` come metadato della relazione Tenant**
+  - [ ] C1.4 — Gate tecnico consolidato C1 — **repository/lifecycle Contact, account isolation, regressioni Lease, integrazione Tenant, draft, legacy, archived/missing, build e lint mirato**
+- [ ] C2 — ID annidati canonici Tenant — **APERTO; include garanti, contatti di emergenza, documenti e file documenti, foto e altri file persistenti; i generatori `Date.now()` / `Math.random()` / fingerprint file non vengono corretti in C1**
+- [ ] C3 — Duplicati anagrafici — **APERTO; CT-01–CT-05 validate; hard block fiscale account-scoped appartiene a C3 e non a C1**
+- [ ] C4 — Creazione atomica Tenant — **APERTO; dipende da C1–C3; deve impedire Tenant parziali e riferimenti Contact dangling. Un Contact creato esplicitamente nella rubrica è un'entità autonoma e non viene rollbackato soltanto perché il form Tenant viene successivamente abbandonato**
 - [ ] C5 — Modifica e lifecycle — **APERTO**
 - [ ] C6 — Azioni lista ancora simulate — **DECISIONE PRODOTTO**
 - [ ] C7 — Inviti email — **FUTURO — BACKEND**

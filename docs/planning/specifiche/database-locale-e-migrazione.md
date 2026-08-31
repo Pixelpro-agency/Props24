@@ -74,6 +74,26 @@ Il dominio contatti costituisce il primo pilot concreto del confine repository:
 - il pilot non implica che tutti i domini o consumer siano già migrati;
 - non introduce SDK Supabase, backend, SQL o Realtime.
 
+### Contratto approvato per il completamento Contact–Tenant
+
+Il ciclo C completa il pilot contacts senza introdurre ancora la futura view Rubrica.
+
+`ContactRecord` resta l'identità canonica della rubrica. Lease e Tenant non devono creare copie indipendenti dello stesso concetto come nuova fonte canonica.
+
+Le relazioni Contact del Tenant conservano un proprio `id` persistente e un `contactId` distinto che punta al `ContactRecord`. Il `contactId` resta opzionale per compatibilità con i Tenant legacy già persistiti senza relazione esplicita.
+
+I record legacy inline vengono preservati. La normalizzazione non cerca automaticamente un Contact corrispondente mediante nome, email, telefono, CF, partita IVA o altre euristiche e non crea Contact durante una semplice lettura o migrazione.
+
+I metadati della relazione non vengono spostati sul Contact globale. `isPrimary` dei contatti di emergenza resta quindi una proprietà Tenant-specific.
+
+Il lifecycle Contact deve essere completato con `restore`. La delete protection considera sia `Lease.guarantorIds` sia i `contactId` persistiti nelle relazioni Contact dei Tenant. Un riferimento attivo impedisce la delete senza cascade impliciti.
+
+Un Contact creato esplicitamente dall'utente mediante `ContactRepository.create` è una mutazione autonoma della rubrica e può esistere senza Tenant o Lease collegati. Non viene cancellato automaticamente quando un form Tenant viene abbandonato o la successiva create Tenant fallisce.
+
+La create atomica C4 riguarda il record Tenant e l'integrità dei riferimenti persistiti: non deve produrre Tenant parziali o `contactId` dangling. Non deve invece eseguire rollback di Contact autonomi precedentemente creati con un'azione esplicita dell'utente.
+
+L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 resta responsabilità di C3. La canonicalizzazione degli ID annidati Tenant resta responsabilità di C2.
+
 ## 5. Bozze separate
 
 L'archivio bozze è separato dai record definitivi e usa almeno:
@@ -97,6 +117,12 @@ Caricare una bozza non crea entità definitive. La bozza è aggiornata soltanto 
 Il repository condiviso è implementato con contratto asincrono e adapter locale account-scoped. Usa chiavi logiche per form, modalità ed eventuale entità, schema canonico versionato e migrazione delle forme legacy; non dipende da una singola chiave globale. I payload restano specifici per ciascun form e vengono validati dalla relativa definition. La baseline persistita è clonata e non viene mutata dalle modifiche dirty del form.
 
 Nuovo inquilino, Nuova unità, Nuova locazione e Nuovo edificio usano il repository condiviso, il caricamento iniziale con ripresa o cancellazione, save manuale, delete esplicita e cleanup post-submit. Non esiste alcuna bozza globale.
+
+La bozza create del Tenant può conservare relazioni Contact con `contactId` già esistenti o creati esplicitamente dall'utente. Riprendere, normalizzare o visualizzare la bozza non crea nuovi Contact e non cancella Contact già esistenti.
+
+Il caricamento asincrono o il refresh della rubrica non modifica da solo il payload della bozza, non rende dirty il form e non produce autosave. Riferimenti Contact archiviati, mancanti o temporaneamente non verificabili vengono preservati finché l'utente non esegue un'azione esplicita.
+
+Un Contact creato esplicitamente mentre il form Tenant è aperto è già una voce autonoma della rubrica: `Abbandona`, eliminazione della bozza o fallimento della create Tenant non ne comportano la cancellazione automatica.
 
 La modifica di una Unit usa una bozza account-scoped con chiave logica `formType: property`, `mode: edit` ed `entityId` uguale all'ID della Unit. La bozza edit è distinta dalla bozza create e dalle bozze edit di altre entità. La baseline iniziale deriva dal record persistito; il salvataggio è soltanto manuale e il restore produce inizialmente uno stato non dirty. `Abbandona` ripristina l'ultima baseline salvata senza eliminare la bozza persistita.
 

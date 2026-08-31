@@ -158,6 +158,23 @@ Una Unit libera può essere eliminata anche se collegata a un Building; in quest
 
 Lista e dettaglio espongono lifecycle coerente con lo stato persistito: una Unit attiva offre Modifica, Archivia ed Elimina; una Unit archiviata offre Modifica, Ripristina ed Elimina. Le azioni attive eseguono mutazioni reali e gli errori di dominio non producono falsi successi.
 
+## 7 bis. Contratto locale Inquilini e Contatti
+
+### Rubrica canonica
+
+`ContactRecord` è l'entità canonica della rubrica locale e viene condivisa dai consumer che necessitano di persone o società collegate, inclusi garanti delle locazioni e relazioni Contact degli inquilini.
+
+La futura pagina o view Rubrica non appartiene al ciclo C1. Il repository, le relazioni e i consumer possono essere completati e collaudati prima dell'introduzione di una route dedicata ai contatti.
+
+### Relazioni Tenant–Contact
+
+Le relazioni Contact salvate nel Tenant mantengono due identità distinte:
+
+```text
+id
+contactId
+```
+
 ## 8. Funzioni documentali future
 
 Dipendono dal backend: upload e storage definitivo di immagini, conversione immagini, lettura e creazione PDF, OCR di identità, catasto e visure camerali, scraping, firme digitali, verifica documentale, email e automazioni. Il futuro sistema distingue almeno Ricevuta, Fattura, Quietanza e Allegato del pagamento. Per la ricevuta sono già noti locatore, conduttore, importo, data e tipologia/metodo di pagamento. Restano rinviati prove definitive, momento di emissione, automatismi, regole fiscali, pagamenti parziali, crediti e debiti.
