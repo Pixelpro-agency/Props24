@@ -7,6 +7,7 @@ import {
     TENANT_DRAFT_SCHEMA_VERSION,
     tenantDraftDefinition,
 } from '../../src/components/tenant-form/tenantDraftDefinition';
+import { normalizeTenantFormData } from '../../src/components/tenant-form/schema';
 
 describe('tenant draft definition', () => {
     it('dichiara form e versione canonici', () => {
@@ -45,13 +46,15 @@ describe('tenant draft definition', () => {
             TenantIDCardBack: file,
             TenantCompanyRegistryFile: file,
             TenantGuarantors: [{
-                id: 'guarantor-1',
+                id: 'guarantor-relation-1',
+                contactId: 'contact-1',
                 contactType: 'person',
                 firstName: 'Mario',
                 lastName: 'Rossi',
             }],
             TenantEmergencyContacts: [{
-                id: 'emergency-1',
+                id: 'emergency-relation-1',
+                contactId: 'contact-2',
                 contactType: 'person',
                 firstName: 'Luisa',
                 lastName: 'Verdi',
@@ -74,9 +77,72 @@ describe('tenant draft definition', () => {
         expect(parsed.TenantIDCard).toEqual(file);
         expect(parsed.TenantIDCardBack).toEqual(file);
         expect(parsed.TenantCompanyRegistryFile).toEqual(file);
-        expect(parsed.TenantGuarantors[0]?.id).toBe('guarantor-1');
+        expect(parsed.TenantGuarantors[0]).toMatchObject({
+            id: 'guarantor-relation-1',
+            contactId: 'contact-1',
+        });
+        expect(parsed.TenantEmergencyContacts[0]).toMatchObject({
+            id: 'emergency-relation-1',
+            contactId: 'contact-2',
+            isPrimary: true,
+        });
         expect(parsed.TenantEmergencyContacts[0]?.isPrimary).toBe(true);
         expect(parsed.TenantDocuments[0]?.file).toEqual(file);
+    });
+
+    it('preserva relazioni legacy senza inventare contactId', () => {
+        const parsed = tenantDraftDefinition.parse({
+            TenantGuarantors: [{
+                id: 'contact-with-the-same-id',
+                contactType: 'person',
+                firstName: 'Mario',
+                lastName: 'Rossi',
+                email: 'mario@example.test',
+            }],
+            TenantEmergencyContacts: [{
+                id: 'emergency-legacy',
+                contactType: 'person',
+                firstName: 'Mario',
+                lastName: 'Rossi',
+                email: 'mario@example.test',
+                isPrimary: true,
+            }],
+        }, 1);
+
+        expect(parsed.TenantGuarantors[0]).toMatchObject({
+            id: 'contact-with-the-same-id',
+            firstName: 'Mario',
+        });
+        expect(parsed.TenantGuarantors[0]).not.toHaveProperty('contactId');
+        expect(parsed.TenantEmergencyContacts[0]).toMatchObject({
+            id: 'emergency-legacy',
+            isPrimary: true,
+        });
+        expect(parsed.TenantEmergencyContacts[0]).not.toHaveProperty('contactId');
+    });
+
+    it('preserva contactId esplicito nella normalizzazione form definitiva', () => {
+        const normalized = normalizeTenantFormData({
+            TenantFirstName: 'Ada',
+            TenantLastName: 'Lovelace',
+            TenantGuarantors: [{
+                id: 'guarantor-relation-1',
+                contactId: 'contact-1',
+                contactType: 'person',
+            }],
+            TenantEmergencyContacts: [{
+                id: 'emergency-relation-1',
+                contactId: 'contact-2',
+                contactType: 'person',
+                isPrimary: true,
+            }],
+        });
+
+        expect(normalized.TenantGuarantors[0]?.contactId).toBe('contact-1');
+        expect(normalized.TenantEmergencyContacts[0]).toMatchObject({
+            contactId: 'contact-2',
+            isPrimary: true,
+        });
     });
 
     it('rifiuta email non valida e versione incompatibile', () => {

@@ -227,6 +227,40 @@ function linkedDatabase(linkedContactId = 'contact-linked'): LocalDatabase {
   };
 }
 
+function tenantLinkedDatabase(
+  relation: 'guarantor' | 'emergency',
+  options: { archived?: boolean; explicitContactId?: boolean } = {},
+): LocalDatabase {
+  const database = linkedDatabase('contact-linked');
+  const tenant = database.tenants[0];
+  tenant.archived = options.archived ?? false;
+  tenant.leaseIds = [];
+  const explicitContactId = options.explicitContactId ?? true;
+  if (relation === 'guarantor') {
+    tenant.guarantors = [{
+      id: 'contact-linked',
+      ...(explicitContactId ? { contactId: 'contact-linked' } : {}),
+      contactType: 'person',
+      firstName: 'Mario',
+      lastName: 'Rossi',
+      email: 'mario@example.test',
+    }];
+  } else {
+    tenant.emergencyContacts = [{
+      id: 'contact-linked',
+      ...(explicitContactId ? { contactId: 'contact-linked' } : {}),
+      contactType: 'person',
+      firstName: 'Mario',
+      lastName: 'Rossi',
+      email: 'mario@example.test',
+      isPrimary: true,
+    }];
+  }
+  database.leases = [];
+  database.properties = [];
+  return database;
+}
+
 function personInput(overrides: Partial<ContactCreateInput> = {}): ContactCreateInput {
   return {
     type: 'person',
@@ -426,6 +460,51 @@ describe('local contact repository adapter', () => {
     expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes + 1);
   });
 
+  it('restores an archived contact preserving its data with one write and notification', async () => {
+    const archivedContact = contact({ archived: true, notes: 'Da preservare' });
+    const { repository, storage } = await arrange(emptyDatabase([archivedContact]));
+    const callback = vi.fn();
+    repository.subscribe(callback);
+    const writes = storage.writesFor(ACCOUNT_KEY).length;
+
+    const restored = await repository.restore('contact-existing');
+
+    expect(restored).toEqual({ ...archivedContact, archived: false, updatedAt: NOW });
+    expect(restored.id).toBe(archivedContact.id);
+    expect(restored.createdAt).toBe(archivedContact.createdAt);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes + 1);
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects restoring a missing contact without writes or notifications', async () => {
+    const { repository, storage } = await arrange();
+    const callback = vi.fn();
+    repository.subscribe(callback);
+    const writes = storage.writesFor(ACCOUNT_KEY).length;
+
+    await expect(repository.restore('contact-missing')).rejects.toMatchObject({
+      name: 'LeaseContactNotFoundError',
+    });
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes);
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('restores only the shared id in the captured account', async () => {
+    const sharedId = 'contact-shared';
+    const first = emptyDatabase([contact({ id: sharedId, archived: true })]);
+    const second = emptyDatabase([contact({ id: sharedId, archived: true })]);
+    const { repository, storage } = await arrangeAccounts(first, second);
+    const firstWrites = storage.writesFor(ACCOUNT_KEY).length;
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+
+    await repository.restore(sharedId);
+
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts[0].archived).toBe(false);
+    expect(storedDatabase(storage, SECOND_ACCOUNT_KEY).contacts[0].archived).toBe(true);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(firstWrites + 1);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
+  });
+
   it('blocks deleting a linked contact with the domain error and no write', async () => {
     const { repository, storage } = await arrange(linkedDatabase());
     const writes = storage.writesFor(ACCOUNT_KEY).length;
@@ -439,6 +518,58 @@ describe('local contact repository adapter', () => {
     });
     await expect(repository.getById('contact-linked')).resolves.not.toBeNull();
     expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes);
+  });
+
+  it.each([
+    ['guarantor', false],
+    ['emergency', false],
+    ['guarantor', true],
+  ] as const)('blocks delete for a %s relation on archived=%s tenant', async (relation, archived) => {
+    const fixture = tenantLinkedDatabase(relation, { archived });
+    const { repository, storage } = await arrange(fixture);
+    const originalTenant = structuredClone(storedDatabase(storage, ACCOUNT_KEY).tenants[0]);
+    const writes = storage.writesFor(ACCOUNT_KEY).length;
+
+    await expect(repository.canDelete('contact-linked')).resolves.toMatchObject({ canDelete: false });
+    await expect(repository.delete('contact-linked')).rejects.toMatchObject({
+      name: 'LeaseContactInUseError',
+    });
+    expect(storedDatabase(storage, ACCOUNT_KEY).tenants[0]).toEqual(originalTenant);
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts).toHaveLength(1);
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes);
+  });
+
+  it.each(['guarantor', 'emergency'] as const)(
+    'does not infer a %s link from matching legacy inline data or relation id',
+    async (relation) => {
+      const fixture = tenantLinkedDatabase(relation, { explicitContactId: false });
+      const { repository, storage } = await arrange(fixture);
+      const originalTenants = structuredClone(storedDatabase(storage, ACCOUNT_KEY).tenants);
+      const writes = storage.writesFor(ACCOUNT_KEY).length;
+
+      await expect(repository.canDelete('contact-linked')).resolves.toEqual({ canDelete: true });
+      await expect(repository.delete('contact-linked')).resolves.toBeUndefined();
+      expect(storedDatabase(storage, ACCOUNT_KEY).tenants).toEqual(originalTenants);
+      expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(writes + 1);
+    },
+  );
+
+  it('does not let a tenant reference in another account block delete', async () => {
+    const first = emptyDatabase([contact({ id: 'contact-linked' })]);
+    const second = tenantLinkedDatabase('guarantor');
+    const { repository, storage } = await arrangeAccounts(first, second);
+    const firstWrites = storage.writesFor(ACCOUNT_KEY).length;
+    const secondWrites = storage.writesFor(SECOND_ACCOUNT_KEY).length;
+
+    await expect(repository.canDelete('contact-linked')).resolves.toEqual({ canDelete: true });
+    await repository.delete('contact-linked');
+
+    expect(storedDatabase(storage, ACCOUNT_KEY).contacts).toEqual([]);
+    expect(storedDatabase(storage, SECOND_ACCOUNT_KEY).contacts).toHaveLength(1);
+    expect(storedDatabase(storage, SECOND_ACCOUNT_KEY).tenants[0].guarantors[0])
+      .toMatchObject({ contactId: 'contact-linked' });
+    expect(storage.writesFor(ACCOUNT_KEY)).toHaveLength(firstWrites + 1);
+    expect(storage.writesFor(SECOND_ACCOUNT_KEY)).toHaveLength(secondWrites);
   });
 
   it('deletes an unlinked contact with one write and resolves undefined', async () => {

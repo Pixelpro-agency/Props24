@@ -17,6 +17,7 @@ export function createLocalContactRepository(
         create: async (input) => contacts.create(input),
         update: async (id, input) => contacts.update(id, input),
         archive: async (id) => contacts.archive(id),
+        restore: async (id) => contacts.restore(id),
         canDelete: async (id) => contacts.canDelete(id),
         delete: async (id) => {
             contacts.delete(id);

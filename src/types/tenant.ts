@@ -61,6 +61,7 @@ export const DOCUMENT_CATEGORIES: DocumentCategory[] = [
 // Garante
 export interface Guarantor {
     id: string;
+    contactId?: string;
     contactType: ContactType;
     companyName?: string;
     firstName?: string;
@@ -79,6 +80,7 @@ export interface Guarantor {
 // Contatto di emergenza
 export interface EmergencyContact {
     id: string;
+    contactId?: string;
     contactType: ContactType;
     companyName?: string;
     firstName?: string;

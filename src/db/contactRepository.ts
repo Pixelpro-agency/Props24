@@ -79,10 +79,24 @@ export function createContactRepositoryOperations(gateway: ContactDatabaseGatewa
             contacts[index] = { ...contacts[index], archived: true, updatedAt: timestamp() };
             return gateway.saveDatabase({ ...db, contacts }).contacts[index];
         },
+        restore(id: string): ContactRecord {
+            const db = gateway.getDatabase();
+            const index = db.contacts.findIndex((contact) => contact.id === id);
+            if (index === -1) throw new LeaseContactNotFoundError();
+            const contacts = [...db.contacts];
+            contacts[index] = { ...contacts[index], archived: false, updatedAt: timestamp() };
+            return gateway.saveDatabase({ ...db, contacts }).contacts[index];
+        },
         canDelete(id: string): ContactDeleteCheck {
             const db = gateway.getDatabase();
-            const used = db.leases.some((lease) => lease.guarantorIds.includes(id));
-            return used ? { canDelete: false, reason: 'Il garante è collegato a una locazione.' } : { canDelete: true };
+            const usedByLease = db.leases.some((lease) => lease.guarantorIds.includes(id));
+            const usedByTenant = db.tenants.some((tenant) => (
+                tenant.guarantors.some((guarantor) => guarantor.contactId === id)
+                || tenant.emergencyContacts.some((contact) => contact.contactId === id)
+            ));
+            return usedByLease || usedByTenant
+                ? { canDelete: false, reason: 'Il contatto è collegato a un record persistito.' }
+                : { canDelete: true };
         },
         delete(id: string): boolean {
             const db = gateway.getDatabase();
@@ -120,6 +134,10 @@ export function updateContact(id: string, input: ContactInput): ContactRecord {
 
 export function archiveContact(id: string): ContactRecord {
     return legacyContacts.archive(id);
+}
+
+export function restoreContact(id: string): ContactRecord {
+    return legacyContacts.restore(id);
 }
 
 export function canDeleteContact(id: string): ContactDeleteCheck {

@@ -23,6 +23,7 @@ export const tenantStoredFileSchema = z.object({
 
 export const tenantGuarantorSchema = z.object({
     id: stringField,
+    contactId: z.string().min(1).optional(),
     contactType: z.enum(['person', 'company']).default('person'),
     companyName: stringField,
     firstName: stringField,
@@ -40,6 +41,7 @@ export const tenantGuarantorSchema = z.object({
 
 export const tenantEmergencyContactSchema = z.object({
     id: stringField,
+    contactId: z.string().min(1).optional(),
     contactType: z.enum(['person', 'company']).default('person'),
     companyName: stringField,
     firstName: stringField,

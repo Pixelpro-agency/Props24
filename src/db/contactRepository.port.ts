@@ -20,6 +20,7 @@ export interface ContactRepository {
     create(input: ContactCreateInput): Promise<ContactRecord>;
     update(id: string, input: ContactUpdateInput): Promise<ContactRecord>;
     archive(id: string): Promise<ContactRecord>;
+    restore(id: string): Promise<ContactRecord>;
     canDelete(id: string): Promise<ContactDeleteCheck>;
     delete(id: string): Promise<void>;
     subscribe(callback: () => void): () => void;

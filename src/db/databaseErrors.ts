@@ -282,14 +282,14 @@ export class LeasePaymentOperationError extends Error {
 
 export class LeaseContactNotFoundError extends Error {
     constructor() {
-        super('Garante non trovato.');
+        super('Contatto non trovato.');
         this.name = 'LeaseContactNotFoundError';
     }
 }
 
 export class LeaseContactInUseError extends Error {
     constructor() {
-        super('Il contatto è collegato a una locazione e non può essere eliminato.');
+        super('Il contatto è collegato a un record persistito e non può essere eliminato.');
         this.name = 'LeaseContactInUseError';
     }
 }
