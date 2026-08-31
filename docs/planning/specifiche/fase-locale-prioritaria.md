@@ -187,8 +187,9 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 13. campi e cataloghi canonici delle Unit — B3 completata e verificata;
 14. ID annidati canonici delle Unit — B4 completata e verificata.
 15. modifica e lifecycle delle Unit — B6 completata e verificata tecnicamente, inclusi lifecycle repository, edit reale, bozza e guard edit, azioni lista/dettaglio e gate consolidato.
+16. collaudo browser finale delle Unit — B9 completata con PASS funzionale e nessun finding applicativo riproducibile; file chooser e ispezione storage interna non osservabili per limitazioni dello strumento, con i relativi contratti già coperti dai gate automatizzati.
 
-Il prossimo passo del ciclo locale delle Unit è B9 — Collaudo browser finale delle Unit. B7 — Import/Export resta rinviata e B8 — Analisi catastale/OCR resta futura/backend; entrambe non bloccano B9.
+Il ciclo locale corrente delle Unit è concluso dopo il collaudo B9. B7 — Import/Export resta rinviata, B8 — Analisi catastale/OCR resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non riaprono né bloccano la chiusura del perimetro Unit già verificato.
 
 Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
 

@@ -114,13 +114,15 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 Il Blocco A — Edifici e il Blocco F — Modifiche non salvate sono completati e collaudati.
 
-Nel Blocco B — Unità sono completate tecnicamente B1–B6: relazione unità–edificio, duplicati catastali, campi canonici, ID annidati canonici, bozze manuali, modifica e lifecycle.
+Nel Blocco B — Unità sono completate localmente B1–B6 e B9: relazione unità–edificio, duplicati catastali, campi canonici, ID annidati canonici, bozze manuali, modifica/lifecycle e collaudo browser finale.
 
-La baseline tecnica corrente è 93 file di test e 1099 test passati, con build positiva e lint mirato B6 senza errori.
+B9 si è conclusa con PASS funzionale e nessun finding applicativo riproducibile. Il file chooser per gli allegati e l'ispezione read-only dello storage interno non erano disponibili nello strumento di collaudo; i contratti di persistenza e identità interessati restano coperti dai gate automatizzati B4/B6.
+
+La baseline tecnica corrente resta 93 file di test e 1099 test passati, con build positiva e lint mirato B6 senza errori.
 
 Lo SHA applicativo corrente è `590204e6482d28b8caa778cc63eec3fc88d4cddb`.
 
-Il prossimo punto tecnico è B9 — Collaudo browser finale delle Unit. B7 — Import/Export resta rinviata e B8 — Analisi catastale resta futura/backend; entrambe non bloccano il collaudo locale.
+Nel Blocco B restano residue B7 — Import/Export, rinviata; B8 — Analisi catastale, futura/backend; e B9A — Card e KPI Unit, futura. Nessuna di queste attività riapre il ciclo locale Unit appena collaudato.
 
 # BLOCCO B — Unità
 
@@ -156,26 +158,9 @@ Il prossimo punto tecnico è B9 — Collaudo browser finale delle Unit. B7 — I
 
 Riferimento visuale: [colonne della visura catastale](./riferimenti%20catastali%20-%20colonne%20visura%20catastale%20agenzia%20delle%20entrate%20tramite%20CF.png).
 
-## TASK B9 — Collaudo unità
+## TASK B9A — Card e KPI unità
 
-**Scope del ciclo locale:** B9 esegue il collaudo browser finale del perimetro Unit coperto da B3, B4 e B6. B3, B4 e B6 sono già chiuse tecnicamente; B7 — Import/Export e B8 — Analisi catastale/OCR non bloccano il collaudo locale.
-
-Verificare:
-
-- due unità nello stesso edificio;
-- nove schede;
-- allegati;
-- ID stabili;
-- draft;
-- create ed edit;
-- archive/restore;
-- buildingId e unitsCount;
-- reload;
-- isolamento account;
-- nessun doppio submit;
-- nessuna scrittura eccessiva.
-
-### B9A — Card e KPI unità
+**Stato:** futuro.
 
 Le card future definite sono:
 
@@ -185,7 +170,7 @@ Le card future definite sono:
 - Guadagno lordo, basato sugli incassi effettivi nel periodo;
 - Guadagno netto, al netto di tasse e costi realmente disponibili.
 
-Affittate = unità non archiviate collegate a una locazione attiva secondo lo stato canonico della locazione. Valore patrimoniale usa il valore di acquisizione; un selettore comune offre Ultimo mese, Anno corrente, Ultimi 12 mesi e Dall'inizio; dati assenti non valgono zero e sono segnalati come incompleti. Il Tasso di occupazione è futuro per affitti brevi; la Copertura locativa è soprattutto aggregata e non è una card standard della singola unità tradizionale. B9A resta futura.
+Affittate = unità non archiviate collegate a una locazione attiva secondo lo stato canonico della locazione. Valore patrimoniale usa il valore di acquisizione; un selettore comune offre Ultimo mese, Anno corrente, Ultimi 12 mesi e Dall'inizio; dati assenti non valgono zero e sono segnalati come incompleti. Il Tasso di occupazione è futuro per affitti brevi; la Copertura locativa è soprattutto aggregata e non è una card standard della singola unità tradizionale.
 
 # BLOCCO C — Inquilini e contatti
 

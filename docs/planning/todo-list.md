@@ -14,25 +14,25 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 19
+- Completate integralmente: 20
 - Parzialmente completate: 4
-- Non concluse: 49
+- Non concluse: 48
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: B9 — Collaudo browser finale delle Unità locali
+- Prossimo punto tecnico: da ridefinire nel nuovo Percorso operativo immediato post-B9
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 49 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 48 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
-> **CICLO CORRENTE — COMPLETAMENTO LOCALE DELLE UNITÀ**
+> **CICLO COMPLETATO — UNITÀ LOCALI**
 >
-> Obiettivo: completare il perimetro Unit localmente implementabile consolidando campi canonici, ID annidati, modifica/lifecycle e collaudo finale. B7 — Import/Export resta rinviata e B8 — Analisi catastale resta futura/backend e non bloccano questo ciclo.
+> Obiettivo raggiunto: il perimetro Unit localmente implementabile è stato consolidato nei campi canonici, negli ID annidati, nella modifica/lifecycle e nel collaudo browser finale. B7 — Import/Export resta rinviata, B8 — Analisi catastale resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non hanno impedito la chiusura del ciclo locale corrente.
 >
-> Baseline applicativa corrente: `590204e6482d28b8caa778cc63eec3fc88d4cddb`.
+> Baseline applicativa verificata: `590204e6482d28b8caa778cc63eec3fc88d4cddb`.
 >
-> Baseline tecnica corrente: 93 file di test / 1099 test passati, build positiva e lint mirato B6 senza errori.
+> Baseline tecnica: 93 file di test / 1099 test passati, build positiva e lint mirato B6 senza errori.
 >
 > - [x] B3 — Campi canonici Unit
 >   - [x] B3.1 — Contratto cataloghi e schema Unit
@@ -48,9 +48,11 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] B6.3 — Guard e bozza edit Unit
 >   - [x] B6.4 — Azioni reali lista e dettaglio Unit
 >   - [x] B6.5 — Gate tecnico consolidato B6
-> - [ ] B9 — Collaudo browser finale delle Unità locali — **PROSSIMA TASK**
+> - [x] B9 — Collaudo browser finale delle Unità locali
 >
-> Il planning è stato riallineato dopo la chiusura tecnica di B6. B9 è il prossimo e ultimo passo del ciclo locale corrente delle Unit. B7 — Import/Export e B8 — Analisi catastale/OCR restano rispettivamente rinviata e futura/backend e non bloccano B9. Dopo il collaudo B9 verrà consolidato lo stato finale del ciclo Unit e verrà definito un nuovo Percorso operativo immediato sulla base delle attività residue.
+> B9 si è conclusa con PASS funzionale e nessun finding applicativo riproducibile. Il caricamento reale degli allegati tramite file chooser e alcune verifiche interne dello storage non sono stati osservabili per limitazioni dello strumento di collaudo; i relativi contratti di persistenza, identità e round-trip restano coperti dai gate automatizzati B4/B6.
+>
+> Il ciclo locale corrente delle Unit è concluso. Il prossimo Percorso operativo immediato verrà definito riesaminando le attività residue, le loro dipendenze e le decisioni ancora aperte, senza assumere automaticamente come prossima una task soltanto per il suo ordine nel documento.
 
 Le attività concluse dei cicli precedenti restano registrate nei rispettivi blocchi; cronologia, evidenze tecniche e modifiche sono conservate nella storia Git.
 
@@ -115,7 +117,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] B6.5 — Gate tecnico consolidato B6 — **COMPLETATA; PASS; 93 file / 1099 test, build e lint mirato positivi**
 - [ ] B7 — Import ed export unità — **RINVIATO**
 - [ ] B8 — Analisi catastale futura — **FUTURO — BACKEND**
-- [ ] B9 — Collaudo unità — **APERTO — PROSSIMA TASK; B6 completata tecnicamente; B7 e B8 non bloccano il collaudo locale**
+- [x] B9 — Collaudo unità — **COMPLETATA; PASS funzionale; due Unit nello stesso Building, nove schede, draft create/edit, create/edit, reload, lifecycle singolo e bulk, selection safety, relazione Building, unitsCount e isolamento account verificati; nessun finding applicativo; file chooser e ispezione storage interna limitati dallo strumento**
   - [ ] B9A — Card unità: Affittate, Valore locativo, Valore patrimoniale, Guadagno lordo e Guadagno netto; Tasso di occupazione solo per futuri affitti brevi e Copertura locativa soprattutto aggregata — **FUTURO; KPI-01 e KPI-02 validate**
 
 ## Blocco C — Inquilini e contatti
@@ -282,6 +284,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] Campi canonici Unit, UI, round-trip e gate tecnico — B3.1–B3.3
   - [x] ID annidati canonici Unit, round-trip e gate tecnico — B4.1–B4.3
   - [x] Modifica e lifecycle Unit, edit, bozza/guard edit, azioni lista/dettaglio e gate tecnico consolidato — B6.1–B6.5
+  - [x] Collaudo browser finale delle Unit — B9; PASS funzionale senza finding applicativi, con limitazioni strumentali su file chooser e ispezione storage interna
   - [ ] Copertura progressiva delle task future — **APERTO**
 
 Baseline tecnica corrente post-B6: 93 file, 1099 test passati; build positiva e lint mirato B6 senza errori. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
