@@ -122,7 +122,7 @@ La baseline tecnica corrente resta 93 file di test e 1099 test passati, con buil
 
 Lo SHA applicativo corrente è `590204e6482d28b8caa778cc63eec3fc88d4cddb`.
 
-Nel Blocco B restano residue B7 — Import/Export, rinviata; B8 — Analisi catastale, futura/backend; e B9A — Card e KPI Unit, futura. Nessuna di queste attività riapre il ciclo locale Unit appena collaudato.
+Nel Blocco B restano residue B7 — Import/Export, rinviata; B8 — Analisi catastale, futura/backend; B9R — verifiche browser residue delle Unit, in attesa di strumento adeguato; e B9A — Card e KPI Unit, futura. B9R non riapre il PASS funzionale di B9: conserva soltanto i controlli browser che non erano osservabili con lo strumento disponibile.
 
 # BLOCCO B — Unità
 
@@ -157,6 +157,23 @@ Nel Blocco B restano residue B7 — Import/Export, rinviata; B8 — Analisi cata
 - distinzione tra file salvato e documento realmente verificato.
 
 Riferimento visuale: [colonne della visura catastale](./riferimenti%20catastali%20-%20colonne%20visura%20catastale%20agenzia%20delle%20entrate%20tramite%20CF.png).
+
+## TASK B9R — Verifiche browser residue delle Unit
+
+**Stato:** in attesa di strumento adeguato.
+
+B9 è conclusa con PASS funzionale e nessun finding applicativo riproducibile. Restano tuttavia alcune verifiche browser dirette che non è stato possibile eseguire per limiti dello strumento Chrome utilizzato nel collaudo.
+
+Quando il tooling consentirà file chooser reale e accesso read-only affidabile allo storage browser, rieseguire esclusivamente:
+
+- B9-06 — caricamento reale degli allegati tramite file chooser e verifica della loro persistenza dopo submit e reload;
+- B9-07 — lettura degli ID annidati persistiti dopo la creazione della Unit;
+- B9-13 — doppio submit della create osservato tramite interazione browser reale, verificando la creazione di una sola Unit;
+- B9-15 — confronto degli ID annidati prima e dopo reload;
+- B9-20 — confronto degli ID annidati prima e dopo edit, senza sostituzione dei relativi oggetti o file;
+- B9-35 — confronto read-only dello storage prima e dopo lista, dettaglio, cambio scheda senza modifiche e reload, verificando l'assenza di scritture persistite non motivate.
+
+Queste verifiche residue non riaprono B9 e non costituiscono finding applicativi. I contratti interessati sono già coperti dai test automatizzati B4/B6; B9R conserva esclusivamente il debito di verifica browser diretta e potrà essere chiusa quando lo strumento permetterà di osservare realmente tali comportamenti.
 
 ## TASK B9A — Card e KPI unità
 

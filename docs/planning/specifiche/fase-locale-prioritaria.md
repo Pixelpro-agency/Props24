@@ -187,7 +187,7 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 13. campi e cataloghi canonici delle Unit — B3 completata e verificata;
 14. ID annidati canonici delle Unit — B4 completata e verificata.
 15. modifica e lifecycle delle Unit — B6 completata e verificata tecnicamente, inclusi lifecycle repository, edit reale, bozza e guard edit, azioni lista/dettaglio e gate consolidato.
-16. collaudo browser finale delle Unit — B9 completata con PASS funzionale e nessun finding applicativo riproducibile; file chooser e ispezione storage interna non osservabili per limitazioni dello strumento, con i relativi contratti già coperti dai gate automatizzati.
+16. collaudo browser finale delle Unit — B9 completata con PASS funzionale e nessun finding applicativo riproducibile; restano rinviate a B9R, per limitazioni dello strumento, la verifica browser del caricamento reale degli allegati, degli ID annidati dopo create/reload/edit, del doppio submit create e dell'assenza di scritture persistite nei percorsi read-only. I relativi contratti restano già coperti dai gate automatizzati B4/B6.
 
 Il ciclo locale corrente delle Unit è concluso dopo il collaudo B9. B7 — Import/Export resta rinviata, B8 — Analisi catastale/OCR resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non riaprono né bloccano la chiusura del perimetro Unit già verificato.
 

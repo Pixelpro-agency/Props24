@@ -118,6 +118,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
 - [ ] B7 — Import ed export unità — **RINVIATO**
 - [ ] B8 — Analisi catastale futura — **FUTURO — BACKEND**
 - [x] B9 — Collaudo unità — **COMPLETATA; PASS funzionale; due Unit nello stesso Building, nove schede, draft create/edit, create/edit, reload, lifecycle singolo e bulk, selection safety, relazione Building, unitsCount e isolamento account verificati; nessun finding applicativo; file chooser e ispezione storage interna limitati dallo strumento**
+  - [ ] B9R — Verifiche browser residue delle Unit — **IN ATTESA DI STRUMENTO ADEGUATO; B9 resta completata con PASS funzionale. Da rieseguire quando il browser/tooling consentirà file chooser reale e ispezione read-only affidabile dello storage: B9-06 allegati reali; B9-07 ID annidati dopo create; B9-13 doppio submit create osservato nel browser; B9-15 stabilità ID dopo reload; B9-20 stabilità ID dopo edit; B9-35 assenza di scritture persistite durante operazioni read-only. I relativi contratti sono già coperti dai gate automatizzati B4/B6, ma la verifica browser diretta resta pendente.**
   - [ ] B9A — Card unità: Affittate, Valore locativo, Valore patrimoniale, Guadagno lordo e Guadagno netto; Tasso di occupazione solo per futuri affitti brevi e Copertura locativa soprattutto aggregata — **FUTURO; KPI-01 e KPI-02 validate**
 
 ## Blocco C — Inquilini e contatti
