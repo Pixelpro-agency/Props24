@@ -41,7 +41,10 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] C1.2 — Migrazione Garanti di Nuovo inquilino alla rubrica reale — **COMPLETATA**
 >   - [x] C1.3 — Contatti di emergenza e modello Contact comune — **COMPLETATA**
 >   - [x] C1.4 — Gate tecnico consolidato C1 — **COMPLETATA; PASS; 95 file / 1137 test, build e lint mirato positivi, nessun finding**
-> - [ ] C2 — ID annidati canonici Tenant — **PROSSIMA TASK; garanti, contatti di emergenza, documenti e relativi file, foto e altri file persistenti del Tenant**
+> - [ ] C2 — ID annidati canonici Tenant — **PROSSIMA TASK; create-once/preserve-thereafter per tutte le identità persistenti annidate Tenant**
+>   - [ ] C2.1 — ID canonici delle relazioni Tenant — **PROSSIMA TASK; Garanti e Contatti di emergenza**
+>   - [ ] C2.2 — ID canonici di allegati e documenti Tenant — **foto, documenti identità, visura società, TenantDocument e relativo file**
+>   - [ ] C2.3 — Gate tecnico consolidato C2 — **round-trip draft/submit/reload, legacy preservation, regressioni, suite, build e lint**
 > - [ ] C3 — Duplicati anagrafici secondo CT-01–CT-05
 > - [ ] C4 — Creazione atomica Tenant e relazioni — **DIPENDE DA C1–C3; nessun Tenant parziale e nessun riferimento Contact dangling. I Contact creati esplicitamente nella rubrica sono entità autonome e non vengono considerati orfani se il successivo form Tenant viene abbandonato o fallisce**
 > - [ ] C5 — Modifica e lifecycle Tenant
@@ -134,7 +137,10 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] C1.2 — Migrazione Garanti di Nuovo inquilino — **COMPLETATA; rubrica reale, Contact esistenti/nuovi, riferimenti archived/missing e refresh canonico verificati**
   - [x] C1.3 — Contatti di emergenza e modello comune — **COMPLETATA; rubrica reale, requisito telefono, `isPrimary` Tenant-specific ed exactly-one primary verificati**
   - [x] C1.4 — Gate tecnico consolidato C1 — **COMPLETATA; PASS; nessun finding; 95 file / 1137 test, build positiva e lint mirato 0 errori/0 warning**
-- [ ] C2 — ID annidati canonici Tenant — **PROSSIMA TASK; include garanti, contatti di emergenza, documenti e file documenti, foto e altri file persistenti**
+- [ ] C2 — ID annidati canonici Tenant — **APERTO; create-once/preserve-thereafter per tutte le identità persistenti annidate Tenant**
+  - [ ] C2.1 — ID canonici delle relazioni Tenant — **PROSSIMA TASK; sostituire i generatori deboli di Garanti e Contatti di emergenza usando il generatore canonico condiviso**
+  - [ ] C2.2 — ID canonici di allegati e documenti Tenant — **foto, fronte/retro documento identità, visura società, TenantDocument e file allegato**
+  - [ ] C2.3 — Gate tecnico consolidato C2 — **stabilità ID attraverso form, draft, normalizzazione, submit, persistenza e reload; legacy preservati**
 - [ ] C3 — Duplicati anagrafici — **APERTO; CT-01–CT-05 validate; hard block fiscale account-scoped appartiene a C3 e non a C1**
 - [ ] C4 — Creazione atomica Tenant — **APERTO; dipende da C1–C3; deve impedire Tenant parziali e riferimenti Contact dangling. Un Contact creato esplicitamente nella rubrica è un'entità autonoma e non viene rollbackato soltanto perché il form Tenant viene successivamente abbandonato**
 - [ ] C5 — Modifica e lifecycle — **APERTO**

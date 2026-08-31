@@ -200,6 +200,20 @@ Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale
 
 ## TASK C2 — ID annidati
 
+C2 viene completata tramite C2.1 → C2.2 → C2.3.
+
+### C2.1 — ID canonici delle relazioni Tenant
+
+Migrare gli ID persistenti delle relazioni `TenantGuarantors` e `TenantEmergencyContacts` al generatore canonico condiviso. Un nuovo legame genera l'ID una sola volta; edit, collegamento Contact, rerender, draft e restore preservano l'ID esistente. `contactId` resta distinto dall'ID della relazione e il modello Contact–Tenant consolidato da C1 non viene modificato.
+
+### C2.2 — ID canonici di allegati e documenti Tenant
+
+Migrare al generatore canonico `TenantPhoto`, `TenantIDCard`, `TenantIDCardBack`, `TenantCompanyRegistryFile`, `TenantDocuments[].id` e `TenantDocuments[].file.id`. La modifica dei metadata conserva gli ID; una reale sostituzione di file conserva l'ID del parent e genera soltanto un nuovo file ID. Un file già esistente collegato conserva la propria identità. Eliminare generatori persistenti basati su timestamp, `Math.random()`, nome file, `lastModified`, dimensione o fallback equivalenti.
+
+### C2.3 — Gate tecnico consolidato C2
+
+Verificare create-once/preserve-thereafter per tutte le otto categorie di ID annidati Tenant, round-trip attraverso form, draft, normalizzazione, create Tenant, JSON persistito e reload, preservazione byte-for-byte degli ID legacy già esistenti, assenza di generatori deboli nei writer Tenant, regressioni C1, suite completa, build, lint mirato e UTF-8.
+
 **Obiettivo:**
 
 - applicare il generatore persistente canonico a tutte le identità annidate Tenant;

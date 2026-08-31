@@ -250,7 +250,7 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 
 Il ciclo locale corrente delle Unit è concluso dopo il collaudo B9. B7 — Import/Export resta rinviata, B8 — Analisi catastale/OCR resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non riaprono né bloccano la chiusura del perimetro Unit già verificato.
 
-Il ciclo locale prioritario di Inquilini e Contatti ha completato C1 — Garanti e rubrica. La prossima task è C2 — ID annidati canonici Tenant; seguono C3–C6 e quindi C10. Il modello Contact–Tenant consolidato da C1 resta il boundary da preservare nelle task successive. I contratti professionali CT-01–CT-05 restano validi e il loro hard block fiscale appartiene a C3. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
+Il ciclo locale prioritario di Inquilini e Contatti ha completato C1 — Garanti e rubrica. C2 — ID annidati canonici Tenant viene completata tramite C2.1 — relazioni Tenant, C2.2 — allegati e documenti Tenant e C2.3 — gate tecnico consolidato; C2.1 è la prossima task. Seguono C3–C6 e quindi C10. Il modello Contact–Tenant consolidato da C1 resta il boundary da preservare nelle task successive. I contratti professionali CT-01–CT-05 restano validi e il loro hard block fiscale appartiene a C3. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
 
 Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
 
