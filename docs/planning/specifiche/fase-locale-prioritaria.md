@@ -191,6 +191,8 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 
 Il ciclo locale corrente delle Unit è concluso dopo il collaudo B9. B7 — Import/Export resta rinviata, B8 — Analisi catastale/OCR resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non riaprono né bloccano la chiusura del perimetro Unit già verificato.
 
+Il successivo ciclo locale prioritario riguarda Inquilini e Contatti: completare C1–C6 e quindi C10, preservando i contratti già validati CT-01–CT-05. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
+
 Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
 
 `Elimina e ricomincia` cancella esplicitamente la bozza persistita. Il collaudo trasversale F4 ha verificato restore, salvataggio manuale, dirty state, navigazione protetta, `Resta`, `Abbandona`, logout, submit riuscito e fallito, cleanup e persistenza.

@@ -191,6 +191,10 @@ Affittate = unità non archiviate collegate a una locazione attiva secondo lo st
 
 # BLOCCO C — Inquilini e contatti
 
+Il prossimo ciclo locale completa Inquilini e Contatti nell'ordine C1 → C2 → C3 → C4 → C5 → C6 → C10. C1–C3 costituiscono le fondamenta del modello e C4 dipende esplicitamente dal loro completamento. C5 è owner del lifecycle reale Tenant, incluse le mutazioni singole e bulk; C6 non deve duplicare C5 e resta owner soltanto delle ulteriori azioni lista simulate o ancora da classificare.
+
+C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano C10 nel perimetro locale. C10 verifica l'invito locale già supportato, non l'invio email backend futuro.
+
 Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale e il guard descritti nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
 ## TASK C1 — Garanti e rubrica

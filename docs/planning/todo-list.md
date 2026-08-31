@@ -20,39 +20,35 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: da ridefinire nel nuovo Percorso operativo immediato post-B9
+- Prossimo punto tecnico: C1 — Garanti e rubrica
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 48 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
-> **CICLO COMPLETATO — UNITÀ LOCALI**
+> **NUOVO CICLO — COMPLETAMENTO LOCALE INQUILINI E CONTATTI**
 >
-> Obiettivo raggiunto: il perimetro Unit localmente implementabile è stato consolidato nei campi canonici, negli ID annidati, nella modifica/lifecycle e nel collaudo browser finale. B7 — Import/Export resta rinviata, B8 — Analisi catastale resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non hanno impedito la chiusura del ciclo locale corrente.
+> Obiettivo: completare il perimetro locale di Inquilini e Contatti consolidando il boundary con la rubrica, gli ID persistenti annidati, i duplicati fiscali, la creazione atomica, modifica/lifecycle, le azioni UI residue e il collaudo browser finale.
+>
+> Baseline repository corrente: `6ddf80884ece3915d4689ee4d4e79ce6dc6c4199`.
 >
 > Baseline applicativa verificata: `590204e6482d28b8caa778cc63eec3fc88d4cddb`.
 >
-> Baseline tecnica: 93 file di test / 1099 test passati, build positiva e lint mirato B6 senza errori.
+> Baseline tecnica corrente: 93 file di test / 1099 test passati, build positiva e lint mirato B6 senza errori.
 >
-> - [x] B3 — Campi canonici Unit
->   - [x] B3.1 — Contratto cataloghi e schema Unit
->   - [x] B3.2 — UI e round-trip campi canonici Unit
->   - [x] B3.3 — Gate tecnico consolidato B3
-> - [x] B4 — ID annidati canonici
->   - [x] B4.1 — Generatore canonico e ID di documento catastale, chiavi e contratti
->   - [x] B4.2 — ID canonici di fotografie, contatti e documenti
->   - [x] B4.3 — Gate tecnico consolidato B4
-> - [x] B6 — Modifica e lifecycle unità
->   - [x] B6.1 — Lifecycle repository Unit
->   - [x] B6.2 — Route e form Modifica Unit
->   - [x] B6.3 — Guard e bozza edit Unit
->   - [x] B6.4 — Azioni reali lista e dettaglio Unit
->   - [x] B6.5 — Gate tecnico consolidato B6
-> - [x] B9 — Collaudo browser finale delle Unità locali
+> - [ ] C1 — Garanti e rubrica — **PROSSIMA TASK; completare la migrazione dei consumer Tenant al ContactRepository, eliminare dipendenze runtime da mock/existingContacts, consolidare il boundary canonico Contact–Tenant e prevenire record orfani**
+> - [ ] C2 — ID annidati canonici Tenant
+> - [ ] C3 — Duplicati anagrafici secondo CT-01–CT-05
+> - [ ] C4 — Creazione atomica Tenant e relazioni — **DIPENDE DA C1–C3**
+> - [ ] C5 — Modifica e lifecycle Tenant
+> - [ ] C6 — Chiusura delle azioni lista residue; il lifecycle reale appartiene a C5, mentre le altre azioni devono essere implementate, disabilitate secondo convenzione o rimosse
+> - [ ] C10 — Collaudo browser finale Inquilini e Contatti
 >
-> B9 si è conclusa con PASS funzionale e nessun finding applicativo riproducibile. Il caricamento reale degli allegati tramite file chooser e alcune verifiche interne dello storage non sono stati osservabili per limitazioni dello strumento di collaudo; i relativi contratti di persistenza, identità e round-trip restano coperti dai gate automatizzati B4/B6.
+> C7 — Inviti email reali, C8 — storage degli allegati delle bozze, C9 — verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano il completamento del ciclo locale C1–C6 → C10.
 >
-> Il ciclo locale corrente delle Unit è concluso. Il prossimo Percorso operativo immediato verrà definito riesaminando le attività residue, le loro dipendenze e le decisioni ancora aperte, senza assumere automaticamente come prossima una task soltanto per il suo ordine nel documento.
+> B9R resta separata e in attesa di uno strumento browser adeguato; non blocca questo ciclo e non riapre il PASS funzionale di B9.
+>
+> CT-01–CT-05 sono già validate e costituiscono il contratto professionale per il ciclo corrente. Il ciclo non deve riaprire decisioni fiscali già consolidate salvo conflitto reale emerso dal codice.
 
 Le attività concluse dei cicli precedenti restano registrate nei rispettivi blocchi; cronologia, evidenze tecniche e modifiche sono conservate nella storia Git.
 
