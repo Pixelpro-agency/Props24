@@ -142,6 +142,22 @@ Gli ID legacy già presenti vengono conservati senza migrazione automatica del f
 
 La strategia tecnica del generatore canonico è descritta in [Database locale e migrazione futura](./database-locale-e-migrazione.md).
 
+### Modifica, bozza edit e lifecycle
+
+La modifica di una Unit usa la route canonica `/properties/units/:id/edit` e parte dal record persistito. L'aggiornamento definitivo modifica il record esistente senza creare una nuova Unit e preserva identità, `createdAt`, stato di archivio, relazioni e ID annidati già assegnati, salvo la sostituzione reale di un file. La relazione `buildingId` non viene riassegnata implicitamente durante l'edit.
+
+La bozza di modifica usa `formType: property`, `mode: edit` ed `entityId` uguale all'ID della Unit. È account-scoped ed è distinta sia dalla bozza create sia dalle bozze edit di altre Unit. Il salvataggio resta esclusivamente manuale; una bozza ripristinata è inizialmente clean e il guard mantiene il contratto `Resta` / `Abbandona` / `Salva bozza`. Dopo un update definitivo riuscito viene eseguito il cleanup della bozza; un errore del cleanup non ripete l'update già completato.
+
+Il lifecycle delle Unit usa operazioni account-scoped reali di archivio, ripristino ed eliminazione, oltre alle corrispondenti operazioni bulk atomiche. Prima di una mutazione bulk viene validato l'intero insieme richiesto; una delete che contiene insieme Unit eliminabili e Unit bloccate non produce cancellazioni parziali.
+
+Archivio e ripristino preservano identità, dati e `buildingId` e non modificano `building.unitsCount`. Una Unit può essere ripristinata anche quando il Building collegato è archiviato.
+
+L'eliminazione è bloccata da qualunque Lease persistente con `lease.propertyId` uguale all'ID della Unit e da qualunque Payment persistente con `payment.propertyId` uguale all'ID della Unit, indipendentemente dallo stato corrente o storico. Le proiezioni `tenantIds` e `leaseIds` non costituiscono blocker autonomi e non viene eseguito alcun cascade.
+
+Una Unit libera può essere eliminata anche se collegata a un Building; in questo caso `building.unitsCount` viene ricalcolato dai dati reali.
+
+Lista e dettaglio espongono lifecycle coerente con lo stato persistito: una Unit attiva offre Modifica, Archivia ed Elimina; una Unit archiviata offre Modifica, Ripristina ed Elimina. Le azioni attive eseguono mutazioni reali e gli errori di dominio non producono falsi successi.
+
 ## 8. Funzioni documentali future
 
 Dipendono dal backend: upload e storage definitivo di immagini, conversione immagini, lettura e creazione PDF, OCR di identità, catasto e visure camerali, scraping, firme digitali, verifica documentale, email e automazioni. Il futuro sistema distingue almeno Ricevuta, Fattura, Quietanza e Allegato del pagamento. Per la ricevuta sono già noti locatore, conduttore, importo, data e tipologia/metodo di pagamento. Restano rinviati prove definitive, momento di emissione, automatismi, regole fiscali, pagamenti parziali, crediti e debiti.
@@ -170,8 +186,9 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 12. duplicati delle Unit — B2 completata e collaudata;
 13. campi e cataloghi canonici delle Unit — B3 completata e verificata;
 14. ID annidati canonici delle Unit — B4 completata e verificata.
+15. modifica e lifecycle delle Unit — B6 completata e verificata tecnicamente, inclusi lifecycle repository, edit reale, bozza e guard edit, azioni lista/dettaglio e gate consolidato.
 
-Il prossimo blocco operativo locale delle Unit è B6 — Modifica e lifecycle unità.
+Il prossimo passo del ciclo locale delle Unit è B9 — Collaudo browser finale delle Unit. B7 — Import/Export resta rinviata e B8 — Analisi catastale/OCR resta futura/backend; entrambe non bloccano B9.
 
 Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
 

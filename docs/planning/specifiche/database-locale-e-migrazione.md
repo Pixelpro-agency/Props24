@@ -98,6 +98,10 @@ Il repository condiviso è implementato con contratto asincrono e adapter locale
 
 Nuovo inquilino, Nuova unità, Nuova locazione e Nuovo edificio usano il repository condiviso, il caricamento iniziale con ripresa o cancellazione, save manuale, delete esplicita e cleanup post-submit. Non esiste alcuna bozza globale.
 
+La modifica di una Unit usa una bozza account-scoped con chiave logica `formType: property`, `mode: edit` ed `entityId` uguale all'ID della Unit. La bozza edit è distinta dalla bozza create e dalle bozze edit di altre entità. La baseline iniziale deriva dal record persistito; il salvataggio è soltanto manuale e il restore produce inizialmente uno stato non dirty. `Abbandona` ripristina l'ultima baseline salvata senza eliminare la bozza persistita.
+
+Dopo un update definitivo riuscito il cleanup della bozza è una mutazione separata. Se il cleanup fallisce, il record già aggiornato viene preservato e il recovery ritenta esclusivamente la cancellazione della bozza senza ripetere `updateProperty`.
+
 La bozza create di Nuova locazione è account-scoped e usa la chiave logica `formType: lease`, `mode: create`, `entityId: null`. Il payload è validato e salvato soltanto manualmente; `activeTab` viene persistita senza contribuire al dirty. La riconciliazione preserva gli ID Property, Tenant e Guarantor e il restore non crea entità definitive.
 
 `createLease` persiste atomicamente il dominio Lease previsto, inclusi pagamenti, deposito e relazioni, ma non cancella la bozza nella stessa mutazione. Dopo il successo, `DraftRepository` esegue il cleanup F1 come mutazione separata. Se la delete fallisce, la locazione già creata viene preservata e il recovery ritenta esclusivamente la cancellazione della bozza: non esegue rollback e non richiama `createLease`. Un submit lock sincrono create-only impedisce una seconda create concorrente dallo stesso form montato.
@@ -144,7 +148,17 @@ unit.relations.buildingId
 building.unitsCount derivato
 ```
 
-Non si duplicano oggetti edificio nelle unità. `unitsCount` deriva dai dati reali e viene ricalcolato dopo il lifecycle delle unità. L'eliminazione dell'edificio è bloccata con relazioni non gestite. L'identificativo edificio è univoco per account. Nello stesso account, stesso indirizzo completo e stesso civico identificano lo stesso edificio; il suffisso è parte del civico e le divisioni interne non producono nuovi edifici.
+Non si duplicano oggetti edificio nelle unità. `building.unitsCount` deriva dai dati reali.
+
+Il lifecycle delle Unit è account-scoped e comprende archive, restore e delete singole, oltre a operazioni bulk atomiche. Archivio e ripristino preservano `unit.relations.buildingId` e non modificano `building.unitsCount`. Il ripristino della Unit resta consentito anche quando il Building collegato è archiviato.
+
+L'eliminazione di una Unit libera collegata a un Building è consentita e ricalcola `building.unitsCount`. Il Building collegato non costituisce di per sé un blocker della delete.
+
+La delete della Unit è invece bloccata da qualunque Lease persistente con `lease.propertyId` corrispondente e da qualunque Payment persistente con `payment.propertyId` corrispondente, indipendentemente dal loro stato corrente o storico. Le relazioni derivate `tenantIds` e `leaseIds` non costituiscono blocker autonomi e non viene eseguito alcun cascade.
+
+Le operazioni bulk validano l'intero insieme prima della scrittura e sono atomiche: se almeno una Unit della delete è bloccata, non viene eliminata nessuna Unit dell'insieme.
+
+L'eliminazione dell'edificio resta separata ed è bloccata dalle relazioni non gestite. L'identificativo edificio è univoco per account. Nello stesso account, stesso indirizzo completo e stesso civico identificano lo stesso edificio; il suffisso è parte del civico e le divisioni interne non producono nuovi edifici.
 
 ## 9. Allegati e storage futuro
 

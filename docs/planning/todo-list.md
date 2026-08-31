@@ -14,25 +14,25 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 18
+- Completate integralmente: 19
 - Parzialmente completate: 4
-- Non concluse: 50
+- Non concluse: 49
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: B6.1 — Lifecycle repository Unit
+- Prossimo punto tecnico: B9 — Collaudo browser finale delle Unità locali
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 50 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 49 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
-> **NUOVO CICLO — COMPLETAMENTO LOCALE DELLE UNITÀ**
+> **CICLO CORRENTE — COMPLETAMENTO LOCALE DELLE UNITÀ**
 >
 > Obiettivo: completare il perimetro Unit localmente implementabile consolidando campi canonici, ID annidati, modifica/lifecycle e collaudo finale. B7 — Import/Export resta rinviata e B8 — Analisi catastale resta futura/backend e non bloccano questo ciclo.
 >
-> Baseline applicativa corrente: `b835d3b5e3a7c3c2b1f93289ed89ca4aa8faf4a6`.
+> Baseline applicativa corrente: `590204e6482d28b8caa778cc63eec3fc88d4cddb`.
 >
-> Baseline tecnica corrente: 88 file di test / 1055 test passati, build positiva e lint mirato B4 senza errori.
+> Baseline tecnica corrente: 93 file di test / 1099 test passati, build positiva e lint mirato B6 senza errori.
 >
 > - [x] B3 — Campi canonici Unit
 >   - [x] B3.1 — Contratto cataloghi e schema Unit
@@ -42,15 +42,15 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] B4.1 — Generatore canonico e ID di documento catastale, chiavi e contratti
 >   - [x] B4.2 — ID canonici di fotografie, contatti e documenti
 >   - [x] B4.3 — Gate tecnico consolidato B4
-> - [ ] B6 — Modifica e lifecycle unità
->   - [ ] B6.1 — Lifecycle repository Unit — **PROSSIMA TASK**
->   - [ ] B6.2 — Route e form Modifica Unit
->   - [ ] B6.3 — Guard e bozza edit Unit
->   - [ ] B6.4 — Azioni reali lista e dettaglio Unit
->   - [ ] B6.5 — Gate tecnico consolidato B6
-> - [ ] B9 — Collaudo browser finale delle Unità locali
+> - [x] B6 — Modifica e lifecycle unità
+>   - [x] B6.1 — Lifecycle repository Unit
+>   - [x] B6.2 — Route e form Modifica Unit
+>   - [x] B6.3 — Guard e bozza edit Unit
+>   - [x] B6.4 — Azioni reali lista e dettaglio Unit
+>   - [x] B6.5 — Gate tecnico consolidato B6
+> - [ ] B9 — Collaudo browser finale delle Unità locali — **PROSSIMA TASK**
 >
-> Il planning è stato riallineato dopo la chiusura di B4. Durante B6.1–B6.5 non verrà aggiornato dopo ogni sotto-task: stato ed evidenze resteranno nei commit, nei test e nelle revisioni della Chat Analisi. Il prossimo riallineamento documentale avverrà dopo B6.5, prima di procedere con B9.
+> Il planning è stato riallineato dopo la chiusura tecnica di B6. B9 è il prossimo e ultimo passo del ciclo locale corrente delle Unit. B7 — Import/Export e B8 — Analisi catastale/OCR restano rispettivamente rinviata e futura/backend e non bloccano B9. Dopo il collaudo B9 verrà consolidato lo stato finale del ciclo Unit e verrà definito un nuovo Percorso operativo immediato sulla base delle attività residue.
 
 Le attività concluse dei cicli precedenti restano registrate nei rispettivi blocchi; cronologia, evidenze tecniche e modifiche sono conservate nella storia Git.
 
@@ -107,12 +107,12 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] B4.2 — ID canonici di fotografie, contatti e documenti — **COMPLETATA**
   - [x] B4.3 — Gate tecnico consolidato B4 — **COMPLETATA; PASS; 88 file / 1055 test, build e lint mirato positivi**
 - [x] B5 — Bozza unità — **COMPLETATA; repository condiviso, salvataggio manuale, restore, guard e cleanup verificati**
-- [ ] B6 — Modifica e lifecycle unità — **APERTO; pianificato nel ciclo corrente**
-  - [ ] B6.1 — Lifecycle repository Unit — **PROSSIMA TASK**
-  - [ ] B6.2 — Route e form Modifica Unit — **APERTO**
-  - [ ] B6.3 — Guard e bozza edit Unit — **APERTO**
-  - [ ] B6.4 — Azioni reali lista e dettaglio Unit — **APERTO**
-  - [ ] B6.5 — Gate tecnico consolidato B6 — **APERTO**
+- [x] B6 — Modifica e lifecycle unità — **COMPLETATA; lifecycle repository account-scoped, edit reale, bozza e guard edit entity-scoped, azioni singole e bulk reali, eliminazione protetta, relazione Building preservata e gate tecnico consolidato verificati**
+  - [x] B6.1 — Lifecycle repository Unit — **COMPLETATA**
+  - [x] B6.2 — Route e form Modifica Unit — **COMPLETATA**
+  - [x] B6.3 — Guard e bozza edit Unit — **COMPLETATA**
+  - [x] B6.4 — Azioni reali lista e dettaglio Unit — **COMPLETATA**
+  - [x] B6.5 — Gate tecnico consolidato B6 — **COMPLETATA; PASS; 93 file / 1099 test, build e lint mirato positivi**
 - [ ] B7 — Import ed export unità — **RINVIATO**
 - [ ] B8 — Analisi catastale futura — **FUTURO — BACKEND**
 - [ ] B9 — Collaudo unità — **APERTO; dipende dal completamento di B6; B7 e B8 non bloccano il collaudo locale**
@@ -191,7 +191,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
 
 - [ ] G1 — Inventario statico aggiornato — **APERTO**
 - [ ] G2 — Integrare l’inventario route nella documentazione tecnica — **APERTO; dipende da G1 e confluisce in L2**
-- [ ] G3 — Residui azioni unità e inquilini — **DA RIVALUTARE DOPO G1; non deve duplicare B6, B7, C5 o C6**
+- [ ] G3 — Residui azioni unità e inquilini — **DA RIVALUTARE DOPO G1; non deve riaprire B6 già completata né duplicare B7, C5 o C6**
 - [ ] G4 — Locazioni — **DECISIONE PRODOTTO / FUTURO**
 - [ ] G5 — Dashboard e navbar — **DECISIONE PRODOTTO**
 - [ ] G6 — Route future — **DECISIONE PRODOTTO / FUTURO**
@@ -281,9 +281,10 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] Collaudo browser duplicati unità — B2.4
   - [x] Campi canonici Unit, UI, round-trip e gate tecnico — B3.1–B3.3
   - [x] ID annidati canonici Unit, round-trip e gate tecnico — B4.1–B4.3
+  - [x] Modifica e lifecycle Unit, edit, bozza/guard edit, azioni lista/dettaglio e gate tecnico consolidato — B6.1–B6.5
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline tecnica corrente post-B4: 88 file, 1055 test passati; build positiva e lint mirato B4 senza errori. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
+Baseline tecnica corrente post-B6: 93 file, 1099 test passati; build positiva e lint mirato B6 senza errori. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**

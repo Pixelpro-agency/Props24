@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: b835d3b5e3a7c3c2b1f93289ed89ca4aa8faf4a6
+SHA applicativo esaminato: 590204e6482d28b8caa778cc63eec3fc88d4cddb
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -114,83 +114,15 @@ La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e
 
 Il Blocco A — Edifici e il Blocco F — Modifiche non salvate sono completati e collaudati.
 
-Nel Blocco B — Unità sono completate B1–B5: relazione unità–edificio, duplicati catastali, campi canonici, ID annidati canonici e bozze manuali.
+Nel Blocco B — Unità sono completate tecnicamente B1–B6: relazione unità–edificio, duplicati catastali, campi canonici, ID annidati canonici, bozze manuali, modifica e lifecycle.
 
-La baseline tecnica corrente è 88 file di test e 1055 test passati, con build positiva e lint mirato B4 senza errori.
+La baseline tecnica corrente è 93 file di test e 1099 test passati, con build positiva e lint mirato B6 senza errori.
 
-Lo SHA applicativo corrente è `b835d3b5e3a7c3c2b1f93289ed89ca4aa8faf4a6`.
+Lo SHA applicativo corrente è `590204e6482d28b8caa778cc63eec3fc88d4cddb`.
 
-Il prossimo punto tecnico è B6.1 — Lifecycle repository Unit. B6 completa modifica e lifecycle delle Unit; successivamente B9 eseguirà il collaudo browser finale. B7 — Import/Export resta rinviata e B8 — Analisi catastale resta futura/backend.
+Il prossimo punto tecnico è B9 — Collaudo browser finale delle Unit. B7 — Import/Export resta rinviata e B8 — Analisi catastale resta futura/backend; entrambe non bloccano il collaudo locale.
 
 # BLOCCO B — Unità
-
-## TASK B6 — Modifica e lifecycle unità
-
-### Contratti Unit già consolidati da preservare in B6
-
-B6 deve mantenere invariati i contratti già verificati:
-
-- B1: relazione canonica `buildingId` e coerenza con il Building;
-- B2: identità catastale canonica, duplicati account-scoped e assenza di fallback alternativi;
-- B3: `PropertyTypeID` strict alla mutation, cataloghi canonici, lettura legacy conservativa, machine ID persistiti e label costruite nel read-model;
-- B4: gli otto ID annidati Unit vengono creati una sola volta e non devono essere rigenerati da hydration, edit, update, draft, normalizzazione o reload; gli ID legacy restano invariati.
-
-**Obiettivo:**
-
-- route edit approvata;
-- idratazione una sola volta;
-- riuso del form;
-- aggiornamento reale;
-- archivio e ripristino;
-- eliminazione protetta da relazioni;
-- azioni lista e dettaglio reali;
-- rimuovere l’alert mock da `PropertyDetailPage.tsx`.
-
-### B6.1 — Lifecycle repository Unit
-
-**Stato:** prossima task.
-
-- archive e restore reali;
-- mutazioni atomiche;
-- eliminazione protetta dalle relazioni;
-- coerenza `buildingId` e `unitsCount`;
-- errori di dominio;
-- account scope;
-- test repository.
-
-### B6.2 — Route e form Modifica Unit
-
-- route edit reale;
-- caricamento del record esistente;
-- idratazione una sola volta;
-- riuso del form Unit;
-- `updateProperty` reale;
-- gestione record assente o non disponibile;
-- preservazione dell'identità e delle relazioni.
-
-### B6.3 — Guard e bozza edit Unit
-
-- integrare la modalità edit entity-scoped del repository bozze;
-- baseline iniziale dal record persistito;
-- dirty state;
-- `Resta`, `Abbandona` e `Salva bozza`;
-- restore della bozza edit;
-- submit riuscito e fallito;
-- cleanup senza duplicare la mutazione definitiva.
-
-### B6.4 — Azioni reali lista e dettaglio Unit
-
-- Modifica;
-- Archivio;
-- Ripristino;
-- Eliminazione protetta;
-- conferme reali;
-- rimuovere alert e handler mock;
-- aggiornamento coerente di lista e dettaglio.
-
-### B6.5 — Gate tecnico consolidato B6
-
-Consolidare repository lifecycle, edit, draft/guard, lista/dettaglio, Building relation, suite completa, build e lint mirato.
 
 ## TASK B7 — Import ed export unità
 
@@ -226,7 +158,7 @@ Riferimento visuale: [colonne della visura catastale](./riferimenti%20catastali%
 
 ## TASK B9 — Collaudo unità
 
-**Scope del ciclo locale:** B9 esegue il collaudo browser finale del perimetro Unit coperto da B3, B4 e B6. B3 e B4 sono già chiuse tecnicamente; B7 — Import/Export e B8 — Analisi catastale/OCR non bloccano il collaudo locale.
+**Scope del ciclo locale:** B9 esegue il collaudo browser finale del perimetro Unit coperto da B3, B4 e B6. B3, B4 e B6 sono già chiuse tecnicamente; B7 — Import/Export e B8 — Analisi catastale/OCR non bloccano il collaudo locale.
 
 Verificare:
 
@@ -576,7 +508,7 @@ La task deve:
 
 **Stato:** da rivalutare dopo G1.
 
-G3 non deve riaprire il lifecycle degli edifici, già completato e collaudato, né duplicare attività già assegnate a B6, B7, C5 o C6.
+G3 non deve riaprire il lifecycle degli edifici né il lifecycle delle Unit già completato in B6, e non deve duplicare attività residue già assegnate a B7, C5 o C6.
 
 Dopo G1 devono restare in G3 soltanto eventuali azioni realmente attive ma senza effetto o non ancora classificate che non abbiano già una task owner.
 
@@ -872,7 +804,7 @@ La baseline automatizzata verificata corrente è mantenuta nella Todo list e non
 **Aree residue:**
 
 - repository e consumer ancora da implementare;
-- duplicati anagrafici e lifecycle ancora da completare, inclusi C3, B6 e C5;
+- duplicati anagrafici e lifecycle ancora da completare, inclusi C3 e C5;
 - D1B — storico append-only e override motivato;
 - D2D — prepagato, ricevuta e confirmation precedenti;
 - funzioni future gialle e realmente disabilitate;
