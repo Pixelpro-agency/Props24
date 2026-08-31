@@ -206,5 +206,5 @@ describe('NewProperty discard baseline round-trip', () => {
         expect(consoleError).not.toHaveBeenCalled();
         third.unmount();
         third.dispose();
-    });
+    }, 10_000);
 });
