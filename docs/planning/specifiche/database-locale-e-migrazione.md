@@ -123,6 +123,73 @@ La create atomica C4 riguarda il record Tenant e l'integrità dei riferimenti pe
 
 La canonicalizzazione degli ID annidati Tenant è completata e consolidata da C2. L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 resta responsabilità di C3.
 
+### Identità fiscale locale di Contact e Tenant
+
+C3 mantiene separate le identità persistenti `ContactRecord` e `TenantRecord`. Il duplicate check è account-scoped all'interno della rispettiva collezione e non introduce un vincolo fiscale incrociato fra `contacts` e `tenants`.
+
+Per `ContactRecord` il modello fiscale corrente resta:
+
+```text
+type
+fiscalCode
+vatNumber
+```
+
+Semantica:
+
+- `type = person`: `fiscalCode` è l'unica chiave fiscale hard-block;
+- `type = company`: `fiscalCode` identifica fiscalmente l'ente e `vatNumber`, quando valorizzata, è una seconda chiave hard-block;
+- `vatNumber` di un Contact persona non costituisce chiave hard-block;
+- valori vuoti non collidono.
+
+Per `TenantRecord` viene distinta l'identità della persona fisica dall'identità dell'ente.
+
+Il modello comprende:
+
+```text
+fiscalCode
+vatNumberPersonal
+companyFiscalCode
+vatNumber
+```
+
+Semantica:
+
+```text
+Tenant person
+fiscalCode → CF della persona
+
+Tenant company
+companyFiscalCode → CF dell'ente
+vatNumber         → P.IVA dell'ente
+
+Tenant company / rappresentante legale
+fiscalCode        → CF del rappresentante
+vatNumberPersonal → eventuale P.IVA personale del rappresentante
+```
+
+`fiscalCode` e `vatNumberPersonal` del rappresentante legale non costituiscono identità fiscale della società.
+
+Il form Tenant espone il nuovo campo:
+
+```text
+TenantCompanyFiscalCode
+```
+
+che viene persistito in:
+
+```text
+TenantRecord.companyFiscalCode
+```
+
+I record Tenant company legacy che non possiedono `companyFiscalCode` vengono normalizzati con stringa vuota. Non viene copiato o reinterpretato automaticamente il precedente `fiscalCode`, perché potrebbe appartenere al rappresentante legale.
+
+Il confronto fiscale usa business rules condivise e deterministiche. Create e update devono eseguire il controllo prima della scrittura definitiva. L'update esclude il record corrente tramite ID.
+
+Anche i record archived partecipano al controllo dei duplicati; account differenti restano isolati e possono contenere gli stessi identificativi.
+
+Email, telefono, nome, indirizzo, SIRET e SIREN non sono chiavi hard-block correnti.
+
 ## 5. Bozze separate
 
 L'archivio bozze è separato dai record definitivi e usa almeno:

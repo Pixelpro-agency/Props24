@@ -202,13 +202,55 @@ Il lifecycle locale della rubrica comprende create, update, archive, restore, de
 
 Un Contact non può essere eliminato quando è ancora referenziato da una locazione come garante oppure da una relazione Contact persistita di un Tenant. Non viene eseguito alcun cascade implicito per liberare la delete.
 
+### Identità fiscale e duplicati
+
+C3 applica CT-01–CT-05 come hard block fiscale account-scoped senza override.
+
+Il duplicate check resta separato fra le due entità persistenti canoniche:
+
+```text
+Contact ↔ Contact
+Tenant  ↔ Tenant
+```
+
+C3 non introduce un vincolo fiscale incrociato `Contact ↔ Tenant`. Un Contact autonomo della rubrica può quindi appartenere alla stessa persona o società che successivamente assume anche il ruolo di Tenant senza dover essere eliminato o convertito.
+
+Per le persone fisiche la chiave hard-block è esclusivamente il codice fiscale valorizzato. La P.IVA personale, l'email, il telefono, il nome e l'indirizzo non costituiscono prova di duplicazione.
+
+Per società ed enti le chiavi hard-block sono il codice fiscale dell'ente e, quando valorizzata, la partita IVA dell'ente. La collisione di uno dei due identificatori è sufficiente per bloccare la mutazione. SIRET e SIREN restano fuori scope corrente.
+
+Gli identificatori fiscali vuoti non costituiscono identità e non collidono. Gli stessi identificatori sono ammessi in account differenti. I record archived continuano a partecipare al controllo perché restano anagrafiche persistite dell'account.
+
+Nel modello Tenant società il codice fiscale dell'ente è distinto dal codice fiscale del rappresentante legale. Il form usa quindi:
+
+```text
+TenantCompanyFiscalCode
+```
+
+per l'ente, persistito come:
+
+```text
+TenantRecord.companyFiscalCode
+```
+
+Il preesistente `TenantFiscalCode` della sezione Rappresentante legale resta riferito alla persona fisica rappresentante e non viene usato per determinare un duplicato della società. `TenantVatNumberPersonal` resta analogamente distinto dalla P.IVA dell'ente.
+
+I Tenant company legacy privi di `companyFiscalCode` vengono preservati con valore vuoto. Non viene inferito il CF dell'ente dal vecchio `fiscalCode`.
+
+C3 viene completata tramite:
+
+- C3.1 — contratto identità fiscale e modello company Tenant;
+- C3.2 — enforcement `ContactRepository`;
+- C3.3 — enforcement Tenant create e UI;
+- C3.4 — gate tecnico consolidato.
+
 ### Confini del ciclo
 
 C1 definisce e integra il modello Contact–Tenant e il lifecycle Contact. C2 consolida le identità persistenti annidate Tenant con il contratto create-once/preserve-thereafter.
 
 Restano task separate:
 
-- C3 — hard block dei duplicati fiscali secondo CT-01–CT-05;
+- C3 — hard block dei duplicati fiscali secondo CT-01–CT-05 tramite C3.1–C3.4;
 - C4 — create Tenant atomica e account-scoped;
 - C5 — edit e lifecycle Tenant;
 - C6 — ulteriori azioni lista.

@@ -45,7 +45,11 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] C2.1 — ID canonici delle relazioni Tenant — **COMPLETATA; Garanti ed Emergency usano il generatore canonico condiviso preservando relation ID e contactId distinti**
 >   - [x] C2.2 — ID canonici di allegati e documenti Tenant — **COMPLETATA; foto, documenti identità, visura società, TenantDocument e file allegati canonicalizzati**
 >   - [x] C2.3 — Gate tecnico consolidato C2 — **COMPLETATA; PASS; round-trip normalization/draft/createTenant/JSON/reload verificato, 98 file / 1155 test PASS, nessun finding**
-> - [ ] C3 — Duplicati anagrafici secondo CT-01–CT-05 — **PROSSIMA TASK**
+> - [ ] C3 — Duplicati anagrafici secondo CT-01–CT-05 — **APERTO; hard block fiscale account-scoped con identità distinte per persona e società**
+>   - [ ] C3.1 — Contratto identità fiscale e modello company Tenant — **PROSSIMA TASK; distinguere CF dell'ente da CF del rappresentante legale e consolidare le regole fiscali condivise**
+>   - [ ] C3.2 — Enforcement ContactRepository — **hard block Contact↔Contact su create/update, account-scoped, con esclusione del record corrente**
+>   - [ ] C3.3 — Enforcement Tenant create e UI — **hard block Tenant↔Tenant su create, errori fiscali sul campo/scheda corretti e nessuna mutazione parziale**
+>   - [ ] C3.4 — Gate tecnico consolidato C3 — **persona/società, CF/P.IVA, empty, archived, account isolation, regressioni, suite, build e lint**
 > - [ ] C4 — Creazione atomica Tenant e relazioni — **DIPENDE DA C1–C3; nessun Tenant parziale e nessun riferimento Contact dangling. I Contact creati esplicitamente nella rubrica sono entità autonome e non vengono considerati orfani se il successivo form Tenant viene abbandonato o fallisce**
 > - [ ] C5 — Modifica e lifecycle Tenant
 > - [ ] C6 — Chiusura delle azioni lista residue; il lifecycle reale appartiene a C5, mentre le altre azioni devono essere implementate, disabilitate secondo convenzione o rimosse
@@ -141,7 +145,11 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] C2.1 — ID canonici delle relazioni Tenant — **COMPLETATA; `TenantGuarantors[].id` e `TenantEmergencyContacts[].id` usano il generatore canonico condiviso**
   - [x] C2.2 — ID canonici di allegati e documenti Tenant — **COMPLETATA; foto, fronte/retro identità, visura società, TenantDocument e relativo file canonicalizzati**
   - [x] C2.3 — Gate tecnico consolidato C2 — **COMPLETATA; PASS; ID canonici e legacy preservati byte-for-byte, nessun read-repair su DB canonico, 98 file / 1155 test PASS**
-- [ ] C3 — Duplicati anagrafici — **PROSSIMA TASK; CT-01–CT-05 validate; hard block fiscale account-scoped**
+- [ ] C3 — Duplicati anagrafici — **APERTO; CT-01–CT-05 validate; hard block fiscale account-scoped senza override**
+  - [ ] C3.1 — Contratto identità fiscale e modello company Tenant — **PROSSIMA TASK; introdurre il CF canonico dell'ente distinto dal CF del rappresentante legale e consolidare pure rules/find/assert**
+  - [ ] C3.2 — Enforcement ContactRepository — **create/update; persona duplicata per CF, società duplicata per CF o P.IVA valorizzata; archived inclusi; record corrente escluso in update**
+  - [ ] C3.3 — Enforcement Tenant create e UI — **persona duplicata per CF, società duplicata per CF ente o P.IVA; hard block prima della mutation e feedback sul campo fiscale corretto**
+  - [ ] C3.4 — Gate tecnico consolidato C3 — **account isolation, legacy, empty IDs, normalizzazione, no email/SIRET, C1/C2 regression e full gate**
 - [ ] C4 — Creazione atomica Tenant — **APERTO; dipende da C1–C3; deve impedire Tenant parziali e riferimenti Contact dangling. Un Contact creato esplicitamente nella rubrica è un'entità autonoma e non viene rollbackato soltanto perché il form Tenant viene successivamente abbandonato**
 - [ ] C5 — Modifica e lifecycle — **APERTO**
 - [ ] C6 — Azioni lista ancora simulate — **DECISIONE PRODOTTO**
