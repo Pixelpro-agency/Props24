@@ -372,6 +372,7 @@ function normalizeTenantRecord(input: unknown, fallbackId: string): TenantRecord
         identityDocumentFile: normalizeStoredLocalFile(source.identityDocumentFile),
         identityDocumentBackFile: normalizeStoredLocalFile(source.identityDocumentBackFile),
         companyName: valueAsString(source.companyName) || (source.type === 'company' ? displayName : ''),
+        companyFiscalCode: valueAsString(source.companyFiscalCode),
         vatNumber: valueAsString(source.vatNumber),
         siret: valueAsString(source.siret),
         capital: valueAsString(source.capital),

@@ -121,6 +121,9 @@ export function createTenant(formDataInput: TenantFormData): TenantRecord {
         identityDocumentBackFile:
             formData.TenantType === 'person' ? formData.TenantIDCardBack : null,
         companyName: stringValue(formData.TenantCompanyName),
+        companyFiscalCode: formData.TenantType === 'company'
+            ? normalizeFiscalCode(formData.TenantCompanyFiscalCode)
+            : '',
         vatNumber: stringValue(formData.TenantVatNumber),
         siret: stringValue(formData.TenantSiret),
         capital: stringValue(formData.TenantCapital),
@@ -234,6 +237,7 @@ export function getTenantById(id: string): TenantDetail | null {
         fiscalCode: tenant.fiscalCode,
         vatNumberPersonal: tenant.vatNumberPersonal,
         companyName: tenant.companyName,
+        companyFiscalCode: tenant.companyFiscalCode,
         vatNumber: tenant.vatNumber,
         siret: tenant.siret,
         capital: tenant.capital,

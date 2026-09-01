@@ -157,6 +157,36 @@ export class TenantLeaseConflictError extends Error {
     }
 }
 
+export type FiscalIdentityField = 'fiscalCode' | 'vatNumber';
+
+export class DuplicateContactFiscalIdentityError extends Error {
+    readonly field: FiscalIdentityField;
+    readonly existingContactId: string;
+
+    constructor(field: FiscalIdentityField, existingContactId: string) {
+        super(field === 'fiscalCode'
+            ? 'Esiste già un contatto con lo stesso codice fiscale.'
+            : 'Esiste già un contatto con la stessa partita IVA.');
+        this.name = 'DuplicateContactFiscalIdentityError';
+        this.field = field;
+        this.existingContactId = existingContactId;
+    }
+}
+
+export class DuplicateTenantFiscalIdentityError extends Error {
+    readonly field: FiscalIdentityField;
+    readonly existingTenantId: string;
+
+    constructor(field: FiscalIdentityField, existingTenantId: string) {
+        super(field === 'fiscalCode'
+            ? 'Esiste già un inquilino con lo stesso codice fiscale.'
+            : 'Esiste già un inquilino con la stessa partita IVA.');
+        this.name = 'DuplicateTenantFiscalIdentityError';
+        this.field = field;
+        this.existingTenantId = existingTenantId;
+    }
+}
+
 export class LeasePropertyNotFoundError extends Error {
     constructor() {
         super('La proprietà selezionata non esiste o è archiviata.');

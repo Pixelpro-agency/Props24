@@ -1,6 +1,6 @@
-import type { BuildingRecord, LeaseRecord, LocalDatabase, PropertyRecord, TenantRecord } from './database.types';
+import type { BuildingRecord, ContactRecord, LeaseRecord, LocalDatabase, PropertyRecord, TenantRecord } from './database.types';
 import type { PropertyFormData } from '../components/property-form/schema';
-import { DuplicateBuildingIdentifierError, DuplicateBuildingLocationError, DuplicatePropertyCadastralKeyError, DuplicatePropertyIdentifierError, DuplicatePropertyLocationError, TenantLeaseConflictError } from './databaseErrors';
+import { DuplicateBuildingIdentifierError, DuplicateBuildingLocationError, DuplicateContactFiscalIdentityError, DuplicatePropertyCadastralKeyError, DuplicatePropertyIdentifierError, DuplicatePropertyLocationError, DuplicateTenantFiscalIdentityError, TenantLeaseConflictError, type FiscalIdentityField } from './databaseErrors';
 import { isValidIsoDate } from './dataSelectors';
 
 const ALLOW_OVERLAPPING_TENANT_LEASES = false;
@@ -137,6 +137,71 @@ export function normalizeFiscalCode(value: string): string {
     return String(value ?? '').normalize('NFKC').replace(/\s+/g, '').toUpperCase();
 }
 
+export function normalizeVatNumber(value: string): string {
+    return String(value ?? '').normalize('NFKC').replace(/\s+/g, '').toUpperCase();
+}
+
+export type { FiscalIdentityField } from './databaseErrors';
+
+export type ContactFiscalIdentityCandidate = Pick<ContactRecord, 'type' | 'fiscalCode' | 'vatNumber'>;
+export type TenantFiscalIdentityCandidate = Pick<TenantRecord, 'type' | 'fiscalCode' | 'companyFiscalCode' | 'vatNumber'>;
+
+export interface ContactFiscalDuplicate {
+    field: FiscalIdentityField;
+    record: ContactRecord;
+}
+
+export interface TenantFiscalDuplicate {
+    field: FiscalIdentityField;
+    record: TenantRecord;
+}
+
+export function findContactFiscalDuplicate(database: LocalDatabase, candidate: ContactFiscalIdentityCandidate, excludeContactId?: string): ContactFiscalDuplicate | null {
+    const fiscalCode = normalizeFiscalCode(candidate.fiscalCode);
+    const vatNumber = candidate.type === 'company' ? normalizeVatNumber(candidate.vatNumber) : '';
+    if (fiscalCode) {
+        const record = database.contacts.find((contact) => contact.id !== excludeContactId
+            && contact.type === candidate.type
+            && normalizeFiscalCode(contact.fiscalCode) === fiscalCode);
+        if (record) return { field: 'fiscalCode', record };
+    }
+    if (vatNumber) {
+        const record = database.contacts.find((contact) => contact.id !== excludeContactId
+            && contact.type === 'company'
+            && normalizeVatNumber(contact.vatNumber) === vatNumber);
+        if (record) return { field: 'vatNumber', record };
+    }
+    return null;
+}
+
+export function assertUniqueContactFiscalIdentity(database: LocalDatabase, candidate: ContactFiscalIdentityCandidate, excludeContactId?: string): void {
+    const duplicate = findContactFiscalDuplicate(database, candidate, excludeContactId);
+    if (duplicate) throw new DuplicateContactFiscalIdentityError(duplicate.field, duplicate.record.id);
+}
+
+export function findTenantFiscalDuplicate(database: LocalDatabase, candidate: TenantFiscalIdentityCandidate, excludeTenantId?: string): TenantFiscalDuplicate | null {
+    const fiscalCode = normalizeFiscalCode(candidate.type === 'person' ? candidate.fiscalCode : candidate.companyFiscalCode);
+    const vatNumber = candidate.type === 'company' ? normalizeVatNumber(candidate.vatNumber) : '';
+    if (fiscalCode) {
+        const record = database.tenants.find((tenant) => tenant.id !== excludeTenantId
+            && tenant.type === candidate.type
+            && normalizeFiscalCode(tenant.type === 'person' ? tenant.fiscalCode : tenant.companyFiscalCode) === fiscalCode);
+        if (record) return { field: 'fiscalCode', record };
+    }
+    if (vatNumber) {
+        const record = database.tenants.find((tenant) => tenant.id !== excludeTenantId
+            && tenant.type === 'company'
+            && normalizeVatNumber(tenant.vatNumber) === vatNumber);
+        if (record) return { field: 'vatNumber', record };
+    }
+    return null;
+}
+
+export function assertUniqueTenantFiscalIdentity(database: LocalDatabase, candidate: TenantFiscalIdentityCandidate, excludeTenantId?: string): void {
+    const duplicate = findTenantFiscalDuplicate(database, candidate, excludeTenantId);
+    if (duplicate) throw new DuplicateTenantFiscalIdentityError(duplicate.field, duplicate.record.id);
+}
+
 export function findPropertyByIdentifier(database: LocalDatabase, identifier: string, excludePropertyId?: string) {
     const normalized = normalizePropertyIdentifier(identifier);
     if (!normalized) return null;
@@ -176,6 +241,7 @@ export function findTenantByFiscalCode(database: LocalDatabase, fiscalCode: stri
     if (!normalized) return null;
     return database.tenants.find((tenant) => (
         tenant.id !== excludeTenantId
+        && tenant.type === 'person'
         && normalizeFiscalCode(tenant.fiscalCode) === normalized
     )) || null;
 }

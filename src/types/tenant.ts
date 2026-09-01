@@ -143,6 +143,7 @@ export interface Tenant {
     identityDocumentBackFile?: StoredLocalFile | null;
     // Società
     companyName?: string;
+    companyFiscalCode?: string;
     vatNumber?: string;
     siret?: string;
     capital?: string;

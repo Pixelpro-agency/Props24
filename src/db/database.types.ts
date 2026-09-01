@@ -94,6 +94,7 @@ export interface TenantRecord {
     identityDocumentFile: StoredLocalFile | null;
     identityDocumentBackFile: StoredLocalFile | null;
     companyName: string;
+    companyFiscalCode: string;
     vatNumber: string;
     siret: string;
     capital: string;

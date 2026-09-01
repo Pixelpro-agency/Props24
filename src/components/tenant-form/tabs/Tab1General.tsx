@@ -1,5 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 import { FormSection } from '../../property-form/ui/FormSection';
 import { TextInput } from '../../property-form/ui/TextInput';
 import { Select } from '../../property-form/ui/Select';
@@ -10,7 +11,7 @@ import { PhotoUpload } from '../ui/PhotoUpload';
 import { SimpleFileUpload } from '../ui/SimpleFileUpload';
 import { COUNTRIES } from '../../../types/tenant';
 
-const sectionVariants: any = {
+const sectionVariants: Variants = {
     hidden: { opacity: 0, height: 0, overflow: 'hidden' },
     visible: { opacity: 1, height: 'auto', overflow: 'visible', transition: { duration: 0.3, ease: 'easeOut' } },
     exit: { opacity: 0, height: 0, overflow: 'hidden', transition: { duration: 0.2, ease: 'easeIn' } },
@@ -104,6 +105,7 @@ export function Tab1General() {
                                 required
                                 helpText="Se compili questa casella, il nome della società apparirà nelle fatture generate da props24."
                             />
+                            <TextInput name="TenantCompanyFiscalCode" label="Codice fiscale ente" orientation="horizontal" />
                             <TextInput name="TenantVatNumber" label="P.IVA" orientation="horizontal" helpText={vatHelpText} />
                             <TextInput name="TenantSiret" label="Registro imprese" orientation="horizontal" />
                             <TextInput name="TenantCapital" label="Capitale" orientation="horizontal" />
