@@ -121,7 +121,7 @@ Un Contact creato esplicitamente dall'utente mediante `ContactRepository.create`
 
 La create atomica C4 riguarda il record Tenant e l'integrità dei riferimenti persistiti: non deve produrre Tenant parziali o `contactId` dangling. Non deve invece eseguire rollback di Contact autonomi precedentemente creati con un'azione esplicita dell'utente.
 
-La canonicalizzazione degli ID annidati Tenant è completata e consolidata da C2. L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 resta responsabilità di C3.
+La canonicalizzazione degli ID annidati Tenant è completata e consolidata da C2. L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 è completato e consolidato da C3 per `ContactRepository.create/update` e per la create Tenant corrente.
 
 ### Identità fiscale locale di Contact e Tenant
 
@@ -184,11 +184,13 @@ TenantRecord.companyFiscalCode
 
 I record Tenant company legacy che non possiedono `companyFiscalCode` vengono normalizzati con stringa vuota. Non viene copiato o reinterpretato automaticamente il precedente `fiscalCode`, perché potrebbe appartenere al rappresentante legale.
 
-Il confronto fiscale usa business rules condivise e deterministiche. Create e update devono eseguire il controllo prima della scrittura definitiva. L'update esclude il record corrente tramite ID.
+Il confronto fiscale usa business rules condivise e deterministiche. `ContactRepository.create` e `ContactRepository.update` eseguono il controllo prima della scrittura definitiva; l'update Contact esclude il record corrente tramite ID. La create Tenant esegue lo stesso controllo prima della generazione e persistenza del nuovo Tenant.
 
-Anche i record archived partecipano al controllo dei duplicati; account differenti restano isolati e possono contenere gli stessi identificativi.
+L'update Tenant reale non è ancora implementato e appartiene a C5. Quando verrà introdotto dovrà riusare le stesse pure business rules C3, escludendo il Tenant corrente tramite ID invece di duplicare la logica fiscale.
 
-Email, telefono, nome, indirizzo, SIRET e SIREN non sono chiavi hard-block correnti.
+Anche i record archived partecipano al controllo dei duplicati; account differenti restano isolati e possono contenere gli stessi identificativi. Contact e Tenant vengono confrontati esclusivamente all'interno della propria collezione: non esiste hard block fiscale `Contact ↔ Tenant`.
+
+Email, telefono, nome, indirizzo, SIRET e SIREN non sono chiavi hard-block correnti. Identificatori fiscali vuoti non collidono e i Tenant company legacy privi di `companyFiscalCode` non ricevono inferenze dal `fiscalCode` del rappresentante legale.
 
 ## 5. Bozze separate
 

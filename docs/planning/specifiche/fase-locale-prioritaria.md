@@ -204,7 +204,7 @@ Un Contact non può essere eliminato quando è ancora referenziato da una locazi
 
 ### Identità fiscale e duplicati
 
-C3 applica CT-01–CT-05 come hard block fiscale account-scoped senza override.
+C3 ha consolidato CT-01–CT-05 come hard block fiscale account-scoped senza override.
 
 Il duplicate check resta separato fra le due entità persistenti canoniche:
 
@@ -213,7 +213,7 @@ Contact ↔ Contact
 Tenant  ↔ Tenant
 ```
 
-C3 non introduce un vincolo fiscale incrociato `Contact ↔ Tenant`. Un Contact autonomo della rubrica può quindi appartenere alla stessa persona o società che successivamente assume anche il ruolo di Tenant senza dover essere eliminato o convertito.
+Non esiste un vincolo fiscale incrociato `Contact ↔ Tenant`. Un Contact autonomo della rubrica può quindi appartenere alla stessa persona o società che successivamente assume anche il ruolo di Tenant senza dover essere eliminato o convertito.
 
 Per le persone fisiche la chiave hard-block è esclusivamente il codice fiscale valorizzato. La P.IVA personale, l'email, il telefono, il nome e l'indirizzo non costituiscono prova di duplicazione.
 
@@ -221,7 +221,7 @@ Per società ed enti le chiavi hard-block sono il codice fiscale dell'ente e, qu
 
 Gli identificatori fiscali vuoti non costituiscono identità e non collidono. Gli stessi identificatori sono ammessi in account differenti. I record archived continuano a partecipare al controllo perché restano anagrafiche persistite dell'account.
 
-Nel modello Tenant società il codice fiscale dell'ente è distinto dal codice fiscale del rappresentante legale. Il form usa quindi:
+Nel modello Tenant società il codice fiscale dell'ente è distinto dal codice fiscale del rappresentante legale. Il form usa:
 
 ```text
 TenantCompanyFiscalCode
@@ -237,25 +237,38 @@ Il preesistente `TenantFiscalCode` della sezione Rappresentante legale resta rif
 
 I Tenant company legacy privi di `companyFiscalCode` vengono preservati con valore vuoto. Non viene inferito il CF dell'ente dal vecchio `fiscalCode`.
 
-C3 viene completata tramite:
+L'enforcement corrente è:
+
+- `ContactRepository.create` e `ContactRepository.update`: persona per CF; società per CF o P.IVA;
+- `createTenant`: persona per CF; società per `companyFiscalCode` o P.IVA;
+- update Contact con esclusione del record corrente;
+- archived inclusi;
+- nessuna mutazione definitiva quando il controllo fallisce;
+- UI Nuovo inquilino con errore sul campo fiscale corretto e ritorno alla scheda `Informazioni generali`;
+- nessun hard block Contact↔Tenant.
+
+L'update Tenant reale non è ancora implementato e appartiene a C5; quando verrà introdotto dovrà riusare le pure business rules C3 con esclusione del Tenant corrente.
+
+C3 è stata completata tramite:
 
 - C3.1 — contratto identità fiscale e modello company Tenant;
 - C3.2 — enforcement `ContactRepository`;
 - C3.3 — enforcement Tenant create e UI;
 - C3.4 — gate tecnico consolidato.
 
+Il gate fiscale consolidato C3 verifica 7 file / 37 test PASS. Le due full-suite globali eseguite durante C3.4 hanno mostrato intermittenze fuori scope nei test NewProperty; il successivo collaudo isolato e combinato dei test coinvolti ha concluso con 44/44 PASS, nessun timeout e nessuna failure riproducibile.
+
 ### Confini del ciclo
 
-C1 definisce e integra il modello Contact–Tenant e il lifecycle Contact. C2 consolida le identità persistenti annidate Tenant con il contratto create-once/preserve-thereafter.
+C1 definisce e integra il modello Contact–Tenant e il lifecycle Contact. C2 consolida le identità persistenti annidate Tenant con il contratto create-once/preserve-thereafter. C3 consolida e applica le regole fiscali CT-01–CT-05 alle mutation Contact e alla create Tenant corrente.
 
 Restano task separate:
 
-- C3 — hard block dei duplicati fiscali secondo CT-01–CT-05 tramite C3.1–C3.4;
 - C4 — create Tenant atomica e account-scoped;
-- C5 — edit e lifecycle Tenant;
+- C5 — edit e lifecycle Tenant, incluso il futuro enforcement fiscale dell'update con esclusione del record corrente;
 - C6 — ulteriori azioni lista.
 
-La presenza di CF e partita IVA nel modello Contact/Tenant non implica che C1 debba già applicare il controllo duplicati: tale enforcement appartiene a C3.
+C1–C3 costituiscono quindi la baseline già completata che C4 deve preservare.
 
 ## 8. Funzioni documentali future
 
@@ -289,10 +302,11 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 16. collaudo browser finale delle Unit — B9 completata con PASS funzionale e nessun finding applicativo riproducibile; restano rinviate a B9R, per limitazioni dello strumento, la verifica browser del caricamento reale degli allegati, degli ID annidati dopo create/reload/edit, del doppio submit create e dell'assenza di scritture persistite nei percorsi read-only. I relativi contratti restano già coperti dai gate automatizzati B4/B6.
 17. Garanti e rubrica — C1.1–C1.4 completate e verificate: `ContactRecord` canonico condiviso da Lease e Tenant, `contactId` distinto dall'ID delle relazioni Tenant, lifecycle Contact con restore e delete protection Lease/Tenant, Garanti Tenant e contatti di emergenza migrati alla rubrica reale, compatibilità legacy e gate tecnico consolidato concluso con 95 file / 1137 test PASS.
 18. ID annidati canonici Tenant — C2.1–C2.3 completate e verificate: 8 categorie di ID persistenti annidati usano il generatore canonico condiviso nei nuovi writer e rispettano create-once/preserve-thereafter; normalization, draft, `createTenant`, JSON persistito e reload preservano byte-for-byte gli ID canonici e legacy già presenti; il reload del database canonico non produce read-repair; gate concluso con 98 file / 1155 test PASS.
+19. duplicati anagrafici — C3.1–C3.4 completate e verificate: identità fiscale person/company distinta, `TenantCompanyFiscalCode` e `companyFiscalCode` consolidati, hard block Contact create/update e Tenant create account-scoped, archived ed exclude-current verificati, nessun vincolo fiscale Contact↔Tenant, mapping UI fiscale e compatibilità legacy verificati; gate fiscale concluso con 7 file / 37 test PASS. Le intermittenze NewProperty osservate nelle full-suite globali C3.4 non sono risultate riproducibili nel collaudo mirato successivo, concluso con 44/44 test PASS.
 
 Il ciclo locale corrente delle Unit è concluso dopo il collaudo B9. B7 — Import/Export resta rinviata, B8 — Analisi catastale/OCR resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non riaprono né bloccano la chiusura del perimetro Unit già verificato.
 
-Il ciclo locale prioritario di Inquilini e Contatti ha completato C1 — Garanti e rubrica e C2 — ID annidati canonici Tenant. La prossima task è C3 — duplicati anagrafici e fiscali secondo CT-01–CT-05; seguono C4–C6 e quindi C10. Il modello Contact–Tenant consolidato da C1 e il contratto create-once/preserve-thereafter consolidato da C2 restano boundary da preservare nelle task successive. I contratti professionali CT-01–CT-05 restano validi e il loro hard block fiscale appartiene a C3. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
+Il ciclo locale prioritario di Inquilini e Contatti ha completato C1 — Garanti e rubrica, C2 — ID annidati canonici Tenant e C3 — Duplicati anagrafici. La prossima task è C4 — creazione atomica Tenant e relazioni; seguono C5–C6 e quindi C10. Il modello Contact–Tenant consolidato da C1, il contratto create-once/preserve-thereafter consolidato da C2 e le regole fiscali account-scoped consolidate da C3 costituiscono boundary da preservare nelle task successive. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
 
 Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
 

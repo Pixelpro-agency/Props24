@@ -14,15 +14,15 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 22
+- Completate integralmente: 23
 - Parzialmente completate: 3
-- Non concluse: 47
+- Non concluse: 46
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: C3 — Duplicati anagrafici secondo CT-01–CT-05
+- Prossimo punto tecnico: C4 — Creazione atomica Tenant e relazioni
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 47 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 46 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
@@ -32,9 +32,9 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >
 > Baseline di partenza del ciclo C: `7bbfdab336813f5f075b85223198d446fd252144`.
 >
-> Baseline applicativa verificata post-C2: `8537adff923bb914c425efb978d80dc7f9eccfb0`.
+> Baseline applicativa verificata post-C3: `096a8fc902db4a5443fef2a51b55949ebe429b4d`.
 >
-> Baseline tecnica corrente post-C2: 98 file di test / 1155 test passati, build positiva e lint mirato C2 senza errori o warning.
+> Baseline tecnica corrente post-C3: 105 file di test / 1192 test totali; gate fiscale C3 7 file / 37 test PASS, regressioni C1/C2 e Tenant positive, build positiva, lint mirato C3 senza errori o warning. Le due full-suite globali C3.4 hanno mostrato intermittenze fuori scope nei test NewProperty; il collaudo isolato successivo ha verificato 44/44 test Property PASS senza timeout o failure riproducibili.
 >
 > - [x] C1 — Garanti e rubrica — **COMPLETATA; contratto Contact–Tenant, lifecycle Contact, Garanti Tenant, contatti di emergenza e gate tecnico consolidato verificati**
 >   - [x] C1.1 — Contratto Contact–Tenant e lifecycle Contact — **COMPLETATA**
@@ -45,12 +45,12 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] C2.1 — ID canonici delle relazioni Tenant — **COMPLETATA; Garanti ed Emergency usano il generatore canonico condiviso preservando relation ID e contactId distinti**
 >   - [x] C2.2 — ID canonici di allegati e documenti Tenant — **COMPLETATA; foto, documenti identità, visura società, TenantDocument e file allegati canonicalizzati**
 >   - [x] C2.3 — Gate tecnico consolidato C2 — **COMPLETATA; PASS; round-trip normalization/draft/createTenant/JSON/reload verificato, 98 file / 1155 test PASS, nessun finding**
-> - [ ] C3 — Duplicati anagrafici secondo CT-01–CT-05 — **APERTO; hard block fiscale account-scoped con identità distinte per persona e società**
->   - [ ] C3.1 — Contratto identità fiscale e modello company Tenant — **PROSSIMA TASK; distinguere CF dell'ente da CF del rappresentante legale e consolidare le regole fiscali condivise**
->   - [ ] C3.2 — Enforcement ContactRepository — **hard block Contact↔Contact su create/update, account-scoped, con esclusione del record corrente**
->   - [ ] C3.3 — Enforcement Tenant create e UI — **hard block Tenant↔Tenant su create, errori fiscali sul campo/scheda corretti e nessuna mutazione parziale**
->   - [ ] C3.4 — Gate tecnico consolidato C3 — **persona/società, CF/P.IVA, empty, archived, account isolation, regressioni, suite, build e lint**
-> - [ ] C4 — Creazione atomica Tenant e relazioni — **DIPENDE DA C1–C3; nessun Tenant parziale e nessun riferimento Contact dangling. I Contact creati esplicitamente nella rubrica sono entità autonome e non vengono considerati orfani se il successivo form Tenant viene abbandonato o fallisce**
+> - [x] C3 — Duplicati anagrafici secondo CT-01–CT-05 — **COMPLETATA; hard block fiscale account-scoped senza override, con identità distinte persona/società e nessun vincolo fiscale Contact↔Tenant**
+>   - [x] C3.1 — Contratto identità fiscale e modello company Tenant — **COMPLETATA; CF ente distinto dal CF del rappresentante legale, `TenantCompanyFiscalCode`/`companyFiscalCode`, pure rules e compatibilità legacy consolidate**
+>   - [x] C3.2 — Enforcement ContactRepository — **COMPLETATA; create/update Contact hard-block, archived inclusi, exclude-current e account isolation verificati**
+>   - [x] C3.3 — Enforcement Tenant create e UI — **COMPLETATA; hard block Tenant create prima della mutation, errori sul campo fiscale corretto, ritorno a Informazioni generali, draft preservata e retry verificato**
+>   - [x] C3.4 — Gate tecnico consolidato C3 — **COMPLETATA; gate fiscale 7 file / 37 test PASS; gap contrattuali, legacy, no cross-domain, C1/C2 regression, build, lint e UTF-8 verificati; intermittenze Property globali non riprodotte nel collaudo isolato 44/44**
+> - [ ] C4 — Creazione atomica Tenant e relazioni — **PROSSIMA TASK; dipendenze C1–C3 soddisfatte; nessun Tenant parziale e nessun riferimento Contact dangling. I Contact creati esplicitamente nella rubrica sono entità autonome e non vengono considerati orfani se il successivo form Tenant viene abbandonato o fallisce**
 > - [ ] C5 — Modifica e lifecycle Tenant
 > - [ ] C6 — Chiusura delle azioni lista residue; il lifecycle reale appartiene a C5, mentre le altre azioni devono essere implementate, disabilitate secondo convenzione o rimosse
 > - [ ] C10 — Collaudo browser finale Inquilini e Contatti
@@ -145,12 +145,12 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] C2.1 — ID canonici delle relazioni Tenant — **COMPLETATA; `TenantGuarantors[].id` e `TenantEmergencyContacts[].id` usano il generatore canonico condiviso**
   - [x] C2.2 — ID canonici di allegati e documenti Tenant — **COMPLETATA; foto, fronte/retro identità, visura società, TenantDocument e relativo file canonicalizzati**
   - [x] C2.3 — Gate tecnico consolidato C2 — **COMPLETATA; PASS; ID canonici e legacy preservati byte-for-byte, nessun read-repair su DB canonico, 98 file / 1155 test PASS**
-- [ ] C3 — Duplicati anagrafici — **APERTO; CT-01–CT-05 validate; hard block fiscale account-scoped senza override**
-  - [ ] C3.1 — Contratto identità fiscale e modello company Tenant — **PROSSIMA TASK; introdurre il CF canonico dell'ente distinto dal CF del rappresentante legale e consolidare pure rules/find/assert**
-  - [ ] C3.2 — Enforcement ContactRepository — **create/update; persona duplicata per CF, società duplicata per CF o P.IVA valorizzata; archived inclusi; record corrente escluso in update**
-  - [ ] C3.3 — Enforcement Tenant create e UI — **persona duplicata per CF, società duplicata per CF ente o P.IVA; hard block prima della mutation e feedback sul campo fiscale corretto**
-  - [ ] C3.4 — Gate tecnico consolidato C3 — **account isolation, legacy, empty IDs, normalizzazione, no email/SIRET, C1/C2 regression e full gate**
-- [ ] C4 — Creazione atomica Tenant — **APERTO; dipende da C1–C3; deve impedire Tenant parziali e riferimenti Contact dangling. Un Contact creato esplicitamente nella rubrica è un'entità autonoma e non viene rollbackato soltanto perché il form Tenant viene successivamente abbandonato**
+- [x] C3 — Duplicati anagrafici — **COMPLETATA; CT-01–CT-05 applicate tramite hard block fiscale account-scoped senza override; identità person/company distinte, Contact↔Contact e Tenant↔Tenant separati**
+  - [x] C3.1 — Contratto identità fiscale e modello company Tenant — **COMPLETATA; `TenantCompanyFiscalCode`/`companyFiscalCode`, normalizzazione fiscale, pure finder/assert, archived/exclude-current e legacy-safe**
+  - [x] C3.2 — Enforcement ContactRepository — **COMPLETATA; create/update Contact bloccano CF person e CF/P.IVA company, senza write su collisione e con account isolation**
+  - [x] C3.3 — Enforcement Tenant create e UI — **COMPLETATA; person per CF, company per CF ente/P.IVA, nessun uso del CF rappresentante, feedback RHF sul campo corretto e nessuna mutazione parziale**
+  - [x] C3.4 — Gate tecnico consolidato C3 — **COMPLETATA; 7 file / 37 test fiscali PASS, legacy/no-cross-domain/regressioni verificati; build/lint/UTF-8 positivi e failure Property globali non riprodotte nel collaudo isolato 44/44**
+- [ ] C4 — Creazione atomica Tenant — **PROSSIMA TASK; dipendenze C1–C3 completate; deve impedire Tenant parziali e riferimenti Contact dangling. Un Contact creato esplicitamente nella rubrica è un'entità autonoma e non viene rollbackato soltanto perché il form Tenant viene successivamente abbandonato**
 - [ ] C5 — Modifica e lifecycle — **APERTO**
 - [ ] C6 — Azioni lista ancora simulate — **DECISIONE PRODOTTO**
 - [ ] C7 — Inviti email — **FUTURO — BACKEND**
