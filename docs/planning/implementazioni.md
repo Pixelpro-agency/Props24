@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 096a8fc902db4a5443fef2a51b55949ebe429b4d
+SHA applicativo esaminato: 5a6d899f6830e5a22f89c23b27268d4eb9fedfc4
 Baseline di partenza del ciclo C: 7bbfdab336813f5f075b85223198d446fd252144
 ```
 
@@ -192,45 +192,49 @@ Affittate = unità non archiviate collegate a una locazione attiva secondo lo st
 
 # BLOCCO C — Inquilini e contatti
 
-C1 — Garanti e rubrica, C2 — ID annidati canonici Tenant e C3 — Duplicati anagrafici sono completate e verificate. Il ciclo locale prosegue nell'ordine C4 → C5 → C6 → C10.
+C1 — Garanti e rubrica, C2 — ID annidati canonici Tenant, C3 — Duplicati anagrafici e C4 — Creazione atomica Tenant sono completate e verificate. Il ciclo locale prosegue nell'ordine C5 → C6 → C10.
 
-C4 può quindi assumere come contratti già consolidati il modello Contact–Tenant di C1, le identità persistenti annidate di C2 e le business rules fiscali account-scoped di C3. C5 resta owner del lifecycle reale Tenant, incluse le mutazioni singole e bulk; C6 non deve duplicare C5 e resta owner soltanto delle ulteriori azioni lista simulate o ancora da classificare.
+C5 può assumere come contratti già consolidati il modello Contact–Tenant di C1, le identità persistenti annidate di C2, le business rules fiscali account-scoped di C3 e l'authority atomica/account-scoped della create Tenant di C4.
+
+In particolare C5 deve preservare:
+
+- `contactId` distinto dall'ID della relazione Tenant;
+- compatibilità dei record legacy inline senza matching euristico;
+- identità fiscali person/company definite da C3;
+- account isolation;
+- exclude-current nell'update fiscale Tenant;
+- relation ID persistenti create-once/preserve-thereafter;
+- riferimenti Contact validi nello stesso account per le nuove mutation;
+- Contact archived ancora referenzialmente validi;
+- nessun rollback dei Contact autonomi;
+- nessuna mutation Tenant parziale.
+
+C5 resta owner del lifecycle reale Tenant, incluse le mutazioni singole e bulk. C6 non deve duplicare C5 e resta owner soltanto delle ulteriori azioni lista simulate o ancora da classificare.
 
 C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano C10 nel perimetro locale. C10 verifica l'invito locale già supportato, non l'invio email backend futuro.
 
 Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale e il guard descritti nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
-## TASK C4 — Creazione atomica
+## TASK C5 — Modifica e lifecycle
 
 **Stato:** prossima task.
 
-**Dipendenze:** C1, C2 e C3 completate e verificate.
+**Dipendenze:** C1–C4 completate e verificate.
 
 **Obiettivo:**
 
-- rendere la create definitiva del Tenant account-scoped e atomica;
-- validare integralmente il Tenant e i riferimenti Contact prima della scrittura;
-- applicare i vincoli duplicati già consolidati da C3;
-- eseguire una sola mutation definitiva del dominio Tenant;
-- nessun Tenant parziale;
-- nessun riferimento `contactId` dangling;
-- nessuna relazione Tenant incoerente;
-- rileggere e normalizzare il record persistito;
-- preservare il submit lock e il recovery della bozza già consolidati.
-
-Un Contact creato esplicitamente tramite `ContactRepository` prima del submit Tenant è una voce autonoma della rubrica e non viene considerato orfano se il successivo Tenant non viene creato. C4 non esegue rollback o cancellazione automatica di Contact autonomi; il vincolo “nessun record orfano” riguarda riferimenti e mutazioni parziali prodotti dalla create Tenant stessa.
-
-## TASK C5 — Modifica e lifecycle
-
-**Obiettivo:**
-
-- pagina o flusso edit;
-- update repository;
+- introdurre pagina o flusso edit Tenant reale;
+- introdurre update repository account-scoped;
+- riusare le business rules fiscali C3 con esclusione del Tenant corrente;
+- applicare all'update gli stessi vincoli referenziali e di integrità delle relazioni consolidati da C4;
+- preservare relation ID, document ID e file ID esistenti secondo C2;
 - archivio e ripristino;
-- eliminazione protetta dalle locazioni;
+- eliminazione protetta dalle locazioni e dallo storico che deve restare persistente;
 - preservare invito e documenti;
-- sostituire azioni bulk con mutazioni reali;
-- aggiornare `DataTable.tsx`, dove Modifica è ancora pending.
+- evitare mutation parziali;
+- sostituire le azioni lifecycle bulk con mutazioni reali;
+- aggiornare `DataTable.tsx`, dove Modifica è ancora pending;
+- non duplicare in C6 le operazioni lifecycle che appartengono a C5.
 
 ## TASK C6 — Azioni lista ancora simulate
 

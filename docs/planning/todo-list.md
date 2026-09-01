@@ -14,15 +14,15 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 23
+- Completate integralmente: 24
 - Parzialmente completate: 3
-- Non concluse: 46
+- Non concluse: 45
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: C4 — Creazione atomica Tenant e relazioni
+- Prossimo punto tecnico: C5 — Modifica e lifecycle Tenant
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 46 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 45 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
@@ -32,9 +32,9 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >
 > Baseline di partenza del ciclo C: `7bbfdab336813f5f075b85223198d446fd252144`.
 >
-> Baseline applicativa verificata post-C3: `096a8fc902db4a5443fef2a51b55949ebe429b4d`.
+> Baseline applicativa verificata post-C4: `5a6d899f6830e5a22f89c23b27268d4eb9fedfc4`.
 >
-> Baseline tecnica corrente post-C3: 105 file di test / 1192 test totali; gate fiscale C3 7 file / 37 test PASS, regressioni C1/C2 e Tenant positive, build positiva, lint mirato C3 senza errori o warning. Le due full-suite globali C3.4 hanno mostrato intermittenze fuori scope nei test NewProperty; il collaudo isolato successivo ha verificato 44/44 test Property PASS senza timeout o failure riproducibili.
+> Baseline tecnica corrente post-C4: 106 file di test / 1206 test PASS; gate C4 14 test PASS, regressioni C1/C2/C3 e submit/draft Tenant positive, build positiva, ESLint mirato 0 errori/0 warning, UTF-8 valido e nessun mojibake. Un timeout C1 osservato sotto carico parallelo non è risultato riproducibile nella run isolata 60/60 e la full suite finale è conclusa 1206/1206 PASS.
 >
 > - [x] C1 — Garanti e rubrica — **COMPLETATA; contratto Contact–Tenant, lifecycle Contact, Garanti Tenant, contatti di emergenza e gate tecnico consolidato verificati**
 >   - [x] C1.1 — Contratto Contact–Tenant e lifecycle Contact — **COMPLETATA**
@@ -50,8 +50,14 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] C3.2 — Enforcement ContactRepository — **COMPLETATA; create/update Contact hard-block, archived inclusi, exclude-current e account isolation verificati**
 >   - [x] C3.3 — Enforcement Tenant create e UI — **COMPLETATA; hard block Tenant create prima della mutation, errori sul campo fiscale corretto, ritorno a Informazioni generali, draft preservata e retry verificato**
 >   - [x] C3.4 — Gate tecnico consolidato C3 — **COMPLETATA; gate fiscale 7 file / 37 test PASS; gap contrattuali, legacy, no cross-domain, C1/C2 regression, build, lint e UTF-8 verificati; intermittenze Property globali non riprodotte nel collaudo isolato 44/44**
-> - [ ] C4 — Creazione atomica Tenant e relazioni — **PROSSIMA TASK; dipendenze C1–C3 soddisfatte; nessun Tenant parziale e nessun riferimento Contact dangling. I Contact creati esplicitamente nella rubrica sono entità autonome e non vengono considerati orfani se il successivo form Tenant viene abbandonato o fallisce**
-> - [ ] C5 — Modifica e lifecycle Tenant
+> - [x] C4 — Creazione atomica Tenant e relazioni — **COMPLETATA; repository create account-scoped, authority unica, validazioni quota/fiscali/referenziali prima della mutation, una sola save, nessun Tenant parziale e nessun nuovo `contactId` dangling**
+>   - [x] Account scope catturato dal repository e bridge legacy `createTenant` preservato
+>   - [x] Relation ID obbligatori e univoci, massimo 5 Emergency ed exactly-one primary quando presenti
+>   - [x] `contactId` linked validato nello stesso account; archived consentiti, inline legacy senza `contactId` preservati e Contact cross-account rifiutati
+>   - [x] Contact autonomi non rollbackati dopo failure Tenant
+>   - [x] FIX C4-F01 — fixture C2 resa referenzialmente valida senza rimuovere `contactId` o alterare gli ID annidati
+>   - [x] Gate tecnico — **14 test C4 PASS; full suite 106 file / 1206 test PASS, build e lint positivi**
+> - [ ] C5 — Modifica e lifecycle Tenant — **PROSSIMA TASK; deve riusare i contratti C1–C4, incluso account scope, duplicate fiscal enforcement con exclude-current, integrità delle relazioni e protezione dello storico**
 > - [ ] C6 — Chiusura delle azioni lista residue; il lifecycle reale appartiene a C5, mentre le altre azioni devono essere implementate, disabilitate secondo convenzione o rimosse
 > - [ ] C10 — Collaudo browser finale Inquilini e Contatti
 >
@@ -150,8 +156,13 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] C3.2 — Enforcement ContactRepository — **COMPLETATA; create/update Contact bloccano CF person e CF/P.IVA company, senza write su collisione e con account isolation**
   - [x] C3.3 — Enforcement Tenant create e UI — **COMPLETATA; person per CF, company per CF ente/P.IVA, nessun uso del CF rappresentante, feedback RHF sul campo corretto e nessuna mutazione parziale**
   - [x] C3.4 — Gate tecnico consolidato C3 — **COMPLETATA; 7 file / 37 test fiscali PASS, legacy/no-cross-domain/regressioni verificati; build/lint/UTF-8 positivi e failure Property globali non riprodotte nel collaudo isolato 44/44**
-- [ ] C4 — Creazione atomica Tenant — **PROSSIMA TASK; dipendenze C1–C3 completate; deve impedire Tenant parziali e riferimenti Contact dangling. Un Contact creato esplicitamente nella rubrica è un'entità autonoma e non viene rollbackato soltanto perché il form Tenant viene successivamente abbandonato**
-- [ ] C5 — Modifica e lifecycle — **APERTO**
+- [x] C4 — Creazione atomica Tenant — **COMPLETATA; create Tenant account-scoped con authority unica, validazioni complete pre-save, una sola mutation definitiva, return dal database salvato e nessun Tenant parziale**
+  - [x] Riferimenti Contact — **`contactId` esistenti nello stesso account obbligatori per le nuove create; Contact archived ancora validi; inline legacy senza `contactId` ammessi; cross-account e dangling bloccati**
+  - [x] Integrità relazioni — **relation ID non vuoti/univoci, massimo 5 Emergency ed exactly-one primary quando la collection è valorizzata**
+  - [x] Atomicità — **1 write sul successo, 0 write sulle validation failure, Contact autonomi preservati senza rollback**
+  - [x] FIX C4-F01 — **fixture C2 allineata aggiungendo i Contact reali mancanti senza rimuovere `contactId` o alterare gli otto nested ID**
+  - [x] Gate tecnico — **14 test C4 PASS; regressioni C1/C2/C3 e submit/draft positive; full suite 106 file / 1206 test PASS; build/lint/UTF-8 positivi**
+- [ ] C5 — Modifica e lifecycle — **PROSSIMA TASK; deve introdurre update/lifecycle Tenant preservando i contratti C1–C4**
 - [ ] C6 — Azioni lista ancora simulate — **DECISIONE PRODOTTO**
 - [ ] C7 — Inviti email — **FUTURO — BACKEND**
 - [ ] C8 — Allegati delle bozze — **FUTURO — STORAGE**
@@ -299,7 +310,10 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] Enforcement duplicati fiscali Contact create/update, archived, exclude-current e account isolation — C3.2
   - [x] Enforcement duplicati fiscali Tenant create, mapping errori UI, info1, draft preserve e retry — C3.3
   - [x] Gate fiscale consolidato C3, legacy, empty IDs, no cross-domain Contact↔Tenant e regressioni — C3.4
+  - [x] Creazione atomica Tenant account-scoped, authority unica, integrità delle relazioni e `contactId`, single-save e no partial writes — C4
   - [ ] Copertura progressiva delle task future — **APERTO**
+
+Baseline tecnica corrente post-C4: 106 file di test / 1206 test PASS; test C4 14/14 PASS, regressioni C1/C2/C3 e submit/draft Tenant positive, build e lint mirato C4 positivi. Un timeout C1 osservato sotto carico parallelo non è risultato riproducibile nella verifica isolata 60/60 e la full suite finale è conclusa 1206/1206 PASS. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
 
 Baseline tecnica corrente post-C3: 105 file di test / 1192 test totali; gate fiscale C3 7 file / 37 test PASS, regressioni C1/C2 e Tenant positive, build e lint mirato C3 positivi. Le intermittenze NewProperty osservate nelle full-suite globali C3.4 non sono risultate riproducibili nel successivo collaudo isolato e combinato, concluso con 44/44 test PASS e nessun timeout. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
 

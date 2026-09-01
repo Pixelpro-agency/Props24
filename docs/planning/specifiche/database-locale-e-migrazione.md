@@ -119,9 +119,19 @@ Il lifecycle Contact comprende `restore`. La delete protection considera sia `Le
 
 Un Contact creato esplicitamente dall'utente mediante `ContactRepository.create` è una mutazione autonoma della rubrica e può esistere senza Tenant o Lease collegati. Non viene cancellato automaticamente quando un form Tenant viene abbandonato o la successiva create Tenant fallisce.
 
-La create atomica C4 riguarda il record Tenant e l'integrità dei riferimenti persistiti: non deve produrre Tenant parziali o `contactId` dangling. Non deve invece eseguire rollback di Contact autonomi precedentemente creati con un'azione esplicita dell'utente.
+La create atomica C4 è completata. Il dominio Tenant usa una authority di create basata su gateway con repository account-scoped; il bridge legacy `createTenant` cattura l'account attivo all'inizio della mutation e delega alla stessa authority.
 
-La canonicalizzazione degli ID annidati Tenant è completata e consolidata da C2. L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 è completato e consolidato da C3 per `ContactRepository.create/update` e per la create Tenant corrente.
+Prima della persistenza definitiva vengono completati normalizzazione, quota allegati, duplicate fiscal enforcement C3, integrità delle relazioni e validazione dei riferimenti Contact. Soltanto dopo queste verifiche viene generato l'ID Tenant e viene costruito il database candidato. La mutation esegue una sola save e restituisce il Tenant rileggendolo dal database restituito dalla persistenza.
+
+Per una nuova create Tenant, ogni `contactId` valorizzato in Garanti o Contatti di emergenza deve esistere nella collection `contacts` dello stesso account. Un Contact archived resta valido; un Contact presente soltanto in un altro account non soddisfa il riferimento. Le relazioni inline/legacy senza `contactId` restano consentite e non viene eseguito matching euristico.
+
+Le relation ID di Garanti ed Emergency devono essere valorizzate e univoche nella relativa collection. I contatti di emergenza sono al massimo cinque e, quando presenti, devono avere esattamente un elemento primary.
+
+Il vincolo C4 sulle nuove create non trasforma la normalizzazione del database in read-repair: draft e Tenant legacy già persistiti con riferimenti missing vengono preservati e non causano creazione, cancellazione o ricostruzione automatica di Contact.
+
+Un Contact creato esplicitamente dall'utente mediante `ContactRepository.create` resta una mutazione autonoma della rubrica e non viene rollbackato se la successiva create Tenant fallisce.
+
+La canonicalizzazione degli ID annidati Tenant è completata e consolidata da C2. L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 è completato e consolidato da C3. L'atomicità e l'integrità referenziale della create Tenant sono consolidate da C4.
 
 ### Identità fiscale locale di Contact e Tenant
 
@@ -184,7 +194,7 @@ TenantRecord.companyFiscalCode
 
 I record Tenant company legacy che non possiedono `companyFiscalCode` vengono normalizzati con stringa vuota. Non viene copiato o reinterpretato automaticamente il precedente `fiscalCode`, perché potrebbe appartenere al rappresentante legale.
 
-Il confronto fiscale usa business rules condivise e deterministiche. `ContactRepository.create` e `ContactRepository.update` eseguono il controllo prima della scrittura definitiva; l'update Contact esclude il record corrente tramite ID. La create Tenant esegue lo stesso controllo prima della generazione e persistenza del nuovo Tenant.
+Il confronto fiscale usa business rules condivise e deterministiche. `ContactRepository.create` e `ContactRepository.update` eseguono il controllo prima della scrittura definitiva; l'update Contact esclude il record corrente tramite ID. La create Tenant account-scoped consolidata da C4 esegue lo stesso controllo prima della validazione referenziale finale, della generazione dell'ID Tenant e dell'unica persistenza definitiva.
 
 L'update Tenant reale non è ancora implementato e appartiene a C5. Quando verrà introdotto dovrà riusare le stesse pure business rules C3, escludendo il Tenant corrente tramite ID invece di duplicare la logica fiscale.
 
@@ -216,7 +226,7 @@ Il repository condiviso è implementato con contratto asincrono e adapter locale
 
 Nuovo inquilino, Nuova unità, Nuova locazione e Nuovo edificio usano il repository condiviso, il caricamento iniziale con ripresa o cancellazione, save manuale, delete esplicita e cleanup post-submit. Non esiste alcuna bozza globale.
 
-La bozza create del Tenant può conservare relazioni Contact con `contactId` già esistenti o creati esplicitamente dall'utente. Riprendere, normalizzare o visualizzare la bozza non crea nuovi Contact e non cancella Contact già esistenti.
+La bozza create del Tenant può conservare relazioni Contact con `contactId` già esistenti, archiviati o temporaneamente non risolvibili, oltre a record inline legacy senza `contactId`. Riprendere, normalizzare o visualizzare la bozza non crea nuovi Contact e non cancella Contact già esistenti. Al submit definitivo C4 rivalida invece ogni `contactId` valorizzato contro la collection `contacts` dello stesso account: un riferimento realmente mancante blocca la nuova create senza modificare la bozza o la rubrica.
 
 Il caricamento asincrono o il refresh della rubrica non modifica da solo il payload della bozza, non rende dirty il form e non produce autosave. Riferimenti Contact archiviati, mancanti o temporaneamente non verificabili vengono preservati finché l'utente non esegue un'azione esplicita.
 
