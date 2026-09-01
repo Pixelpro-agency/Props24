@@ -315,8 +315,6 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
 
 Baseline tecnica corrente post-C4: 106 file di test / 1206 test PASS; test C4 14/14 PASS, regressioni C1/C2/C3 e submit/draft Tenant positive, build e lint mirato C4 positivi. Un timeout C1 osservato sotto carico parallelo non è risultato riproducibile nella verifica isolata 60/60 e la full suite finale è conclusa 1206/1206 PASS. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
 
-Baseline tecnica corrente post-C3: 105 file di test / 1192 test totali; gate fiscale C3 7 file / 37 test PASS, regressioni C1/C2 e Tenant positive, build e lint mirato C3 positivi. Le intermittenze NewProperty osservate nelle full-suite globali C3.4 non sono risultate riproducibili nel successivo collaudo isolato e combinato, concluso con 44/44 test PASS e nessun timeout. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
-
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
 - [ ] J4 — ID persistiti residui — **APERTO**
