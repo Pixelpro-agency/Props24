@@ -1,12 +1,12 @@
 import type { TenantDetail, TenantLease } from '../types/tenantDetail';
 import type { Tenant } from '../types/tenant';
 import type { TenantInvitation } from '../types/tenant';
-import { generateId, getJsonDb, saveJsonDb } from './jsonDb';
-import type { LeaseRecord, PropertyRecord, TenantRecord } from './database.types';
+import { createJsonDbAccountScope, generateId, getActiveDatabaseAccountId, getJsonDb, saveJsonDb } from './jsonDb';
+import type { LeaseRecord, LocalDatabase, PropertyRecord, TenantRecord } from './database.types';
 import { calculateTenantBalance, classifyLease, classifyTenantStatus, currentLeasesForTenant, tenantDisplayName } from './dataSelectors';
 import { calculateTenantAttachmentBytes, MAX_TENANT_TOTAL_ATTACHMENT_BYTES, normalizeTenantFormData, type TenantFormData } from '../components/tenant-form/schema';
 import { assertUniqueTenantFiscalIdentity, normalizeFiscalCode } from './businessRules';
-import { TenantDeleteBlockedByLeaseError, TenantInviteMissingEmailError, TenantStorageQuotaError } from './databaseErrors';
+import { TenantContactReferenceNotFoundError, TenantDeleteBlockedByLeaseError, TenantInviteMissingEmailError, TenantRelationIntegrityError, TenantStorageQuotaError, type TenantRelationType } from './databaseErrors';
 
 export { findTenantByFiscalCode } from './businessRules';
 
@@ -90,9 +90,53 @@ function stringValue(value: string | undefined | null): string {
     return String(value ?? '');
 }
 
-export function createTenant(formDataInput: TenantFormData): TenantRecord {
+export type TenantDatabaseGateway = {
+    getDatabase(): LocalDatabase;
+    saveDatabase(database: LocalDatabase): LocalDatabase;
+};
+
+function validateRelationIds(relations: ReadonlyArray<{ id: string }>, relationType: TenantRelationType): void {
+    const ids = new Set<string>();
+    for (const relation of relations) {
+        if (!relation.id.trim()) {
+            throw new TenantRelationIntegrityError(relationType, 'Ogni relazione dell’inquilino deve avere un identificativo persistente.');
+        }
+        if (ids.has(relation.id)) {
+            throw new TenantRelationIntegrityError(relationType, 'Gli identificativi delle relazioni dell’inquilino devono essere univoci.');
+        }
+        ids.add(relation.id);
+    }
+}
+
+function validateTenantRelations(formData: TenantFormData): void {
+    validateRelationIds(formData.TenantGuarantors, 'guarantor');
+    validateRelationIds(formData.TenantEmergencyContacts, 'emergency');
+    if (formData.TenantEmergencyContacts.length > 5) {
+        throw new TenantRelationIntegrityError('emergency', 'Sono consentiti al massimo cinque contatti di emergenza.');
+    }
+    const primaryCount = formData.TenantEmergencyContacts.filter((contact) => contact.isPrimary === true).length;
+    if (formData.TenantEmergencyContacts.length > 0 && primaryCount !== 1) {
+        throw new TenantRelationIntegrityError('emergency', 'Deve essere indicato esattamente un contatto di emergenza principale.');
+    }
+}
+
+function validateTenantContactReferences(database: LocalDatabase, formData: TenantFormData): void {
+    const contactIds = new Set(database.contacts.map((contact) => contact.id));
+    for (const guarantor of formData.TenantGuarantors) {
+        if (guarantor.contactId && !contactIds.has(guarantor.contactId)) {
+            throw new TenantContactReferenceNotFoundError(guarantor.contactId, 'guarantor');
+        }
+    }
+    for (const emergency of formData.TenantEmergencyContacts) {
+        if (emergency.contactId && !contactIds.has(emergency.contactId)) {
+            throw new TenantContactReferenceNotFoundError(emergency.contactId, 'emergency');
+        }
+    }
+}
+
+function createTenantInGateway(gateway: TenantDatabaseGateway, formDataInput: TenantFormData): TenantRecord {
     const formData = normalizeTenantFormData(formDataInput);
-    const db = getJsonDb();
+    const db = gateway.getDatabase();
     if (calculateTenantAttachmentBytes(formData) > MAX_TENANT_TOTAL_ATTACHMENT_BYTES) throw new TenantStorageQuotaError();
     assertUniqueTenantFiscalIdentity(db, {
         type: formData.TenantType,
@@ -100,6 +144,8 @@ export function createTenant(formDataInput: TenantFormData): TenantRecord {
         companyFiscalCode: formData.TenantCompanyFiscalCode,
         vatNumber: formData.TenantVatNumber,
     });
+    validateTenantRelations(formData);
+    validateTenantContactReferences(db, formData);
     const timestamp = new Date().toISOString();
     const record: TenantRecord = {
         id: generateId('tenant'),
@@ -178,8 +224,29 @@ export function createTenant(formDataInput: TenantFormData): TenantRecord {
         },
     };
 
-    db.tenants.push(record);
-    return saveJsonDb(db).tenants.find((tenant) => tenant.id === record.id) as TenantRecord;
+    const saved = gateway.saveDatabase({ ...db, tenants: [...db.tenants, record] });
+    const persisted = saved.tenants.find((tenant) => tenant.id === record.id);
+    if (!persisted) throw new Error('Creazione inquilino non verificabile nel database locale.');
+    return persisted;
+}
+
+export function createTenantRepositoryOperations(gateway: TenantDatabaseGateway) {
+    return {
+        create(formDataInput: TenantFormData): TenantRecord {
+            return createTenantInGateway(gateway, formDataInput);
+        },
+    };
+}
+
+export function createTenantRepository(options: { accountId: string }) {
+    const scope = createJsonDbAccountScope(options.accountId);
+    return createTenantRepositoryOperations(scope);
+}
+
+export function createTenant(formDataInput: TenantFormData): TenantRecord {
+    const accountId = getActiveDatabaseAccountId();
+    if (!accountId) throw new Error('Database locale non disponibile: nessun account autenticato.');
+    return createTenantRepository({ accountId }).create(formDataInput);
 }
 
 export function sendTenantInvite(tenantId: string): TenantRecord {

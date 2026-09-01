@@ -1042,6 +1042,10 @@ function readDraftKey(key: string): LegacyDraftRead {
     }
 }
 
+export function getActiveDatabaseAccountId(): string | null {
+    return activeDatabaseAccountId;
+}
+
 function legacyDraftDefinition(formType: DraftFormType): DraftDefinition<unknown> {
     return {
         formType,

@@ -157,6 +157,32 @@ export class TenantLeaseConflictError extends Error {
     }
 }
 
+export type TenantRelationType = 'guarantor' | 'emergency';
+
+export class TenantContactReferenceNotFoundError extends Error {
+    readonly contactId: string;
+    readonly relationType: TenantRelationType;
+
+    constructor(contactId: string, relationType: TenantRelationType) {
+        super(relationType === 'guarantor'
+            ? 'Il contatto collegato al garante non esiste più nella rubrica.'
+            : 'Il contatto di emergenza collegato non esiste più nella rubrica.');
+        this.name = 'TenantContactReferenceNotFoundError';
+        this.contactId = contactId;
+        this.relationType = relationType;
+    }
+}
+
+export class TenantRelationIntegrityError extends Error {
+    readonly relationType: TenantRelationType;
+
+    constructor(relationType: TenantRelationType, message: string) {
+        super(message);
+        this.name = 'TenantRelationIntegrityError';
+        this.relationType = relationType;
+    }
+}
+
 export type FiscalIdentityField = 'fiscalCode' | 'vatNumber';
 
 export class DuplicateContactFiscalIdentityError extends Error {

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultTenantValues, normalizeTenantFormData, type TenantFormData } from '../../src/components/tenant-form/schema';
 import { tenantDraftDefinition } from '../../src/components/tenant-form/tenantDraftDefinition';
-import type { LocalDatabase, TenantRecord } from '../../src/db/database.types';
+import type { ContactRecord, LocalDatabase, TenantRecord } from '../../src/db/database.types';
 import { installJsonDbWindow, MemoryStorage, uninstallJsonDbWindow } from './jsonDbStorageHarness';
 
 const KEY = 'props24.localDb.user-001';
@@ -78,9 +78,18 @@ const idsOfPersonRecord = (value: TenantRecord) => [
     value.documents[0]?.file?.id,
 ];
 
+const linkedContact = (id: string, firstName: string, lastName: string, phone: string): ContactRecord => ({
+    id, type: 'person', companyName: '', firstName, lastName, birthDate: '', birthPlace: '', fiscalCode: '',
+    vatNumber: '', email: '', phone, address: '', city: '', zip: '', country: 'IT', notes: '', archived: false,
+    createdAt: NOW, updatedAt: NOW,
+});
+
 const emptyDb = (): LocalDatabase => ({
     meta: { schemaVersion: 4, seedVersion: 1, createdAt: NOW, updatedAt: NOW, source: 'seed' },
-    properties: [], buildings: [], tenants: [], leases: [], payments: [], contacts: [], documents: [],
+    properties: [], buildings: [], tenants: [], leases: [], payments: [], contacts: [
+        linkedContact('contact-guarantor', 'Grace', 'Hopper', '111'),
+        linkedContact('contact-emergency', 'Alan', 'Turing', '222'),
+    ], documents: [],
     reservations: [], catalogs: [], inventory: [], maintenance: [], tasks: [], notes: [], messages: [],
     candidates: [], settings: {}, userProfile: {}, drafts: [],
 });
