@@ -12,9 +12,9 @@ import type { EmergencyContact, ContactType } from '../../../types/tenant';
 import type { ContactRecord } from '../../../db/database.types';
 import { useContactRepository } from '../../../contacts/ContactRepositoryContext';
 import { useContactList } from '../../../contacts/useContactList';
+import { generateId } from '../../../utils/id';
 
 const MAX_CONTACTS = 5;
-const generateId = () => `ec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 const AVATAR_COLORS = ['#06b6d4', '#8b5cf6', '#f59e0b', '#ef4444', '#22c55e'];
 
@@ -259,7 +259,7 @@ export function Tab4Emergency() {
                 setFormErrors({ submit: 'Il contatto selezionato non ha un telefono e non può essere collegato.' });
                 return;
             }
-            addEmergencyRelation(toFormEmergencyContact(generateId(), contactSnapshot(selectedContact, formData)));
+            addEmergencyRelation(toFormEmergencyContact(generateId('tenant-emergency'), contactSnapshot(selectedContact, formData)));
             setIsModalOpen(false);
             return;
         }
@@ -286,7 +286,7 @@ export function Tab4Emergency() {
                 country: formData.country || 'IT',
                 notes: '',
             });
-            addEmergencyRelation(toFormEmergencyContact(generateId(), contactSnapshot(created, formData)));
+            addEmergencyRelation(toFormEmergencyContact(generateId('tenant-emergency'), contactSnapshot(created, formData)));
             setIsModalOpen(false);
         } catch (creationError) {
             setFormErrors({

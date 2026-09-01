@@ -12,9 +12,7 @@ import type { Guarantor, ContactType } from '../../../types/tenant';
 import type { ContactRecord } from '../../../db/database.types';
 import { useContactRepository } from '../../../contacts/ContactRepositoryContext';
 import { useContactList } from '../../../contacts/useContactList';
-
-// Genera ID univoco
-const generateId = () => `g-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+import { generateId } from '../../../utils/id';
 
 // Ottieni iniziali dal garante
 function getInitials(g: Omit<Guarantor, 'id'>): string {
@@ -221,7 +219,7 @@ export function Tab3Guarantors() {
                 setFormErrors({ submit: 'Il contatto selezionato è archiviato e non può essere collegato.' });
                 return;
             }
-            append(toFormGuarantor(generateId(), contactSnapshot(selectedContact, formData.comments)));
+            append(toFormGuarantor(generateId('tenant-guarantor'), contactSnapshot(selectedContact, formData.comments)));
             setIsModalOpen(false);
             return;
         }
@@ -249,7 +247,7 @@ export function Tab3Guarantors() {
                 country: formData.country || 'IT',
                 notes: '',
             });
-            append(toFormGuarantor(generateId(), contactSnapshot(created, formData.comments)));
+            append(toFormGuarantor(generateId('tenant-guarantor'), contactSnapshot(created, formData.comments)));
             setIsModalOpen(false);
         } catch (creationError) {
             setFormErrors({
