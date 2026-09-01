@@ -5,7 +5,7 @@ import { generateId, getJsonDb, saveJsonDb } from './jsonDb';
 import type { LeaseRecord, PropertyRecord, TenantRecord } from './database.types';
 import { calculateTenantBalance, classifyLease, classifyTenantStatus, currentLeasesForTenant, tenantDisplayName } from './dataSelectors';
 import { calculateTenantAttachmentBytes, MAX_TENANT_TOTAL_ATTACHMENT_BYTES, normalizeTenantFormData, type TenantFormData } from '../components/tenant-form/schema';
-import { normalizeFiscalCode } from './businessRules';
+import { assertUniqueTenantFiscalIdentity, normalizeFiscalCode } from './businessRules';
 import { TenantDeleteBlockedByLeaseError, TenantInviteMissingEmailError, TenantStorageQuotaError } from './databaseErrors';
 
 export { findTenantByFiscalCode } from './businessRules';
@@ -92,9 +92,15 @@ function stringValue(value: string | undefined | null): string {
 
 export function createTenant(formDataInput: TenantFormData): TenantRecord {
     const formData = normalizeTenantFormData(formDataInput);
-    const timestamp = new Date().toISOString();
     const db = getJsonDb();
     if (calculateTenantAttachmentBytes(formData) > MAX_TENANT_TOTAL_ATTACHMENT_BYTES) throw new TenantStorageQuotaError();
+    assertUniqueTenantFiscalIdentity(db, {
+        type: formData.TenantType,
+        fiscalCode: formData.TenantFiscalCode,
+        companyFiscalCode: formData.TenantCompanyFiscalCode,
+        vatNumber: formData.TenantVatNumber,
+    });
+    const timestamp = new Date().toISOString();
     const record: TenantRecord = {
         id: generateId('tenant'),
         createdAt: timestamp,

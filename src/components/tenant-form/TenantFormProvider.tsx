@@ -30,6 +30,7 @@ import {
     tenantSchema,
     type TenantFormData,
 } from './schema';
+import { DuplicateTenantFiscalIdentityError } from '../../db/databaseErrors';
 
 const CLEANUP_ERROR =
     'Non è stato possibile eliminare la bozza locale. Riprova la pulizia.';
@@ -185,6 +186,20 @@ export function TenantFormProvider({
             createdTenantIdRef.current = created.id;
         } catch (error) {
             submitLockRef.current = false;
+            if (error instanceof DuplicateTenantFiscalIdentityError) {
+                const field = error.field === 'vatNumber'
+                    ? 'TenantVatNumber'
+                    : data.TenantType === 'company'
+                        ? 'TenantCompanyFiscalCode'
+                        : 'TenantFiscalCode';
+                methods.setError(field, {
+                    type: 'manual',
+                    message: error.message,
+                });
+                setActiveTab('info1');
+                onSubmitError?.(error.message);
+                return;
+            }
             onSubmitError?.(
                 error instanceof Error
                     ? error.message
