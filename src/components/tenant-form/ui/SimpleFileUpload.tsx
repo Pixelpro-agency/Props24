@@ -12,6 +12,7 @@ import {
     MAX_TENANT_TOTAL_ATTACHMENT_BYTES,
     type TenantFormData,
 } from '../schema';
+import { generateId } from '../../../utils/id';
 
 interface SimpleFileUploadProps {
     name: string;
@@ -43,14 +44,6 @@ const SUPPORTED_FILE_TYPES = [
     'image/webp',
 ];
 
-function storedFileId(name: string, file: File): string {
-    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-        return `${name}-${crypto.randomUUID()}`;
-    }
-
-    return `${name}-${Date.now()}-${file.lastModified}-${file.size}`;
-}
-
 export function SimpleFileUpload({
     name,
     label,
@@ -69,7 +62,7 @@ export function SimpleFileUpload({
     const { control, getValues, setValue } = useFormContext<TenantFormData>();
     const value = useWatch({
         control,
-        name: name as any,
+        name: name as keyof TenantFormData,
     }) as DisplayedStoredFile | null;
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -124,7 +117,7 @@ export function SimpleFileUpload({
             }
 
             const storedFile = {
-                id: storedFileId(name, file),
+                id: '',
                 name: file.name,
                 type: file.type,
                 size: file.size,
@@ -148,8 +141,11 @@ export function SimpleFileUpload({
             }
 
             setValue(
-                name as any,
-                storedFile as any,
+                name as keyof TenantFormData,
+                {
+                    ...storedFile,
+                    id: generateId('tenant-file'),
+                } as never,
                 {
                     shouldDirty: true,
                     shouldValidate: true,
@@ -169,8 +165,8 @@ export function SimpleFileUpload({
 
     const handleRemove = () => {
         setValue(
-            name as any,
-            null,
+            name as keyof TenantFormData,
+            null as never,
             {
                 shouldDirty: true,
                 shouldValidate: true,

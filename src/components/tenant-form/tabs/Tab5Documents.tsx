@@ -13,11 +13,11 @@ import {
     MAX_TENANT_TOTAL_ATTACHMENT_BYTES,
     type TenantFormData,
 } from '../schema';
+import { generateId } from '../../../utils/id';
 
 type DocumentMode = 'new' | 'existing';
 type TenantDocumentForm = TenantFormData['TenantDocuments'][number];
 
-const generateId = () => `doc-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 
 function formatFileSize(bytes: number): string {
@@ -124,7 +124,10 @@ export function Tab5Documents() {
         setSelectedFile(file);
     };
 
-    const commitDocument = (nextDocument: TenantDocumentForm) => {
+    const commitDocument = (
+        nextDocument: TenantDocumentForm,
+        options: { createParentId?: boolean; createFileId?: boolean } = {},
+    ) => {
         const nextDocuments = editingIndex !== -1
             ? getValues().TenantDocuments.map((document) => document.id === editingDocumentId ? nextDocument : document)
             : [nextDocument, ...getValues().TenantDocuments];
@@ -133,8 +136,15 @@ export function Tab5Documents() {
             showDocumentError("Limite allegati superato.\nLa dimensione totale dei file dell'inquilino non può superare 3 MB.");
             return;
         }
-        if (editingIndex !== -1) update(editingIndex, nextDocument);
-        else prepend(nextDocument);
+        const committedDocument = {
+            ...nextDocument,
+            id: options.createParentId ? generateId('tenant-document') : nextDocument.id,
+            file: nextDocument.file && options.createFileId
+                ? { ...nextDocument.file, id: generateId('tenant-file') }
+                : nextDocument.file,
+        };
+        if (editingIndex !== -1) update(editingIndex, committedDocument);
+        else prepend(committedDocument);
         closeDocumentModal();
     };
 
@@ -149,7 +159,7 @@ export function Tab5Documents() {
         }
 
         const buildDocument = (file: NonNullable<TenantDocumentForm['file']>) => ({
-            id: editingDocumentId || generateId(),
+            id: editingDocumentId || '',
             fileName: file.name,
             existingDocumentId: undefined,
             categoryId: selectedCategory,
@@ -171,13 +181,16 @@ export function Tab5Documents() {
         reader.onload = (event) => {
             if (!selectedFile) return;
             commitDocument(buildDocument({
-                id: `tenant-doc-${selectedFile.lastModified}-${selectedFile.size}`,
+                id: '',
                 name: selectedFile.name,
                 type: selectedFile.type,
                 size: selectedFile.size,
                 lastModified: selectedFile.lastModified,
                 dataUrl: event.target?.result as string,
-            }));
+            }), {
+                createParentId: !editingDocumentId,
+                createFileId: true,
+            });
         };
         if (selectedFile) reader.readAsDataURL(selectedFile);
     };
@@ -197,7 +210,7 @@ export function Tab5Documents() {
             return;
         }
         commitDocument({
-            id: editingDocumentId || generateId(),
+            id: editingDocumentId || '',
             existingDocumentId: existing.id,
             fileName: existing.file.name,
             categoryId: selectedCategory || editingDocument?.categoryId || 1,
@@ -208,7 +221,7 @@ export function Tab5Documents() {
             isShared,
             fileUrl: '',
             file: existing.file,
-        });
+        }, { createParentId: !editingDocumentId });
     };
 
     const handleSaveDocument = () => {

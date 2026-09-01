@@ -10,6 +10,7 @@ import {
     MAX_TENANT_TOTAL_ATTACHMENT_BYTES,
     type TenantFormData,
 } from '../schema';
+import { generateId } from '../../../utils/id';
 
 interface PhotoUploadProps {
     name: string;
@@ -29,7 +30,7 @@ export function PhotoUpload({
     accept = '.jpg,.jpeg,.png,.webp',
 }: PhotoUploadProps) {
     const { control, getValues, setValue } = useFormContext<TenantFormData>();
-    const value = useWatch({ control, name: name as any }) as { name?: string; type?: string; size?: number; dataUrl?: string } | null;
+    const value = useWatch({ control, name: name as keyof TenantFormData }) as { name?: string; type?: string; size?: number; dataUrl?: string } | null;
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const maxBytes = Math.min(maxSizeMB * 1024 * 1024, MAX_TENANT_PHOTO_BYTES);
@@ -55,7 +56,7 @@ export function PhotoUpload({
         reader.onload = (event) => {
             const result = event.target?.result as string;
             const storedFile = {
-                id: `${name}-${file.lastModified}-${file.size}`,
+                id: '',
                 name: file.name,
                 type: file.type,
                 size: file.size,
@@ -68,14 +69,17 @@ export function PhotoUpload({
                 if (inputRef.current) inputRef.current.value = '';
                 return;
             }
-            setValue(name as keyof TenantFormData, storedFile as any, { shouldDirty: true, shouldValidate: true });
+            setValue(name as keyof TenantFormData, {
+                ...storedFile,
+                id: generateId('tenant-photo'),
+            } as never, { shouldDirty: true, shouldValidate: true });
         };
         reader.readAsDataURL(file);
     };
 
     const handleRemove = () => {
         setError(null);
-        setValue(name as any, null, { shouldDirty: true, shouldValidate: true });
+        setValue(name as keyof TenantFormData, null as never, { shouldDirty: true, shouldValidate: true });
         if (inputRef.current) {
             inputRef.current.value = '';
         }
