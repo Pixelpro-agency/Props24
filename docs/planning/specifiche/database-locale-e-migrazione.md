@@ -69,6 +69,16 @@ TenantDocuments[].id
 TenantDocuments[].file.id
 ```
 
+Le nuove relazioni Garante ed Emergency ricevono rispettivamente ID con prefisso `tenant-guarantor` e `tenant-emergency`; l'ID della relazione resta distinto dal `contactId` del `ContactRecord`.
+
+Le nuove foto usano `tenant-photo`; i nuovi file Tenant usano `tenant-file`; i nuovi parent `TenantDocument` usano `tenant-document`. Nome file, dimensione, `lastModified`, timestamp e fingerprint analoghi non costituiscono identità persistente.
+
+L'ID nasce esclusivamente quando un nuovo oggetto o file viene realmente acquisito e accettato dal form. Validazioni fallite, letture file fallite, superamento quota, render, rerender, refresh, normalizzazione e restore della bozza non consumano nuovi ID.
+
+La modifica dei metadata conserva l'ID dell'entità e del file. Una reale sostituzione di file conserva l'ID del parent e genera soltanto un nuovo file ID. Quando un `TenantDocument` collega un documento globale già esistente, il parent Tenant riceve una propria identità mentre `existingDocumentId` e l'ID del file globale vengono preservati.
+
+Normalizzazione, draft, `createTenant`, serializzazione JSON e reload preservano byte-for-byte gli ID già presenti, inclusi quelli legacy. Un database canonico con tutti gli ID presenti non richiede una scrittura di read-repair al semplice reload.
+
 ## 4. Repository
 
 La UI non conosce chiavi di storage, formato fisico locale, dettagli Supabase o query SQL future. I repository offrono operazioni di dominio come `list`, `get`, `create`, `update`, `archive`, `restore`, eliminazione protetta e `subscribe` quando necessario. Le mutazioni multirecord sono una singola operazione atomica.
@@ -111,7 +121,7 @@ Un Contact creato esplicitamente dall'utente mediante `ContactRepository.create`
 
 La create atomica C4 riguarda il record Tenant e l'integrità dei riferimenti persistiti: non deve produrre Tenant parziali o `contactId` dangling. Non deve invece eseguire rollback di Contact autonomi precedentemente creati con un'azione esplicita dell'utente.
 
-L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 resta responsabilità di C3. La canonicalizzazione degli ID annidati Tenant resta responsabilità di C2.
+La canonicalizzazione degli ID annidati Tenant è completata e consolidata da C2. L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 resta responsabilità di C3.
 
 ## 5. Bozze separate
 

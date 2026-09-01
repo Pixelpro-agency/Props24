@@ -22,7 +22,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Di cui ancora senza risposta: 6
 - Prossimo punto tecnico: C3 — Duplicati anagrafici secondo CT-01–CT-05
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 48 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 47 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
