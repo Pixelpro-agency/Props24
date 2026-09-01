@@ -2,6 +2,7 @@ import { generateId, getJsonDb, saveJsonDb } from './jsonDb';
 import type { ContactRecord, LocalDatabase } from './database.types';
 import { LeaseContactInUseError, LeaseContactNotFoundError } from './databaseErrors';
 import type { ContactDeleteCheck } from './contactRepository.port';
+import { assertUniqueContactFiscalIdentity } from './businessRules';
 
 export type ContactInput = Partial<Omit<ContactRecord, 'id' | 'createdAt' | 'updatedAt' | 'archived'>>;
 
@@ -48,10 +49,12 @@ export function createContactRepositoryOperations(gateway: ContactDatabaseGatewa
         },
         create(input: ContactInput): ContactRecord {
             const db = gateway.getDatabase();
+            const normalizedInput = normalizeContactInput(input);
+            assertUniqueContactFiscalIdentity(db, normalizedInput);
             const now = timestamp();
             const record: ContactRecord = {
                 id: generateId('contact'),
-                ...normalizeContactInput(input),
+                ...normalizedInput,
                 archived: false,
                 createdAt: now,
                 updatedAt: now,
@@ -62,9 +65,11 @@ export function createContactRepositoryOperations(gateway: ContactDatabaseGatewa
             const db = gateway.getDatabase();
             const index = db.contacts.findIndex((contact) => contact.id === id);
             if (index === -1) throw new LeaseContactNotFoundError();
+            const normalizedInput = normalizeContactInput({ ...db.contacts[index], ...input });
+            assertUniqueContactFiscalIdentity(db, normalizedInput, id);
             const updated: ContactRecord = {
                 ...db.contacts[index],
-                ...normalizeContactInput({ ...db.contacts[index], ...input }),
+                ...normalizedInput,
                 updatedAt: timestamp(),
             };
             const contacts = [...db.contacts];
