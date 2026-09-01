@@ -204,11 +204,10 @@ Un Contact non può essere eliminato quando è ancora referenziato da una locazi
 
 ### Confini del ciclo
 
-C1 definisce e integra il modello Contact–Tenant e il lifecycle Contact.
+C1 definisce e integra il modello Contact–Tenant e il lifecycle Contact. C2 consolida le identità persistenti annidate Tenant con il contratto create-once/preserve-thereafter.
 
 Restano task separate:
 
-- C2 — identità persistenti annidate Tenant;
 - C3 — hard block dei duplicati fiscali secondo CT-01–CT-05;
 - C4 — create Tenant atomica e account-scoped;
 - C5 — edit e lifecycle Tenant;
@@ -247,10 +246,11 @@ Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato 
 15. modifica e lifecycle delle Unit — B6 completata e verificata tecnicamente, inclusi lifecycle repository, edit reale, bozza e guard edit, azioni lista/dettaglio e gate consolidato.
 16. collaudo browser finale delle Unit — B9 completata con PASS funzionale e nessun finding applicativo riproducibile; restano rinviate a B9R, per limitazioni dello strumento, la verifica browser del caricamento reale degli allegati, degli ID annidati dopo create/reload/edit, del doppio submit create e dell'assenza di scritture persistite nei percorsi read-only. I relativi contratti restano già coperti dai gate automatizzati B4/B6.
 17. Garanti e rubrica — C1.1–C1.4 completate e verificate: `ContactRecord` canonico condiviso da Lease e Tenant, `contactId` distinto dall'ID delle relazioni Tenant, lifecycle Contact con restore e delete protection Lease/Tenant, Garanti Tenant e contatti di emergenza migrati alla rubrica reale, compatibilità legacy e gate tecnico consolidato concluso con 95 file / 1137 test PASS.
+18. ID annidati canonici Tenant — C2.1–C2.3 completate e verificate: 8 categorie di ID persistenti annidati usano il generatore canonico condiviso nei nuovi writer e rispettano create-once/preserve-thereafter; normalization, draft, `createTenant`, JSON persistito e reload preservano byte-for-byte gli ID canonici e legacy già presenti; il reload del database canonico non produce read-repair; gate concluso con 98 file / 1155 test PASS.
 
 Il ciclo locale corrente delle Unit è concluso dopo il collaudo B9. B7 — Import/Export resta rinviata, B8 — Analisi catastale/OCR resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non riaprono né bloccano la chiusura del perimetro Unit già verificato.
 
-Il ciclo locale prioritario di Inquilini e Contatti ha completato C1 — Garanti e rubrica. C2 — ID annidati canonici Tenant viene completata tramite C2.1 — relazioni Tenant, C2.2 — allegati e documenti Tenant e C2.3 — gate tecnico consolidato; C2.1 è la prossima task. Seguono C3–C6 e quindi C10. Il modello Contact–Tenant consolidato da C1 resta il boundary da preservare nelle task successive. I contratti professionali CT-01–CT-05 restano validi e il loro hard block fiscale appartiene a C3. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
+Il ciclo locale prioritario di Inquilini e Contatti ha completato C1 — Garanti e rubrica e C2 — ID annidati canonici Tenant. La prossima task è C3 — duplicati anagrafici e fiscali secondo CT-01–CT-05; seguono C4–C6 e quindi C10. Il modello Contact–Tenant consolidato da C1 e il contratto create-once/preserve-thereafter consolidato da C2 restano boundary da preservare nelle task successive. I contratti professionali CT-01–CT-05 restano validi e il loro hard block fiscale appartiene a C3. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
 
 Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
 

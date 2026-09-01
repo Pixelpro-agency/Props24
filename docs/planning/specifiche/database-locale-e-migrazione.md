@@ -52,6 +52,23 @@ L'ID nasce esclusivamente quando viene creato realmente un nuovo oggetto o file.
 
 La modifica di un'entità annidata conserva il suo ID. La sostituzione reale di un file crea invece un nuovo oggetto file e quindi un nuovo file ID, senza modificare l'ID dell'entità parent. Gli ID legacy esistenti vengono preservati senza migrazione automatica del formato.
 
+### ID annidati dei Tenant
+
+Gli ID annidati persistenti dei Tenant seguono lo stesso contratto create-once/preserve-thereafter.
+
+Sono coperti:
+
+```text
+TenantGuarantors[].id
+TenantEmergencyContacts[].id
+TenantPhoto.id
+TenantIDCard.id
+TenantIDCardBack.id
+TenantCompanyRegistryFile.id
+TenantDocuments[].id
+TenantDocuments[].file.id
+```
+
 ## 4. Repository
 
 La UI non conosce chiavi di storage, formato fisico locale, dettagli Supabase o query SQL future. I repository offrono operazioni di dominio come `list`, `get`, `create`, `update`, `archive`, `restore`, eliminazione protetta e `subscribe` quando necessario. Le mutazioni multirecord sono una singola operazione atomica.

@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: 7b6c3f92c1d01e48b5d8904858cfcf79ee40a73e
+SHA applicativo esaminato: 8537adff923bb914c425efb978d80dc7f9eccfb0
 Baseline di partenza del ciclo C: 7bbfdab336813f5f075b85223198d446fd252144
 ```
 
@@ -192,46 +192,17 @@ Affittate = unità non archiviate collegate a una locazione attiva secondo lo st
 
 # BLOCCO C — Inquilini e contatti
 
-C1 — Garanti e rubrica è completata e verificata. Il ciclo locale prosegue nell'ordine C2 → C3 → C4 → C5 → C6 → C10. C2 e C3 completano le fondamenta ancora residue prima di C4; C4 mantiene la dipendenza dal contratto già consolidato in C1 oltre che dal completamento di C2 e C3. C5 è owner del lifecycle reale Tenant, incluse le mutazioni singole e bulk; C6 non deve duplicare C5 e resta owner soltanto delle ulteriori azioni lista simulate o ancora da classificare.
+C1 — Garanti e rubrica e C2 — ID annidati canonici Tenant sono completate e verificate. Il ciclo locale prosegue nell'ordine C3 → C4 → C5 → C6 → C10. C3 completa l'ultima fondazione ancora residua prima di C4; C4 mantiene la dipendenza dai contratti già consolidati in C1 e C2 oltre che dal completamento di C3. C5 è owner del lifecycle reale Tenant, incluse le mutazioni singole e bulk; C6 non deve duplicare C5 e resta owner soltanto delle ulteriori azioni lista simulate o ancora da classificare.
 
 C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano C10 nel perimetro locale. C10 verifica l'invito locale già supportato, non l'invio email backend futuro.
 
 Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale e il guard descritti nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
-## TASK C2 — ID annidati
-
-C2 viene completata tramite C2.1 → C2.2 → C2.3.
-
-### C2.1 — ID canonici delle relazioni Tenant
-
-Migrare gli ID persistenti delle relazioni `TenantGuarantors` e `TenantEmergencyContacts` al generatore canonico condiviso. Un nuovo legame genera l'ID una sola volta; edit, collegamento Contact, rerender, draft e restore preservano l'ID esistente. `contactId` resta distinto dall'ID della relazione e il modello Contact–Tenant consolidato da C1 non viene modificato.
-
-### C2.2 — ID canonici di allegati e documenti Tenant
-
-Migrare al generatore canonico `TenantPhoto`, `TenantIDCard`, `TenantIDCardBack`, `TenantCompanyRegistryFile`, `TenantDocuments[].id` e `TenantDocuments[].file.id`. La modifica dei metadata conserva gli ID; una reale sostituzione di file conserva l'ID del parent e genera soltanto un nuovo file ID. Un file già esistente collegato conserva la propria identità. Eliminare generatori persistenti basati su timestamp, `Math.random()`, nome file, `lastModified`, dimensione o fallback equivalenti.
-
-### C2.3 — Gate tecnico consolidato C2
-
-Verificare create-once/preserve-thereafter per tutte le otto categorie di ID annidati Tenant, round-trip attraverso form, draft, normalizzazione, create Tenant, JSON persistito e reload, preservazione byte-for-byte degli ID legacy già esistenti, assenza di generatori deboli nei writer Tenant, regressioni C1, suite completa, build, lint mirato e UTF-8.
-
-**Obiettivo:**
-
-- applicare il generatore persistente canonico a tutte le identità annidate Tenant;
-- coprire almeno garanti, contatti di emergenza, documenti Tenant, file dei documenti, foto e altri file persistenti del Tenant;
-- eliminare generatori persistenti basati su `Date.now()`, `Math.random()`, nome file, `lastModified`, dimensione o fingerprint analoghi;
-- preservare gli ID esistenti durante draft, normalizzazione, submit e reload;
-- una modifica dell'entità annidata conserva l'ID;
-- una reale sostituzione di file genera soltanto il nuovo file ID necessario;
-- preservare gli ID legacy esistenti senza migrazione cosmetica del formato;
-- evitare rigenerazioni durante render o normalizzazione.
-
-C2 non modifica il modello Contact–Tenant definito da C1 e non implementa duplicati fiscali C3.
-
 ## TASK C3 — Duplicati anagrafici
 
 **Dipendenza:** CT-01–CT-05 sono validate e riallineate.
 
-L'enforcement dei duplicati fiscali appartiene esclusivamente a C3. C1 deve trasportare e preservare correttamente CF/P.IVA nel modello Contact/Tenant, ma non deve introdurre anticipatamente gli hard block repository.
+L'enforcement dei duplicati fiscali appartiene esclusivamente a C3. Il modello Contact–Tenant consolidato da C1 e le identità persistenti consolidate da C2 devono essere preservati; C3 introduce esclusivamente gli hard block fiscali account-scoped previsti da CT-01–CT-05.
 
 **Obiettivo:**
 
@@ -244,7 +215,7 @@ L'enforcement dei duplicati fiscali appartiene esclusivamente a C3. C1 deve tras
 
 ## TASK C4 — Creazione atomica
 
-**Dipendenze:** C1–C3.
+**Dipendenze:** C1 e C2 completate; C3 da completare.
 
 **Obiettivo:**
 
