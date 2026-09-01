@@ -295,9 +295,13 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] Collaudo browser finale delle Unit — B9; PASS funzionale senza finding applicativi, con limitazioni strumentali su file chooser e ispezione storage interna
   - [x] Contratto Contact–Tenant, lifecycle Contact, Garanti Tenant, contatti di emergenza e gate tecnico consolidato — C1.1–C1.4
   - [x] ID annidati canonici Tenant, writer reali e round-trip completo normalization/draft/createTenant/JSON/reload — C2.1–C2.3
+  - [x] Contratto identità fiscale e modello company Tenant — C3.1
+  - [x] Enforcement duplicati fiscali Contact create/update, archived, exclude-current e account isolation — C3.2
+  - [x] Enforcement duplicati fiscali Tenant create, mapping errori UI, info1, draft preserve e retry — C3.3
+  - [x] Gate fiscale consolidato C3, legacy, empty IDs, no cross-domain Contact↔Tenant e regressioni — C3.4
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline tecnica corrente post-C2: 98 file, 1155 test passati; build positiva e lint mirato C2 senza errori o warning. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
+Baseline tecnica corrente post-C3: 105 file di test / 1192 test totali; gate fiscale C3 7 file / 37 test PASS, regressioni C1/C2 e Tenant positive, build e lint mirato C3 positivi. Le intermittenze NewProperty osservate nelle full-suite globali C3.4 non sono risultate riproducibili nel successivo collaudo isolato e combinato, concluso con 44/44 test PASS e nessun timeout. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**

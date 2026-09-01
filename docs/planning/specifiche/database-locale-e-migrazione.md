@@ -115,7 +115,7 @@ I record legacy inline vengono preservati. La normalizzazione non cerca automati
 
 I metadati della relazione non vengono spostati sul Contact globale. `isPrimary` dei contatti di emergenza resta quindi una proprietà Tenant-specific.
 
-Il lifecycle Contact deve essere completato con `restore`. La delete protection considera sia `Lease.guarantorIds` sia i `contactId` persistiti nelle relazioni Contact dei Tenant. Un riferimento attivo impedisce la delete senza cascade impliciti.
+Il lifecycle Contact comprende `restore`. La delete protection considera sia `Lease.guarantorIds` sia i `contactId` persistiti nelle relazioni Contact dei Tenant. Un riferimento attivo impedisce la delete senza cascade impliciti.
 
 Un Contact creato esplicitamente dall'utente mediante `ContactRepository.create` è una mutazione autonoma della rubrica e può esistere senza Tenant o Lease collegati. Non viene cancellato automaticamente quando un form Tenant viene abbandonato o la successiva create Tenant fallisce.
 
