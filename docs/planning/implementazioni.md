@@ -381,7 +381,6 @@ C5.6 non sostituisce C10. C10 resta il collaudo browser finale dell'intero Blocc
 
 Elementi:
 
-- bulk delete/archive in `useTenantActions.ts`;
 - export;
 - download;
 - notifica email;
