@@ -133,11 +133,43 @@ export class TenantStorageQuotaError extends Error {
     }
 }
 
-export class TenantDeleteBlockedByLeaseError extends Error {
-    tenantId: string;
+export class TenantNotFoundError extends Error {
+    readonly tenantId: string;
 
     constructor(tenantId: string) {
-        super("Impossibile eliminare i dati!\nL'inquilino è associato ad una locazione.\nArchivia l'inquilino per conservarne lo storico.");
+        super(`Inquilino non trovato: ${tenantId}.`);
+        this.name = 'TenantNotFoundError';
+        this.tenantId = tenantId;
+    }
+}
+
+export interface TenantDeleteBlocker {
+    tenantId: string;
+    leaseIds: string[];
+    paymentIds: string[];
+}
+
+export class TenantDeleteBlockedError extends Error {
+    readonly blockers: TenantDeleteBlocker[];
+    readonly blockedTenantIds: string[];
+
+    constructor(blockers: TenantDeleteBlocker[]) {
+        super("Uno o più inquilini non possono essere eliminati perché conservano locazioni o pagamenti. Archiviali per preservarne lo storico.");
+        this.name = 'TenantDeleteBlockedError';
+        this.blockers = blockers.map((blocker) => ({
+            tenantId: blocker.tenantId,
+            leaseIds: [...blocker.leaseIds],
+            paymentIds: [...blocker.paymentIds],
+        }));
+        this.blockedTenantIds = this.blockers.map((blocker) => blocker.tenantId);
+    }
+}
+
+export class TenantDeleteBlockedByLeaseError extends TenantDeleteBlockedError {
+    readonly tenantId: string;
+
+    constructor(tenantId: string, leaseIds: string[] = [], paymentIds: string[] = []) {
+        super([{ tenantId, leaseIds, paymentIds }]);
         this.name = 'TenantDeleteBlockedByLeaseError';
         this.tenantId = tenantId;
     }

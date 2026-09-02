@@ -6,7 +6,7 @@ import type { LeaseRecord, LocalDatabase, PropertyRecord, TenantRecord } from '.
 import { calculateTenantBalance, classifyLease, classifyTenantStatus, currentLeasesForTenant, tenantDisplayName } from './dataSelectors';
 import { calculateTenantAttachmentBytes, MAX_TENANT_TOTAL_ATTACHMENT_BYTES, normalizeTenantFormData, type TenantFormData } from '../components/tenant-form/schema';
 import { assertUniqueTenantFiscalIdentity, normalizeFiscalCode } from './businessRules';
-import { TenantContactReferenceNotFoundError, TenantDeleteBlockedByLeaseError, TenantInviteMissingEmailError, TenantRelationIntegrityError, TenantStorageQuotaError, type TenantRelationType } from './databaseErrors';
+import { TenantContactReferenceNotFoundError, TenantDeleteBlockedByLeaseError, TenantDeleteBlockedError, TenantInviteMissingEmailError, TenantNotFoundError, TenantRelationIntegrityError, TenantStorageQuotaError, type TenantDeleteBlocker, type TenantRelationType } from './databaseErrors';
 
 export { findTenantByFiscalCode } from './businessRules';
 
@@ -95,6 +95,14 @@ export type TenantDatabaseGateway = {
     saveDatabase(database: LocalDatabase): LocalDatabase;
 };
 
+export type TenantLifecycleOperation = 'archive' | 'restore' | 'delete';
+
+export interface TenantLifecycleBulkResult {
+    operation: TenantLifecycleOperation;
+    ids: string[];
+    count: number;
+}
+
 function validateRelationIds(relations: ReadonlyArray<{ id: string }>, relationType: TenantRelationType): void {
     const ids = new Set<string>();
     for (const relation of relations) {
@@ -132,6 +140,107 @@ function validateTenantContactReferences(database: LocalDatabase, formData: Tena
             throw new TenantContactReferenceNotFoundError(emergency.contactId, 'emergency');
         }
     }
+}
+
+function validateUpdatedTenantContactReferences(database: LocalDatabase, current: TenantRecord, formData: TenantFormData): void {
+    const validate = (
+        relations: TenantFormData['TenantGuarantors'] | TenantFormData['TenantEmergencyContacts'],
+        previous: TenantRecord['guarantors'] | TenantRecord['emergencyContacts'],
+        relationType: TenantRelationType,
+    ) => {
+        const previousById = new Map(previous.map((relation) => [relation.id, relation.contactId]));
+        for (const relation of relations) {
+            if (!relation.contactId) continue;
+            if (previousById.get(relation.id) === relation.contactId) continue;
+            if (!database.contacts.some((contact) => contact.id === relation.contactId)) {
+                throw new TenantContactReferenceNotFoundError(relation.contactId, relationType);
+            }
+        }
+    };
+    validate(formData.TenantGuarantors, current.guarantors, 'guarantor');
+    validate(formData.TenantEmergencyContacts, current.emergencyContacts, 'emergency');
+}
+
+function requireTenant(database: LocalDatabase, id: string): TenantRecord {
+    const tenant = database.tenants.find((item) => item.id === id);
+    if (!tenant) throw new TenantNotFoundError(id);
+    return tenant;
+}
+
+const uniqueIds = (ids: string[]) => [...new Set(ids)];
+
+const bulkResult = (operation: TenantLifecycleOperation, ids: string[]): TenantLifecycleBulkResult => ({
+    operation, ids, count: ids.length,
+});
+
+function tenantDeleteBlockers(database: LocalDatabase, ids: string[]): TenantDeleteBlocker[] {
+    return ids.flatMap((tenantId) => {
+        const leaseIds = database.leases.filter((lease) => lease.tenantIds.includes(tenantId)).map((lease) => lease.id);
+        const paymentIds = database.payments.filter((payment) => payment.tenantId === tenantId).map((payment) => payment.id);
+        return leaseIds.length || paymentIds.length ? [{ tenantId, leaseIds, paymentIds }] : [];
+    });
+}
+
+function updateTenantCandidate(current: TenantRecord, formData: TenantFormData, updatedAt: string): TenantRecord {
+    return {
+        ...current,
+        updatedAt,
+        type: formData.TenantType,
+        photo: formData.TenantPhoto,
+        avatarColor: formData.TenantAvatarHexColor || '#3b82f6',
+        title: formData.TenantTitle === 'Miss' || formData.TenantTitle === 'Mrs' || formData.TenantTitle === 'Mr' ? formData.TenantTitle : '',
+        firstName: formData.TenantFirstName.trim(),
+        middleName: stringValue(formData.TenantMiddleName).trim(),
+        lastName: formData.TenantLastName.trim(),
+        birthDate: stringValue(formData.TenantBirthDate),
+        birthPlace: stringValue(formData.TenantBirthPlace),
+        nationality: stringValue(formData.TenantNationality),
+        fiscalCode: normalizeFiscalCode(formData.TenantFiscalCode),
+        vatNumberPersonal: stringValue(formData.TenantVatNumberPersonal),
+        profession: stringValue(formData.TenantProfession),
+        monthlyIncome: formData.TenantRevenus,
+        idType: formData.TenantIDType === 'ID' || formData.TenantIDType === 'passport' || formData.TenantIDType === 'drivinglicense' || formData.TenantIDType === 'residencepermit' ? formData.TenantIDType : '',
+        idNumber: stringValue(formData.TenantIDNumber),
+        idExpiry: stringValue(formData.TenantIDExpiry),
+        identityDocumentFile: formData.TenantType === 'person' ? formData.TenantIDCard : null,
+        identityDocumentBackFile: formData.TenantType === 'person' ? formData.TenantIDCardBack : null,
+        companyName: stringValue(formData.TenantCompanyName),
+        companyFiscalCode: formData.TenantType === 'company' ? normalizeFiscalCode(formData.TenantCompanyFiscalCode) : '',
+        vatNumber: stringValue(formData.TenantVatNumber),
+        siret: stringValue(formData.TenantSiret),
+        capital: stringValue(formData.TenantCapital),
+        companyDescription: stringValue(formData.TenantCompanyDescription),
+        companyRegistryFile: formData.TenantType === 'company' ? formData.TenantCompanyRegistryFile : null,
+        email: stringValue(formData.TenantEmail),
+        emailSecondary: stringValue(formData.TenantEmailSecond),
+        mobilePhone: stringValue(formData.TenantMobilePhoneNat),
+        phone: stringValue(formData.TenantPhoneNat),
+        address1: stringValue(formData.TenantAddress1),
+        address2: stringValue(formData.TenantAddress2),
+        city: stringValue(formData.TenantCity),
+        zip: stringValue(formData.TenantZip),
+        state: stringValue(formData.TenantState),
+        country: stringValue(formData.TenantCountry),
+        proEmployer: stringValue(formData.TenantProEmployer),
+        proAddress: stringValue(formData.TenantProAddress),
+        proCity: stringValue(formData.TenantProCity),
+        proZip: stringValue(formData.TenantProZip),
+        proState: stringValue(formData.TenantProState),
+        proCountry: stringValue(formData.TenantProCountry),
+        proPhone: stringValue(formData.TenantProPhoneNat),
+        bankName: stringValue(formData.TenantBankName),
+        bankAddress: stringValue(formData.TenantBankAddress),
+        bankCity: stringValue(formData.TenantBankCity),
+        bankZip: stringValue(formData.TenantBankZip),
+        bankCountry: stringValue(formData.TenantBankCountry),
+        bankIBAN: stringValue(formData.TenantBankIBAN).toUpperCase(),
+        bankSwiftBic: stringValue(formData.TenantBankSwiftBic).toUpperCase(),
+        leaveAddress: stringValue(formData.TenantLeaveAddress),
+        notes: stringValue(formData.TenantNotes),
+        guarantors: formData.TenantGuarantors,
+        emergencyContacts: formData.TenantEmergencyContacts,
+        documents: formData.TenantDocuments,
+    };
 }
 
 function createTenantInGateway(gateway: TenantDatabaseGateway, formDataInput: TenantFormData): TenantRecord {
@@ -231,9 +340,89 @@ function createTenantInGateway(gateway: TenantDatabaseGateway, formDataInput: Te
 }
 
 export function createTenantRepositoryOperations(gateway: TenantDatabaseGateway) {
+    function setArchivedMany(ids: string[], archived: boolean): TenantLifecycleBulkResult {
+        const selectedIds = uniqueIds(ids);
+        const operation = archived ? 'archive' : 'restore';
+        if (selectedIds.length === 0) return bulkResult(operation, selectedIds);
+        const database = gateway.getDatabase();
+        selectedIds.forEach((id) => requireTenant(database, id));
+        const selected = new Set(selectedIds);
+        const updatedAt = new Date().toISOString();
+        gateway.saveDatabase({
+            ...database,
+            tenants: database.tenants.map((tenant) => selected.has(tenant.id) ? { ...tenant, archived, updatedAt } : tenant),
+        });
+        return bulkResult(operation, selectedIds);
+    }
+
+    function setArchived(id: string, archived: boolean): TenantRecord {
+        const database = gateway.getDatabase();
+        const current = requireTenant(database, id);
+        const candidate = { ...current, archived, updatedAt: new Date().toISOString() };
+        const saved = gateway.saveDatabase({
+            ...database,
+            tenants: database.tenants.map((tenant) => tenant.id === id ? candidate : tenant),
+        });
+        return requireTenant(saved, id);
+    }
+
     return {
         create(formDataInput: TenantFormData): TenantRecord {
             return createTenantInGateway(gateway, formDataInput);
+        },
+        update(id: string, formDataInput: TenantFormData): TenantRecord {
+            const database = gateway.getDatabase();
+            const current = requireTenant(database, id);
+            const formData = normalizeTenantFormData(formDataInput);
+            if (calculateTenantAttachmentBytes(formData) > MAX_TENANT_TOTAL_ATTACHMENT_BYTES) throw new TenantStorageQuotaError();
+            assertUniqueTenantFiscalIdentity(database, {
+                type: formData.TenantType,
+                fiscalCode: formData.TenantFiscalCode,
+                companyFiscalCode: formData.TenantCompanyFiscalCode,
+                vatNumber: formData.TenantVatNumber,
+            }, id);
+            validateTenantRelations(formData);
+            validateUpdatedTenantContactReferences(database, current, formData);
+            const candidate = updateTenantCandidate(current, formData, new Date().toISOString());
+            const saved = gateway.saveDatabase({
+                ...database,
+                tenants: database.tenants.map((tenant) => tenant.id === id ? candidate : tenant),
+            });
+            return requireTenant(saved, id);
+        },
+        archive(id: string): TenantRecord {
+            return setArchived(id, true);
+        },
+        restore(id: string): TenantRecord {
+            return setArchived(id, false);
+        },
+        delete(id: string): boolean {
+            const database = gateway.getDatabase();
+            requireTenant(database, id);
+            const blockers = tenantDeleteBlockers(database, [id]);
+            if (blockers.length) {
+                const blocker = blockers[0];
+                throw new TenantDeleteBlockedByLeaseError(id, blocker.leaseIds, blocker.paymentIds);
+            }
+            gateway.saveDatabase({ ...database, tenants: database.tenants.filter((tenant) => tenant.id !== id) });
+            return true;
+        },
+        archiveMany(ids: string[]): TenantLifecycleBulkResult {
+            return setArchivedMany(ids, true);
+        },
+        restoreMany(ids: string[]): TenantLifecycleBulkResult {
+            return setArchivedMany(ids, false);
+        },
+        deleteMany(ids: string[]): TenantLifecycleBulkResult {
+            const selectedIds = uniqueIds(ids);
+            if (selectedIds.length === 0) return bulkResult('delete', selectedIds);
+            const database = gateway.getDatabase();
+            selectedIds.forEach((id) => requireTenant(database, id));
+            const blockers = tenantDeleteBlockers(database, selectedIds);
+            if (blockers.length) throw new TenantDeleteBlockedError(blockers);
+            const selected = new Set(selectedIds);
+            gateway.saveDatabase({ ...database, tenants: database.tenants.filter((tenant) => !selected.has(tenant.id)) });
+            return bulkResult('delete', selectedIds);
         },
     };
 }
@@ -266,17 +455,9 @@ export function sendTenantInvite(tenantId: string): TenantRecord {
 }
 
 export function deleteTenantById(tenantId: string): void {
-    const db = getJsonDb();
-    const tenant = db.tenants.find((item) => item.id === tenantId);
-    if (!tenant) throw new Error('Inquilino non trovato.');
-    const linkedLease = db.leases.find((lease) => lease.tenantIds.includes(tenantId));
-    if (linkedLease) throw new TenantDeleteBlockedByLeaseError(tenantId);
-
-    db.tenants = db.tenants.filter((item) => item.id !== tenantId);
-    db.payments = db.payments.map((payment) => (
-        payment.tenantId === tenantId ? { ...payment, tenantId: null } : payment
-    ));
-    saveJsonDb(db);
+    const accountId = getActiveDatabaseAccountId();
+    if (!accountId) throw new Error('Database locale non disponibile: nessun account autenticato.');
+    createTenantRepository({ accountId }).delete(tenantId);
 }
 
 export function listTenants(): TenantListItem[] {
