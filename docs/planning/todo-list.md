@@ -20,7 +20,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: C5 — Modifica e lifecycle Tenant
+- Prossimo punto tecnico: C5.1 — Repository Tenant: update e lifecycle
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 45 task non concluse e non vanno sommati nuovamente.
 
@@ -57,7 +57,13 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >   - [x] Contact autonomi non rollbackati dopo failure Tenant
 >   - [x] FIX C4-F01 — fixture C2 resa referenzialmente valida senza rimuovere `contactId` o alterare gli ID annidati
 >   - [x] Gate tecnico — **14 test C4 PASS; full suite 106 file / 1206 test PASS, build e lint positivi**
-> - [ ] C5 — Modifica e lifecycle Tenant — **PROSSIMA TASK; deve riusare i contratti C1–C4, incluso account scope, duplicate fiscal enforcement con exclude-current, integrità delle relazioni e protezione dello storico**
+> - [ ] C5 — Modifica e lifecycle Tenant — **PROSSIMA TASK; articolata in cinque prompt Esecutore più un collaudo separato; deve preservare integralmente i contratti C1–C4**
+>   - [ ] C5.1 — Repository Tenant: update e lifecycle — **PROSSIMA TASK; update account-scoped, exclude-current fiscale, vincoli referenziali, archive/restore/delete singole e bulk atomiche**
+>   - [ ] C5.2 — Route e form Modifica Tenant — **DOPO C5.1; route canonica `/tenants/:id/edit`, hydration dal record persistito e update reale senza nuova create**
+>   - [ ] C5.3 — Bozza edit e guard Tenant — **DOPO C5.2; draft `tenant/edit/entityId`, baseline persistita, salvataggio manuale e cleanup/recovery senza ripetere l'update**
+>   - [ ] C5.4 — Lifecycle reale lista e dettaglio Tenant — **DOPO C5.3; Modifica, Archivia/Ripristina ed Elimina reali, incluse le azioni bulk lifecycle**
+>   - [ ] C5.5 — Gate tecnico consolidato C5 — **DOPO C5.4; regressioni C1–C4, account isolation, nested ID, riferimenti Contact, edit/draft/lifecycle, build e lint mirato**
+>   - [ ] C5.6 — Collaudo browser C5 — **PROMPT `DESKTOP_COLLAUDATORE` SEPARATO; verifica CRUD/lifecycle, persistenza, reload, guard e assenza di falsi successi; non sostituisce C10**
 > - [ ] C6 — Chiusura delle azioni lista residue; il lifecycle reale appartiene a C5, mentre le altre azioni devono essere implementate, disabilitate secondo convenzione o rimosse
 > - [ ] C10 — Collaudo browser finale Inquilini e Contatti
 >
@@ -162,7 +168,13 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] Atomicità — **1 write sul successo, 0 write sulle validation failure, Contact autonomi preservati senza rollback**
   - [x] FIX C4-F01 — **fixture C2 allineata aggiungendo i Contact reali mancanti senza rimuovere `contactId` o alterare gli otto nested ID**
   - [x] Gate tecnico — **14 test C4 PASS; regressioni C1/C2/C3 e submit/draft positive; full suite 106 file / 1206 test PASS; build/lint/UTF-8 positivi**
-- [ ] C5 — Modifica e lifecycle — **PROSSIMA TASK; deve introdurre update/lifecycle Tenant preservando i contratti C1–C4**
+- [ ] C5 — Modifica e lifecycle — **PROSSIMA TASK; articolata in C5.1–C5.5 più collaudo separato C5.6, preservando i contratti C1–C4**
+  - [ ] C5.1 — Repository Tenant: update e lifecycle — **PROSSIMA TASK**
+  - [ ] C5.2 — Route e form Modifica Tenant — **DOPO C5.1**
+  - [ ] C5.3 — Bozza edit e guard Tenant — **DOPO C5.2**
+  - [ ] C5.4 — Lifecycle reale lista e dettaglio Tenant — **DOPO C5.3**
+  - [ ] C5.5 — Gate tecnico consolidato C5 — **DOPO C5.4**
+  - [ ] C5.6 — Collaudo browser C5 — **DESKTOP_COLLAUDATORE SEPARATO; non sostituisce C10**
 - [ ] C6 — Azioni lista ancora simulate — **DECISIONE PRODOTTO**
 - [ ] C7 — Inviti email — **FUTURO — BACKEND**
 - [ ] C8 — Allegati delle bozze — **FUTURO — STORAGE**
@@ -311,6 +323,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] Enforcement duplicati fiscali Tenant create, mapping errori UI, info1, draft preserve e retry — C3.3
   - [x] Gate fiscale consolidato C3, legacy, empty IDs, no cross-domain Contact↔Tenant e regressioni — C3.4
   - [x] Creazione atomica Tenant account-scoped, authority unica, integrità delle relazioni e `contactId`, single-save e no partial writes — C4
+  - [ ] Update, edit/draft, lifecycle e gate tecnico Tenant — C5.1–C5.5 — **PROSSIMA COPERTURA**
   - [ ] Copertura progressiva delle task future — **APERTO**
 
 Baseline tecnica corrente post-C4: 106 file di test / 1206 test PASS; test C4 14/14 PASS, regressioni C1/C2/C3 e submit/draft Tenant positive, build e lint mirato C4 positivi. Un timeout C1 osservato sotto carico parallelo non è risultato riproducibile nella verifica isolata 60/60 e la full suite finale è conclusa 1206/1206 PASS. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.

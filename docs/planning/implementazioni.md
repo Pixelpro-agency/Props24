@@ -192,7 +192,7 @@ Affittate = unità non archiviate collegate a una locazione attiva secondo lo st
 
 # BLOCCO C — Inquilini e contatti
 
-C1 — Garanti e rubrica, C2 — ID annidati canonici Tenant, C3 — Duplicati anagrafici e C4 — Creazione atomica Tenant sono completate e verificate. Il ciclo locale prosegue nell'ordine C5 → C6 → C10.
+C1 — Garanti e rubrica, C2 — ID annidati canonici Tenant, C3 — Duplicati anagrafici e C4 — Creazione atomica Tenant sono completate e verificate. Il ciclo locale prosegue nell'ordine C5.1 → C5.2 → C5.3 → C5.4 → C5.5 → C5.6 → C6 → C10.
 
 C5 può assumere come contratti già consolidati il modello Contact–Tenant di C1, le identità persistenti annidate di C2, le business rules fiscali account-scoped di C3 e l'authority atomica/account-scoped della create Tenant di C4.
 
@@ -217,24 +217,163 @@ Le bozze degli inquilini seguono il repository condiviso, il salvataggio manuale
 
 ## TASK C5 — Modifica e lifecycle
 
-**Stato:** prossima task.
+**Stato:** prossima task, articolata in C5.1–C5.5 più collaudo browser separato C5.6.
 
 **Dipendenze:** C1–C4 completate e verificate.
 
-**Obiettivo:**
+**Contratto trasversale:**
 
-- introdurre pagina o flusso edit Tenant reale;
-- introdurre update repository account-scoped;
-- riusare le business rules fiscali C3 con esclusione del Tenant corrente;
-- applicare all'update gli stessi vincoli referenziali e di integrità delle relazioni consolidati da C4;
-- preservare relation ID, document ID e file ID esistenti secondo C2;
-- archivio e ripristino;
-- eliminazione protetta dalle locazioni e dallo storico che deve restare persistente;
-- preservare invito e documenti;
-- evitare mutation parziali;
-- sostituire le azioni lifecycle bulk con mutazioni reali;
-- aggiornare `DataTable.tsx`, dove Modifica è ancora pending;
-- non duplicare in C6 le operazioni lifecycle che appartengono a C5.
+- C5 riusa il modello Contact–Tenant di C1, gli ID persistenti annidati di C2, le pure business rules fiscali C3 e l'authority account-scoped introdotta da C4;
+- nessuna mutation deve creare un secondo Tenant quando l'operazione richiesta è un update;
+- archived Tenant continuano a partecipare ai controlli fiscali;
+- `contactId` e relation `id` restano identità distinte;
+- i nested ID già persistiti vengono preservati create-once/preserve-thereafter;
+- nessun read-repair, matching euristico, cascade o falsa dichiarazione di successo;
+- C6 non deve duplicare Modifica, Archivia, Ripristina, Elimina o le corrispondenti operazioni bulk, perché appartengono a C5.
+
+### C5.1 — Repository Tenant: update e lifecycle
+
+Introdurre l'update Tenant e il lifecycle reale su boundary account-scoped.
+
+L'update deve:
+
+- caricare il Tenant esistente nello stesso account e fallire senza scritture se non esiste;
+- normalizzare i dati del form e applicare la quota allegati;
+- riusare l'enforcement fiscale C3 con esclusione del Tenant corrente;
+- riusare i vincoli di integrità delle relazioni C4;
+- validare nello stesso account ogni `contactId` nuovo o sostituito;
+- preservare un `contactId` legacy già persistito e non risolvibile quando resta invariato, senza read-repair o cancellazione implicita;
+- bloccare invece un nuovo riferimento Contact dangling o cross-account;
+- preservare `id`, `createdAt`, `archived`, `leaseIds`, `invitation` e gli altri campi persistenti non posseduti dal form;
+- preservare relation ID, TenantDocument ID e file ID esistenti, salvo la reale creazione o sostituzione prevista dal contratto C2;
+- aggiornare `updatedAt` soltanto nella mutation riuscita;
+- costruire il database candidato completo prima della persistenza;
+- eseguire una sola persistenza definitiva e nessuna mutation parziale.
+
+Il lifecycle deve offrire operazioni singole e bulk di archive, restore e delete.
+
+Archive e restore:
+
+- modificano esclusivamente lo stato lifecycle e `updatedAt`;
+- preservano identità, dati, relazioni, documenti, invito e storico;
+- sono account-scoped.
+
+Delete:
+
+- è consentita anche per un Tenant archiviato quando è realmente libero;
+- è bloccata da qualunque Lease persistente che contenga il Tenant in `tenantIds`, indipendentemente dallo stato corrente, terminato o archiviato della Lease;
+- è bloccata da qualunque Payment persistente con `payment.tenantId` uguale al Tenant, indipendentemente dallo stato del pagamento;
+- non azzera `payment.tenantId`, non modifica Lease e non esegue cascade;
+- nelle operazioni bulk valida prima l'intero insieme richiesto e non produce cancellazioni parziali se almeno un Tenant è mancante o bloccato.
+
+C5.1 deve avere test repository mirati per update, duplicate exclude-current, riferimenti Contact, account isolation, archive/restore, delete protection e atomicità bulk.
+
+### C5.2 — Route e form Modifica Tenant
+
+Introdurre la route canonica `/tenants/:id/edit` e un vero flusso edit.
+
+Il form edit deve:
+
+- partire esclusivamente dal Tenant persistito;
+- usare un mapping deterministico `TenantRecord` → stato form;
+- non rigenerare nested ID durante hydration, render o normalizzazione;
+- salvare tramite l'update C5.1 e non tramite `createTenant`;
+- mantenere lo stesso Tenant ID e lo stesso `createdAt`;
+- mostrare gli errori fiscali sul campo corretto e riportare l'utente alla scheda Informazioni generali;
+- preservare i dati correnti in caso di update fallito;
+- gestire il Tenant non trovato senza creare record sostitutivi.
+
+L'accesso UI a Modifica viene collegato definitivamente in C5.4; C5.2 deve rendere la route direttamente verificabile senza anticipare le altre azioni lifecycle.
+
+### C5.3 — Bozza edit e guard Tenant
+
+Estendere il controller delle bozze Tenant al target edit.
+
+La chiave logica della bozza edit è `formType: tenant`, `mode: edit`, `entityId: tenantId`.
+
+La bozza edit deve essere distinta dalla bozza create e dalle bozze edit di altri Tenant.
+
+La baseline iniziale deriva dal record persistito. Il salvataggio resta soltanto manuale. Una bozza ripristinata è inizialmente clean.
+
+Il guard mantiene il contratto condiviso:
+
+- `Resta` non scrive;
+- `Abbandona` ripristina l'ultima baseline salvata senza eliminare la bozza persistita;
+- `Salva bozza` esegue una sola scrittura e completa la navigazione originaria;
+- refresh e chiusura scheda usano `beforeunload`.
+
+Dopo un update definitivo riuscito, il cleanup della bozza è una mutation separata. Se il cleanup fallisce:
+
+- l'update già riuscito resta persistito;
+- il recovery ritenta soltanto la delete della bozza;
+- l'update Tenant non viene eseguito una seconda volta.
+
+Il submit deve essere serializzato per impedire update concorrenti dallo stesso form montato.
+
+### C5.4 — Lifecycle reale lista e dettaglio Tenant
+
+Collegare le azioni lifecycle reali alla UI.
+
+Tenant attivo:
+
+- Modifica;
+- Archivia;
+- Elimina.
+
+Tenant archiviato:
+
+- Modifica;
+- Ripristina;
+- Elimina.
+
+Lista e dettaglio devono riflettere lo stato persistito dopo mutation e reload.
+
+Le azioni bulk lifecycle devono usare le operazioni atomiche C5.1. Una failure non deve mostrare successo né produrre mutation parziali.
+
+`DataTable.tsx` non deve più mostrare Modifica, Archivia ed Elimina come pending quando C5.4 è completata. Le altre azioni lista non lifecycle restano owner di C6.
+
+### C5.5 — Gate tecnico consolidato C5
+
+Il gate deve coprire almeno:
+
+- update person e company;
+- duplicate fiscale con exclude-current e collisione reale;
+- account isolation;
+- quota allegati;
+- relation ID e nested ID preservati;
+- Contact esistenti, archived, cross-account, nuovi dangling e dangling legacy invariati;
+- edit route e hydration;
+- draft create/edit separati;
+- guard edit;
+- cleanup e recovery senza doppio update;
+- archive/restore singoli e bulk;
+- delete libera;
+- delete bloccata da Lease storica;
+- delete bloccata da Payment storica;
+- atomicità bulk;
+- lista e dettaglio;
+- regressioni C1–C4;
+- build, lint mirato, UTF-8 e assenza di mojibake secondo i gate correnti.
+
+### C5.6 — Collaudo browser C5
+
+C5.6 usa un prompt separato `DESKTOP_COLLAUDATORE` sulla stessa versione approvata da C5.5.
+
+Deve verificare tramite interazioni UI reali almeno:
+
+- apertura e modifica di Tenant persona e società;
+- update e reload;
+- bozza edit, restore e guard;
+- Modifica da lista e dettaglio;
+- Archivia e Ripristina;
+- delete libera;
+- delete bloccata senza falso successo;
+- azioni bulk lifecycle;
+- persistenza dopo reload;
+- console;
+- assenza di regressioni osservabili sui riferimenti Contact e sull'invito locale.
+
+C5.6 non sostituisce C10. C10 resta il collaudo browser finale dell'intero Blocco C dopo C6.
 
 ## TASK C6 — Azioni lista ancora simulate
 
@@ -792,7 +931,7 @@ La baseline automatizzata verificata corrente è mantenuta nella Todo list e non
 **Aree residue:**
 
 - repository e consumer ancora da implementare;
-- duplicati anagrafici e lifecycle ancora da completare, inclusi C3 e C5;
+- update/lifecycle Tenant, edit/draft e relativo gate consolidato C5.1–C5.5;
 - D1B — storico append-only e override motivato;
 - D2D — prepagato, ricevuta e confirmation precedenti;
 - funzioni future gialle e realmente disabilitate;

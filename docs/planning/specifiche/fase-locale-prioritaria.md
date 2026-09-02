@@ -297,13 +297,52 @@ Un Contact creato esplicitamente mediante `ContactRepository` resta un'entità a
 
 C4 è stata verificata con 14 test dedicati. Dopo il fix della fixture C2 che conteneva due `contactId` senza i corrispondenti `ContactRecord`, le regressioni C1/C2/C3, submit/draft e tenant-form sono risultate positive; la full suite finale ha concluso con 106 file / 1206 test PASS, build positiva e lint mirato senza errori o warning.
 
+### Modifica, bozza edit e lifecycle Tenant
+
+C5 completa il CRUD locale del Tenant senza riaprire i contratti consolidati da C1–C4.
+
+La modifica usa la route canonica `/tenants/:id/edit` e parte dal record persistito dello stesso account. L'update modifica il Tenant esistente e non crea una nuova anagrafica.
+
+L'update deve preservare `id`, `createdAt`, stato di archivio, `leaseIds`, invito e tutti i campi persistenti non posseduti dal form. I dati modificabili dal form vengono normalizzati e sostituiti nel record esistente; `updatedAt` cambia soltanto dopo una mutation riuscita.
+
+Il controllo fiscale riusa le pure business rules C3 escludendo il Tenant corrente. Gli archived Tenant continuano a partecipare al duplicate check.
+
+Relation ID, TenantDocument ID e file ID seguono C2: un'identità esistente viene preservata; soltanto la creazione reale di un nuovo oggetto o la sostituzione reale di un file può introdurre la nuova identità prevista dal relativo contratto.
+
+L'update riusa i vincoli di integrità C4. Un nuovo `contactId` o un riferimento sostituito deve esistere nella collection `contacts` dello stesso account; un Contact archived resta valido. Un `contactId` legacy già persistito ma non più risolvibile viene invece preservato quando resta invariato, senza read-repair, matching euristico o cancellazione implicita.
+
+La bozza di modifica usa `formType: tenant`, `mode: edit` ed `entityId` uguale all'ID del Tenant. È account-scoped ed è distinta dalla bozza create e dalle bozze edit di altri Tenant.
+
+La baseline della bozza edit deriva dal Tenant persistito. Il salvataggio resta esclusivamente manuale. Una bozza ripristinata è inizialmente clean e il guard mantiene il contratto `Resta` / `Abbandona` / `Salva bozza`.
+
+Dopo un update definitivo riuscito, la cancellazione della bozza edit è una mutation separata. Se il cleanup fallisce, il Tenant già aggiornato resta persistito e il recovery ritenta esclusivamente la cancellazione della bozza senza ripetere l'update.
+
+Il lifecycle Tenant è account-scoped e comprende archive, restore e delete singole, oltre alle corrispondenti operazioni bulk atomiche.
+
+Archivio e ripristino preservano identità, dati, relazioni, documenti e invito.
+
+La delete è bloccata da qualunque Lease persistente che contenga il Tenant in `tenantIds` e da qualunque Payment persistente con `payment.tenantId` uguale al Tenant, indipendentemente dal loro stato corrente o storico.
+
+La delete non modifica Lease o Payment per liberare artificialmente il Tenant, non azzera `payment.tenantId` e non esegue cascade.
+
+Le operazioni bulk validano l'intero insieme prima della persistenza. Se almeno un Tenant è mancante o bloccato, non viene cancellato nessun Tenant dell'insieme.
+
+Lista e dettaglio espongono lifecycle coerente con lo stato persistito:
+
+- Tenant attivo: Modifica, Archivia, Elimina;
+- Tenant archiviato: Modifica, Ripristina, Elimina.
+
+Le operazioni lifecycle reali appartengono a C5. Le altre azioni lista simulate restano separate in C6.
+
+C5 viene eseguita come C5.1 repository update/lifecycle, C5.2 route e form edit, C5.3 bozza edit e guard, C5.4 azioni lifecycle UI e C5.5 gate tecnico consolidato. C5.6 è il collaudo browser separato e non sostituisce C10.
+
 ### Confini del ciclo
 
 C1 definisce e integra il modello Contact–Tenant e il lifecycle Contact. C2 consolida le identità persistenti annidate Tenant con il contratto create-once/preserve-thereafter. C3 consolida e applica le regole fiscali CT-01–CT-05. C4 consolida la create Tenant account-scoped, atomica e referenzialmente valida.
 
 Restano task separate:
 
-- C5 — edit e lifecycle Tenant, incluso l'enforcement fiscale dell'update con esclusione del record corrente e il riuso dei vincoli referenziali C4;
+- C5 — edit e lifecycle Tenant, articolato in C5.1–C5.5 con collaudo browser separato C5.6 e preservazione dei contratti C1–C4;
 - C6 — ulteriori azioni lista non appartenenti al lifecycle C5.
 
 C1–C4 costituiscono quindi la baseline completata che C5 deve preservare.

@@ -133,6 +133,26 @@ Un Contact creato esplicitamente dall'utente mediante `ContactRepository.create`
 
 La canonicalizzazione degli ID annidati Tenant è completata e consolidata da C2. L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 è completato e consolidato da C3. L'atomicità e l'integrità referenziale della create Tenant sono consolidate da C4.
 
+### Update e lifecycle Tenant
+
+C5 estende il boundary Tenant oltre la create C4 introducendo update e lifecycle account-scoped senza creare una seconda authority indipendente per le stesse mutation.
+
+L'update opera sul Tenant esistente dello scope catturato dal repository. Prima della persistenza definitiva completa normalizzazione, quota allegati, duplicate fiscal enforcement con exclude-current, integrità delle relazioni e validazione referenziale applicabile.
+
+Per i riferimenti Contact, un `contactId` nuovo o sostituito deve esistere nello stesso account. Un riferimento archived resta valido. Un riferimento legacy già persistito e non risolvibile può essere preservato se resta invariato: l'update non esegue read-repair e non obbliga una modifica non correlata a cancellare o ricostruire quel riferimento.
+
+L'update preserva identità e campi non posseduti dal form, inclusi `id`, `createdAt`, `archived`, `leaseIds` e `invitation`. I nested ID persistenti seguono il contratto C2. La mutation costruisce il database candidato prima della write, esegue una sola persistenza definitiva e rilegge il Tenant dal database restituito dalla persistenza.
+
+Il lifecycle comprende archive, restore e delete singole e bulk.
+
+Archive e restore modificano lo stato lifecycle senza scollegare relazioni o riscrivere storico.
+
+La delete è protetta da qualunque Lease persistente che contenga il Tenant in `tenantIds` e da qualunque Payment persistente con `tenantId` corrispondente. Stato attivo, terminato o archiviato della Lease e stato del Payment non eliminano il blocker storico.
+
+La delete non azzera `payment.tenantId`, non modifica `lease.tenantIds` e non esegue cascade. Un Tenant libero può essere eliminato anche se archiviato.
+
+Le operazioni bulk sono atomiche: l'intero insieme viene validato prima della persistenza e un elemento mancante o bloccato impedisce qualunque delete parziale dell'insieme.
+
 ### Identità fiscale locale di Contact e Tenant
 
 C3 mantiene separate le identità persistenti `ContactRecord` e `TenantRecord`. Il duplicate check è account-scoped all'interno della rispettiva collezione e non introduce un vincolo fiscale incrociato fra `contacts` e `tenants`.
@@ -231,6 +251,14 @@ La bozza create del Tenant può conservare relazioni Contact con `contactId` gi�
 Il caricamento asincrono o il refresh della rubrica non modifica da solo il payload della bozza, non rende dirty il form e non produce autosave. Riferimenti Contact archiviati, mancanti o temporaneamente non verificabili vengono preservati finché l'utente non esegue un'azione esplicita.
 
 Un Contact creato esplicitamente mentre il form Tenant è aperto è già una voce autonoma della rubrica: `Abbandona`, eliminazione della bozza o fallimento della create Tenant non ne comportano la cancellazione automatica.
+
+La modifica Tenant usa una bozza account-scoped con chiave logica `formType: tenant`, `mode: edit` ed `entityId` uguale all'ID del Tenant. La bozza edit è distinta dalla bozza create e dalle bozze edit di altre anagrafiche Tenant.
+
+La baseline iniziale deriva dal record persistito. Il salvataggio è esclusivamente manuale; il restore produce inizialmente uno stato non dirty. `Abbandona` ripristina l'ultima baseline salvata senza eliminare la bozza persistita.
+
+I riferimenti Contact e i nested ID presenti nella bozza vengono preservati senza matching euristico o rigenerazione. Il restore non crea Contact e non produce read-repair.
+
+Dopo un update definitivo riuscito il cleanup della bozza edit è una mutation separata. Se il cleanup fallisce, il record Tenant già aggiornato viene preservato e il recovery ritenta esclusivamente la cancellazione della bozza senza ripetere l'update Tenant.
 
 La modifica di una Unit usa una bozza account-scoped con chiave logica `formType: property`, `mode: edit` ed `entityId` uguale all'ID della Unit. La bozza edit è distinta dalla bozza create e dalle bozze edit di altre entità. La baseline iniziale deriva dal record persistito; il salvataggio è soltanto manuale e il restore produce inizialmente uno stato non dirty. `Abbandona` ripristina l'ultima baseline salvata senza eliminare la bozza persistita.
 
