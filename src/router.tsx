@@ -33,6 +33,7 @@ import { PropertyDetailPage } from './pages/PropertyDetailPage';
 import { EditPropertyPage } from './pages/EditPropertyPage';
 import { TenantDetailPage } from './pages/TenantDetailPage';
 import { TenantsPage } from './pages/TenantsPage';
+import { EditTenantPage } from './pages/EditTenantPage';
 
 interface QueryCacheScope {
     accountId: string | null;
@@ -120,6 +121,7 @@ export function createAppRoutes() {
             />
             <Route path="/tenants" element={<TenantsPage />} />
             <Route path="/tenants/new" element={<NewTenantPage />} />
+            <Route path="/tenants/:id/edit" element={<EditTenantPage />} />
             <Route path="/tenants/:id" element={<TenantDetailPage />} />
             <Route path="/leases" element={<LeasesPage />} />
             <Route path="/leases/new" element={<NewLeasePage />} />

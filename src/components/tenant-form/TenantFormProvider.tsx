@@ -30,7 +30,7 @@ import {
     tenantSchema,
     type TenantFormData,
 } from './schema';
-import { DuplicateTenantFiscalIdentityError } from '../../db/databaseErrors';
+import { DuplicateTenantFiscalIdentityError, TenantNotFoundError } from '../../db/databaseErrors';
 
 const CLEANUP_ERROR =
     'Non è stato possibile eliminare la bozza locale. Riprova la pulizia.';
@@ -325,6 +325,82 @@ export function TenantFormProvider({
                     isRetrying={isRetryingCleanup}
                     onRetry={() => void retryCleanup()}
                 />
+            </FormProvider>
+        </TenantFormContext.Provider>
+    );
+}
+
+interface TenantEditFormProviderProps {
+    children: ReactNode;
+    initialState: TenantFormData;
+    activeTab: string;
+    setActiveTab: (tabId: TenantTabId | string) => void;
+    onUpdateTenant(data: TenantFormData): unknown | Promise<unknown>;
+    onTenantUpdated(): void;
+    onSubmitError?: (message: string) => void;
+    onFormBusyChange?: (busy: boolean) => void;
+}
+
+export function TenantEditFormProvider({
+    children, initialState, activeTab, setActiveTab, onUpdateTenant,
+    onTenantUpdated, onSubmitError, onFormBusyChange,
+}: TenantEditFormProviderProps) {
+    const methods = useForm<TenantFormData>({
+        resolver: zodResolver(tenantSchema) as Resolver<TenantFormData>,
+        defaultValues: initialState,
+        mode: 'onChange',
+        shouldFocusError: true,
+    });
+    const isSubmitting = methods.formState.isSubmitting;
+
+    useEffect(() => {
+        onFormBusyChange?.(isSubmitting);
+    }, [isSubmitting, onFormBusyChange]);
+
+    const handleSubmit = async (data: TenantFormData) => {
+        onSubmitError?.('');
+        try {
+            await onUpdateTenant(data);
+            onTenantUpdated();
+        } catch (error) {
+            if (error instanceof DuplicateTenantFiscalIdentityError) {
+                const field = error.field === 'vatNumber'
+                    ? 'TenantVatNumber'
+                    : data.TenantType === 'company'
+                        ? 'TenantCompanyFiscalCode'
+                        : 'TenantFiscalCode';
+                methods.setError(field, { type: 'manual', message: error.message });
+                setActiveTab('info1');
+                onSubmitError?.(error.message);
+                return;
+            }
+            onSubmitError?.(error instanceof TenantNotFoundError
+                ? 'Inquilino non più disponibile.'
+                : error instanceof Error
+                    ? error.message
+                    : 'Errore durante il salvataggio delle modifiche.');
+        }
+    };
+
+    const contextValue: TenantFormContextProps = {
+        activeTab, setActiveTab, draftPhase: 'ready', isSavingDraft: false,
+        isDeletingDraft: false, isSubmitting, isSubmitRecovery: false,
+        draftError: null, draftSuccess: null,
+        saveDraft: async () => undefined, clearDraftFeedback: () => undefined,
+    };
+
+    return (
+        <TenantFormContext.Provider value={contextValue}>
+            <FormProvider {...methods}>
+                <form
+                    id="tenant-form"
+                    onSubmit={methods.handleSubmit(handleSubmit, (errors) => {
+                        onSubmitError?.(validationMessages(errors));
+                    })}
+                    className="flex flex-col flex-1 h-full"
+                >
+                    {children}
+                </form>
             </FormProvider>
         </TenantFormContext.Provider>
     );

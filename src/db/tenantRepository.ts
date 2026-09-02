@@ -367,6 +367,9 @@ export function createTenantRepositoryOperations(gateway: TenantDatabaseGateway)
     }
 
     return {
+        getById(id: string): TenantRecord | null {
+            return gateway.getDatabase().tenants.find((tenant) => tenant.id === id) ?? null;
+        },
         create(formDataInput: TenantFormData): TenantRecord {
             return createTenantInGateway(gateway, formDataInput);
         },
