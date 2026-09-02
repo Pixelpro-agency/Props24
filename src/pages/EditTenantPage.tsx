@@ -44,12 +44,14 @@ function EditTenantPageForRecord({ accountId, tenantId }: EditTenantPageForRecor
         </div></div></div>
         <TenantEditFormProvider
             initialState={initialState}
+            entityId={tenantId}
             activeTab={activeTab}
             setActiveTab={(tab) => setActiveTab(tab as TenantTabId)}
             onUpdateTenant={(data) => repository.update(tenantId, data)}
             onTenantUpdated={() => navigate(detailPath, { replace: true })}
             onSubmitError={setSubmitError}
             onFormBusyChange={setBusy}
+            onExitDraft={() => navigate(detailPath, { replace: true })}
         >
             <TenantFormContent mode="edit" activeTab={activeTab} submitError={submitError} clearSubmitError={() => setSubmitError(null)} onCancel={() => navigate(detailPath)} />
         </TenantEditFormProvider>

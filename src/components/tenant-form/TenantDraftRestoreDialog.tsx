@@ -15,6 +15,7 @@ export interface TenantDraftRestoreDialogProps {
     onResume(): void;
     onDelete(): void;
     onRetry(): void;
+    formMode?: 'create' | 'edit';
 }
 
 export function TenantDraftRestoreDialog({
@@ -26,6 +27,7 @@ export function TenantDraftRestoreDialog({
     onResume,
     onDelete,
     onRetry,
+    formMode = 'create',
 }: TenantDraftRestoreDialogProps) {
     const initialFocusRef = useRef<HTMLButtonElement>(null);
     const disabled = isDeleting;
@@ -42,12 +44,12 @@ export function TenantDraftRestoreDialog({
                 <DialogPanel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
                     <DialogTitle className="text-lg font-semibold text-gray-900">
                         {mode === 'choice'
-                            ? 'Bozza inquilino disponibile'
+                            ? formMode === 'edit' ? 'Bozza modifica inquilino disponibile' : 'Bozza inquilino disponibile'
                             : 'Impossibile aprire la bozza'}
                     </DialogTitle>
                     <Description className="mt-2 text-sm text-gray-600">
                         {mode === 'choice'
-                            ? 'È presente una bozza salvata per il nuovo inquilino.'
+                            ? formMode === 'edit' ? 'È presente una bozza salvata per la modifica di questo inquilino.' : 'È presente una bozza salvata per il nuovo inquilino.'
                             : 'La bozza non può essere caricata. Puoi riprovare oppure uscire senza modificarla.'}
                     </Description>
                     {error ? (
@@ -78,7 +80,7 @@ export function TenantDraftRestoreDialog({
                                 >
                                     {isDeleting
                                         ? 'Eliminazione in corso...'
-                                        : 'Elimina e ricomincia'}
+                                        : formMode === 'edit' ? 'Elimina bozza e ripristina' : 'Elimina e ricomincia'}
                                 </button>
                                 <button
                                     type="button"

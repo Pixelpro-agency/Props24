@@ -56,6 +56,10 @@ function draftRecord(payload: Partial<TenantFormData>): DraftRecord<TenantFormDa
     };
 }
 
+function editDraftRecord(entityId: string, payload: Partial<TenantFormData>): DraftRecord<TenantFormData> {
+    return { ...draftRecord(payload), id: `draft-${entityId}`, mode: 'edit', entityId };
+}
+
 function makeRepository(
     getResult: DraftRecord<TenantFormData> | null = null,
 ): DraftRepository {
@@ -73,15 +77,19 @@ interface HarnessProps {
     onPhaseChange?: (phase: string) => void;
     onReset?: () => void;
     onController?: (controller: TenantDraftController) => void;
+    initialState?: TenantFormData;
+    target?: { mode: 'create'; entityId: null } | { mode: 'edit'; entityId: string };
 }
 
 function Harness({
     onPhaseChange,
     onReset,
     onController,
+    initialState = defaultTenantValues,
+    target = { mode: 'create', entityId: null },
 }: HarnessProps = {}) {
     const methods = useForm<TenantFormData>({
-        defaultValues: defaultTenantValues,
+        defaultValues: initialState,
     });
     const controllerMethods = useMemo(() => ({
         ...methods,
@@ -90,7 +98,7 @@ function Harness({
             return methods.reset(...args);
         },
     }), [methods, onReset]);
-    const controller = useTenantDraftController(controllerMethods);
+    const controller = useTenantDraftController(controllerMethods, undefined, { initialState, target });
     const firstName = useWatch({
         control: methods.control,
         name: 'TenantFirstName',
@@ -202,6 +210,71 @@ afterEach(() => {
 });
 
 describe('useTenantDraftController', () => {
+    const tenantA = { ...defaultTenantValues, TenantFirstName: 'Persistita A' } as TenantFormData;
+
+    it('usa lookup edit A, baseline persistita clean e nessun I/O implicito', async () => {
+        repository = makeRepository(null);
+        render(<Harness initialState={tenantA} target={{ mode: 'edit', entityId: 'tenant-A' }} />);
+        await screen.findByText('ready');
+        expect(repository.get).toHaveBeenCalledWith(expect.anything(), { mode: 'edit', entityId: 'tenant-A' });
+        expect(screen.getByTestId('first-name').textContent).toBe('Persistita A');
+        expect(screen.getByTestId('dirty').textContent).toBe('false');
+        expect(repository.save).not.toHaveBeenCalled();
+        expect(repository.delete).not.toHaveBeenCalled();
+    });
+
+    it('riprende, salva e scarta sull ultima baseline edit preservando nested IDs', async () => {
+        const rich = editDraftRecord('tenant-A', { TenantFirstName: 'Bozza A', TenantGuarantors: [{ id: 'nested-id', contactId: 'contact-id', contactType: 'person', firstName: 'Nested' }] });
+        repository = makeRepository(rich);
+        const user = userEvent.setup();
+        render(<Harness initialState={tenantA} target={{ mode: 'edit', entityId: 'tenant-A' }} />);
+        await screen.findByText('choice_required');
+        await user.click(screen.getByRole('button', { name: 'riprendi' }));
+        expect(screen.getByTestId('first-name').textContent).toBe('Bozza A');
+        expect(screen.getByTestId('dirty').textContent).toBe('false');
+        await user.click(screen.getByRole('button', { name: 'modifica alternativa' }));
+        await user.click(screen.getByRole('button', { name: 'salva' }));
+        await waitFor(() => expect(repository.save).toHaveBeenCalledOnce());
+        expect(vi.mocked(repository.save).mock.calls[0][1]).toMatchObject({ mode: 'edit', entityId: 'tenant-A', payload: { TenantFirstName: 'Alternativo', TenantGuarantors: [{ id: 'nested-id' }] } });
+        await user.click(screen.getByRole('button', { name: 'modifica' }));
+        await user.click(screen.getByRole('button', { name: 'abbandona' }));
+        expect(screen.getByTestId('first-name').textContent).toBe('Alternativo');
+        expect(repository.delete).not.toHaveBeenCalled();
+    });
+
+    it('deleteAndRestart elimina solo edit A e ripristina la baseline DB clean', async () => {
+        repository = makeRepository(editDraftRecord('tenant-A', { TenantFirstName: 'Bozza A' }));
+        render(<Harness initialState={tenantA} target={{ mode: 'edit', entityId: 'tenant-A' }} />);
+        await screen.findByText('choice_required');
+        await userEvent.click(screen.getByRole('button', { name: 'elimina' }));
+        await screen.findByText('ready');
+        expect(repository.delete).toHaveBeenCalledWith({ formType: 'tenant', mode: 'edit', entityId: 'tenant-A' });
+        expect(screen.getByTestId('first-name').textContent).toBe('Persistita A');
+        expect(screen.getByTestId('dirty').textContent).toBe('false');
+    });
+
+    it('separa create da edit e tenant A da B tramite target identity', async () => {
+        const get = vi.fn(async (_definition, lookup: { mode: string; entityId: string | null }) => lookup.mode === 'edit' && lookup.entityId === 'tenant-B' ? editDraftRecord('tenant-B', { TenantFirstName: 'Bozza B' }) : null);
+        repository = { ...makeRepository(), get };
+        const view = render(<Harness initialState={tenantA} target={{ mode: 'edit', entityId: 'tenant-A' }} />);
+        await screen.findByText('ready');
+        expect(screen.getByTestId('first-name').textContent).toBe('Persistita A');
+        view.rerender(<Harness initialState={{ ...tenantA, TenantFirstName: 'Persistita B' }} target={{ mode: 'edit', entityId: 'tenant-B' }} />);
+        await screen.findByText('choice_required');
+        expect(get.mock.calls.map((call) => call[1])).toEqual([{ mode: 'edit', entityId: 'tenant-A' }, { mode: 'edit', entityId: 'tenant-B' }]);
+    });
+
+    it('ignora risposta stale edit A dopo passaggio a edit B', async () => {
+        const pendingA = deferred<DraftRecord<TenantFormData> | null>();
+        repository = makeRepository();
+        vi.mocked(repository.get).mockImplementation((_definition, lookup) => lookup.entityId === 'tenant-A' ? pendingA.promise : Promise.resolve(null));
+        const view = render(<Harness initialState={tenantA} target={{ mode: 'edit', entityId: 'tenant-A' }} />);
+        view.rerender(<Harness initialState={{ ...tenantA, TenantFirstName: 'Persistita B' }} target={{ mode: 'edit', entityId: 'tenant-B' }} />);
+        await screen.findByText('ready');
+        pendingA.resolve(editDraftRecord('tenant-A', { TenantFirstName: 'Obsoleta A' }));
+        await act(() => pendingA.promise);
+        expect(screen.getByTestId('first-name').textContent).toBe('Persistita B');
+    });
     it('resta loading finché get risolve, poi inizializza vuoto non dirty', async () => {
         const pending = deferred<DraftRecord<TenantFormData> | null>();
         repository = makeRepository();

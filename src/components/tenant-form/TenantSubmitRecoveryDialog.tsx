@@ -12,6 +12,7 @@ export interface TenantSubmitRecoveryDialogProps {
     error: string;
     isRetrying: boolean;
     onRetry(): void;
+    mode?: 'create' | 'edit';
 }
 
 export function TenantSubmitRecoveryDialog({
@@ -19,6 +20,7 @@ export function TenantSubmitRecoveryDialog({
     error,
     isRetrying,
     onRetry,
+    mode = 'create',
 }: TenantSubmitRecoveryDialogProps) {
     const retryButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -36,12 +38,12 @@ export function TenantSubmitRecoveryDialog({
             <div className="fixed inset-0 flex items-center justify-center p-4">
                 <DialogPanel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
                     <DialogTitle className="text-lg font-semibold text-gray-900">
-                        Inquilino creato, pulizia incompleta
+                        {mode === 'edit' ? 'Inquilino aggiornato, pulizia incompleta' : 'Inquilino creato, pulizia incompleta'}
                     </DialogTitle>
                     <Description className="mt-2 text-sm text-gray-600">
-                        L’inquilino è stato creato, ma non è stato possibile
-                        eliminare la bozza locale. Riprova la pulizia per aprire
-                        il dettaglio senza creare duplicati.
+                        {mode === 'edit'
+                            ? 'L’inquilino è stato aggiornato, ma non è stato possibile eliminare la bozza locale. Riprova la pulizia per aprire il dettaglio senza ripetere l’aggiornamento.'
+                            : 'L’inquilino è stato creato, ma non è stato possibile eliminare la bozza locale. Riprova la pulizia per aprire il dettaglio senza creare duplicati.'}
                     </Description>
                     <p
                         role="alert"

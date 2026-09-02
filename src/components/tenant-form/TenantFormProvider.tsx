@@ -339,11 +339,13 @@ interface TenantEditFormProviderProps {
     onTenantUpdated(): void;
     onSubmitError?: (message: string) => void;
     onFormBusyChange?: (busy: boolean) => void;
+    entityId: string;
+    onExitDraft(): void;
 }
 
 export function TenantEditFormProvider({
     children, initialState, activeTab, setActiveTab, onUpdateTenant,
-    onTenantUpdated, onSubmitError, onFormBusyChange,
+    onTenantUpdated, onSubmitError, onFormBusyChange, entityId, onExitDraft,
 }: TenantEditFormProviderProps) {
     const methods = useForm<TenantFormData>({
         resolver: zodResolver(tenantSchema) as Resolver<TenantFormData>,
@@ -351,18 +353,63 @@ export function TenantEditFormProvider({
         mode: 'onChange',
         shouldFocusError: true,
     });
-    const isSubmitting = methods.formState.isSubmitting;
+    const draft = useTenantDraftController(methods, undefined, { initialState, target: { mode: 'edit', entityId } });
+    const [isCleaningDraft, setIsCleaningDraft] = useState(false);
+    const [recoveryError, setRecoveryError] = useState<string | null>(null);
+    const [isRetryingCleanup, setIsRetryingCleanup] = useState(false);
+    const [isCompletingUpdate, setIsCompletingUpdate] = useState(false);
+    const submitLockRef = useRef(false);
+    const retryLockRef = useRef(false);
+    const updateCompletedRef = useRef(false);
+    const pendingCompletionRef = useRef(false);
+    const mountedRef = useRef(true);
+    const isSubmitRecovery = recoveryError !== null;
+    const isSubmitting = methods.formState.isSubmitting || isCleaningDraft || isSubmitRecovery || isCompletingUpdate;
+    const guard = useUnsavedChangesGuard({
+        enabled: draft.phase === 'ready',
+        isDirty: methods.formState.isDirty || isSubmitting,
+        isSubmitting,
+        isSavingDraft: draft.isSavingDraft,
+        saveDraft: draft.saveDraft,
+        discardChanges: draft.discardChanges,
+    });
+    const busy = draft.phase !== 'ready' || draft.isSavingDraft || draft.isDeletingDraft || isSubmitting || guard.state.phase !== 'idle';
 
     useEffect(() => {
-        onFormBusyChange?.(isSubmitting);
-    }, [isSubmitting, onFormBusyChange]);
+        mountedRef.current = true;
+        return () => { mountedRef.current = false; };
+    }, []);
+
+    useEffect(() => {
+        onFormBusyChange?.(busy);
+    }, [busy, onFormBusyChange]);
+
+    const finishUpdatedTenant = useCallback(() => {
+        setIsCompletingUpdate(true);
+        setIsCleaningDraft(false);
+        setIsRetryingCleanup(false);
+        setRecoveryError(null);
+        methods.reset(methods.getValues());
+        pendingCompletionRef.current = true;
+    }, [methods]);
+
+    useEffect(() => {
+        if (!pendingCompletionRef.current) return;
+        if (guard.state.phase !== 'idle') { guard.resetGuard(); return; }
+        pendingCompletionRef.current = false;
+        guard.allowNextNavigation();
+        onTenantUpdated();
+    }, [guard, guard.state.phase, onTenantUpdated]);
 
     const handleSubmit = async (data: TenantFormData) => {
+        if (submitLockRef.current) return;
+        submitLockRef.current = true;
         onSubmitError?.('');
         try {
             await onUpdateTenant(data);
-            onTenantUpdated();
+            updateCompletedRef.current = true;
         } catch (error) {
+            submitLockRef.current = false;
             if (error instanceof DuplicateTenantFiscalIdentityError) {
                 const field = error.field === 'vatNumber'
                     ? 'TenantVatNumber'
@@ -379,20 +426,47 @@ export function TenantEditFormProvider({
                 : error instanceof Error
                     ? error.message
                     : 'Errore durante il salvataggio delle modifiche.');
+            return;
+        }
+        setIsCleaningDraft(true);
+        try {
+            await draft.deletePersistedDraft();
+            if (!mountedRef.current) return;
+            finishUpdatedTenant();
+        } catch {
+            if (!mountedRef.current) return;
+            setIsCleaningDraft(false);
+            setRecoveryError(CLEANUP_ERROR);
         }
     };
 
+    const retryCleanup = useCallback(async () => {
+        if (!updateCompletedRef.current || retryLockRef.current) return;
+        retryLockRef.current = true;
+        setIsRetryingCleanup(true);
+        try {
+            await draft.deletePersistedDraft();
+            if (!mountedRef.current) return;
+            finishUpdatedTenant();
+        } catch {
+            if (!mountedRef.current) return;
+            setRecoveryError(CLEANUP_ERROR);
+            setIsRetryingCleanup(false);
+        } finally { retryLockRef.current = false; }
+    }, [draft, finishUpdatedTenant]);
+
     const contextValue: TenantFormContextProps = {
-        activeTab, setActiveTab, draftPhase: 'ready', isSavingDraft: false,
-        isDeletingDraft: false, isSubmitting, isSubmitRecovery: false,
-        draftError: null, draftSuccess: null,
-        saveDraft: async () => undefined, clearDraftFeedback: () => undefined,
+        activeTab, setActiveTab, draftPhase: draft.phase, isSavingDraft: draft.isSavingDraft,
+        isDeletingDraft: draft.isDeletingDraft, isSubmitting, isSubmitRecovery,
+        draftError: draft.draftError, draftSuccess: draft.draftSuccess,
+        saveDraft: draft.saveDraft, clearDraftFeedback: draft.clearDraftFeedback,
     };
 
     return (
         <TenantFormContext.Provider value={contextValue}>
             <FormProvider {...methods}>
-                <form
+                {draft.phase === 'loading' ? <div role="status">Caricamento bozza...</div> : null}
+                {draft.phase === 'ready' ? <form
                     id="tenant-form"
                     onSubmit={methods.handleSubmit(handleSubmit, (errors) => {
                         onSubmitError?.(validationMessages(errors));
@@ -400,7 +474,10 @@ export function TenantEditFormProvider({
                     className="flex flex-col flex-1 h-full"
                 >
                     {children}
-                </form>
+                </form> : null}
+                <TenantDraftRestoreDialog formMode="edit" open={draft.phase === 'choice_required' || draft.phase === 'load_error'} mode={draft.phase === 'load_error' ? 'error' : 'choice'} isDeleting={draft.isDeletingDraft} error={draft.phase === 'load_error' ? draft.loadError : draft.operationError} onCancel={onExitDraft} onResume={draft.resumeDraft} onDelete={() => { void draft.deleteAndRestart(); }} onRetry={draft.retryLoad} />
+                <UnsavedChangesDialog open={guard.isDialogOpen && !isSubmitRecovery} phase={guard.state.phase} error={guard.state.error} actionsDisabled={guard.actionsDisabled} onStay={guard.stay} onDiscard={() => { void guard.discardAndProceed(); }} onSave={() => { void guard.saveAndProceed(); }} />
+                <TenantSubmitRecoveryDialog mode="edit" open={isSubmitRecovery} error={recoveryError ?? CLEANUP_ERROR} isRetrying={isRetryingCleanup} onRetry={() => { void retryCleanup(); }} />
             </FormProvider>
         </TenantFormContext.Provider>
     );

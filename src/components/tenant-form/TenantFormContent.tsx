@@ -21,9 +21,9 @@ export function TenantFormContent({ mode, activeTab, submitError, clearSubmitErr
     const operationsPending = form.isSubmitting || form.isSavingDraft || form.isDeletingDraft;
     const toast = submitError
         ? { variant: 'error' as const, title: 'Errore', message: submitError }
-        : mode === 'create' && form.draftError
+        : form.draftError
             ? { variant: 'error' as const, title: 'Errore bozza', message: form.draftError }
-            : mode === 'create' && form.draftSuccess
+            : form.draftSuccess
                 ? { variant: 'success' as const, title: 'Bozza', message: form.draftSuccess }
                 : null;
     return <>
@@ -39,9 +39,9 @@ export function TenantFormContent({ mode, activeTab, submitError, clearSubmitErr
                     {activeTab === 'info4' && <Tab5Documents />}
                 </div>
                 <div className="mt-8 flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:justify-end">
-                    {mode === 'create' && <button type="button" onClick={() => void form.saveDraft().catch(() => undefined)} disabled={form.draftPhase !== 'ready' || operationsPending} className="inline-flex items-center justify-center rounded-md border border-green-600 bg-white px-4 py-2.5 text-sm font-medium text-green-700 shadow-sm transition-colors hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60">
+                    <button type="button" onClick={() => void form.saveDraft().catch(() => undefined)} disabled={form.draftPhase !== 'ready' || operationsPending} className="inline-flex items-center justify-center rounded-md border border-green-600 bg-white px-4 py-2.5 text-sm font-medium text-green-700 shadow-sm transition-colors hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60">
                         {form.isSavingDraft ? 'Salvataggio bozza...' : 'Salva bozza'}
-                    </button>}
+                    </button>
                     <button type="button" onClick={onCancel} disabled={operationsPending} className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">Annulla</button>
                     <button type="submit" disabled={operationsPending} className="inline-flex min-w-[100px] items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60">
                         {form.isSubmitting ? 'Salvataggio...' : <><Save className="w-4 h-4 ml-[-4px]" />{mode === 'edit' ? 'Salva modifiche' : 'Salva'}</>}

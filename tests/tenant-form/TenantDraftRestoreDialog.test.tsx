@@ -70,6 +70,29 @@ describe('TenantDraftRestoreDialog', () => {
         expect(actions.onCancel).toHaveBeenCalledOnce();
     });
 
+    it('mostra contenuti e azioni specifici per una bozza edit', async () => {
+        const actions = handlers();
+        const user = userEvent.setup();
+        render(<TenantDraftRestoreDialog open mode="choice" formMode="edit" {...actions} />);
+        expect(screen.getByText('Bozza modifica inquilino disponibile')).toBeTruthy();
+        expect(screen.getByText('È presente una bozza salvata per la modifica di questo inquilino.')).toBeTruthy();
+        await user.click(screen.getByRole('button', { name: 'Riprendi bozza' }));
+        await user.click(screen.getByRole('button', { name: 'Elimina bozza e ripristina' }));
+        await user.click(screen.getByRole('button', { name: 'Annulla' }));
+        expect(actions.onResume).toHaveBeenCalledOnce();
+        expect(actions.onDelete).toHaveBeenCalledOnce();
+        expect(actions.onCancel).toHaveBeenCalledOnce();
+    });
+
+    it('supporta errore load e retry in edit', async () => {
+        const actions = handlers();
+        render(<TenantDraftRestoreDialog open mode="error" formMode="edit" error="Errore edit" {...actions} />);
+        expect(screen.getByText('Impossibile aprire la bozza')).toBeTruthy();
+        expect(screen.getByText(/bozza non può essere caricata/i)).toBeTruthy();
+        await userEvent.click(screen.getByRole('button', { name: 'Riprova' }));
+        expect(actions.onRetry).toHaveBeenCalledOnce();
+    });
+
     it('porta il focus su Annulla e ignora Escape e backdrop', async () => {
         const actions = handlers();
         const user = userEvent.setup();

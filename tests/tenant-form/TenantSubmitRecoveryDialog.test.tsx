@@ -66,4 +66,22 @@ describe('TenantSubmitRecoveryDialog', () => {
         fireEvent.click(retry);
         expect(onRetry).not.toHaveBeenCalled();
     });
+
+    it('descrive recovery delete-only in edit e invoca retry una volta', async () => {
+        const onRetry = vi.fn();
+        render(<TenantSubmitRecoveryDialog open mode="edit" error="Pulizia fallita" isRetrying={false} onRetry={onRetry} />);
+        expect(screen.getByText('Inquilino aggiornato, pulizia incompleta')).toBeTruthy();
+        const description = screen.getByText(/aggiornato.*bozza locale/i).textContent ?? '';
+        expect(description).toMatch(/non è stato possibile eliminare la bozza locale/i);
+        expect(description).toMatch(/senza ripetere l’aggiornamento/i);
+        expect(description).not.toMatch(/creato|duplicati/i);
+        await userEvent.click(screen.getByRole('button', { name: 'Riprova pulizia' }));
+        expect(onRetry).toHaveBeenCalledOnce();
+    });
+
+    it('disabilita retry edit mentre la pulizia è in corso', () => {
+        render(<TenantSubmitRecoveryDialog open mode="edit" error="Errore" isRetrying onRetry={vi.fn()} />);
+        expect((screen.getByRole('button', { name: 'Riprovo la pulizia...' }) as HTMLButtonElement).disabled).toBe(true);
+        expect(screen.queryByText(/creato|duplicati/i)).toBeNull();
+    });
 });

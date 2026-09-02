@@ -1,6 +1,7 @@
 import {
     useCallback,
     useEffect,
+    useMemo,
     useRef,
     useState,
 } from 'react';
@@ -31,17 +32,14 @@ export type TenantDraftPhase =
     | 'ready'
     | 'load_error';
 
-const TENANT_DRAFT_KEY = {
-    formType: 'tenant',
-    mode: 'create',
-    entityId: null,
-} as const;
+export type TenantDraftTarget = { mode: 'create' } | { mode: 'edit'; entityId: string };
+export interface TenantDraftContextOptions { initialState?: TenantFormData; target?: TenantDraftTarget; }
 
 function cloneSnapshot(value: unknown): TenantFormData {
     return normalizeTenantDraft(structuredClone(value));
 }
 
-function loadErrorMessage(error: unknown): string {
+function loadErrorMessage(error: unknown, mode: 'create' | 'edit'): string {
     if (error instanceof DraftCorruptedError) {
         return 'La bozza salvata è danneggiata o incompatibile.';
     }
@@ -51,7 +49,9 @@ function loadErrorMessage(error: unknown): string {
     if (error instanceof DraftStorageError) {
         return 'Impossibile accedere alla bozza nel database locale.';
     }
-    return 'Impossibile caricare la bozza del nuovo inquilino.';
+    return mode === 'edit'
+        ? 'Impossibile caricare la bozza di modifica dell’inquilino.'
+        : 'Impossibile caricare la bozza del nuovo inquilino.';
 }
 
 function saveErrorMessage(error: unknown): string {
@@ -87,6 +87,7 @@ export interface TenantDraftController {
 export function useTenantDraftController(
     methods: UseFormReturn<TenantFormData>,
     repositoryOverride?: DraftRepository,
+    options: TenantDraftContextOptions = {},
 ): TenantDraftController {
     const contextRepository = useDraftRepository();
     const repository = repositoryOverride ?? contextRepository;
@@ -99,18 +100,33 @@ export function useTenantDraftController(
     const [draftSuccess, setDraftSuccess] = useState<string | null>(null);
     const [loadAttempt, setLoadAttempt] = useState(0);
     const loadedDraftRef = useRef<DraftRecord<TenantFormData> | null>(null);
+    const initialState = options.initialState ?? defaultTenantValues;
+    const targetMode = options.target?.mode ?? 'create';
+    const targetEntityId = options.target?.mode === 'edit' ? options.target.entityId : null;
+    const draftKey = useMemo(() => ({ formType: 'tenant', mode: targetMode, entityId: targetEntityId } as const), [targetEntityId, targetMode]);
+    const draftLookup = useMemo(() => targetMode === 'edit'
+        ? { mode: 'edit' as const, entityId: targetEntityId as string }
+        : { mode: 'create' as const }, [targetEntityId, targetMode]);
     const lastSavedSnapshotRef = useRef<TenantFormData>(
-        cloneSnapshot(defaultTenantValues),
+        cloneSnapshot(initialState),
     );
     const loadRef = useRef<{
         repository: DraftRepository;
         attempt: number;
+        mode: 'create' | 'edit';
+        entityId: string | null;
         promise: Promise<DraftRecord<TenantFormData> | null>;
     } | null>(null);
     const requestIdRef = useRef(0);
     const savePendingRef = useRef(false);
     const deletePendingRef = useRef(false);
     const persistedDeletePromiseRef = useRef<Promise<void> | null>(null);
+    const mountedRef = useRef(true);
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => { mountedRef.current = false; };
+    }, []);
 
     useEffect(() => {
         const requestId = ++requestIdRef.current;
@@ -122,39 +138,40 @@ export function useTenantDraftController(
         if (
             loadRef.current?.repository !== repository
             || loadRef.current.attempt !== loadAttempt
+            || loadRef.current.mode !== targetMode
+            || loadRef.current.entityId !== targetEntityId
         ) {
             loadRef.current = {
                 repository,
                 attempt: loadAttempt,
-                promise: repository.get(
-                    tenantDraftDefinition,
-                    { mode: 'create' },
-                ),
+                mode: targetMode,
+                entityId: targetEntityId,
+                promise: repository.get(tenantDraftDefinition, draftLookup),
             };
         }
 
         void loadRef.current.promise.then((record) => {
-            if (!active || requestId !== requestIdRef.current) return;
+            if (!active || !mountedRef.current || requestId !== requestIdRef.current) return;
             loadedDraftRef.current = record;
             if (record) {
                 setPhase('choice_required');
                 return;
             }
-            const empty = cloneSnapshot(defaultTenantValues);
+            const empty = cloneSnapshot(initialState);
             lastSavedSnapshotRef.current = cloneSnapshot(empty);
             methods.reset(empty);
             setPhase('ready');
         }).catch((error: unknown) => {
-            if (!active || requestId !== requestIdRef.current) return;
+            if (!active || !mountedRef.current || requestId !== requestIdRef.current) return;
             loadedDraftRef.current = null;
-            setLoadError(loadErrorMessage(error));
+            setLoadError(loadErrorMessage(error, targetMode));
             setPhase('load_error');
         });
 
         return () => {
             active = false;
         };
-    }, [loadAttempt, methods, repository]);
+    }, [draftLookup, initialState, loadAttempt, methods, repository, targetEntityId, targetMode]);
 
     const resumeDraft = useCallback(() => {
         if (phase !== 'choice_required' || !loadedDraftRef.current) return;
@@ -175,21 +192,22 @@ export function useTenantDraftController(
         setIsDeletingDraft(true);
         setOperationError(null);
         try {
-            await repository.delete(TENANT_DRAFT_KEY);
-            const empty = cloneSnapshot(defaultTenantValues);
+            await repository.delete(draftKey);
+            if (!mountedRef.current) return;
+            const empty = cloneSnapshot(initialState);
             loadedDraftRef.current = null;
             lastSavedSnapshotRef.current = cloneSnapshot(empty);
             methods.reset(empty);
             setPhase('ready');
         } catch {
-            setOperationError(
+            if (mountedRef.current) setOperationError(
                 'Impossibile eliminare la bozza. Riprova.',
             );
         } finally {
             deletePendingRef.current = false;
-            setIsDeletingDraft(false);
+            if (mountedRef.current) setIsDeletingDraft(false);
         }
-    }, [methods, phase, repository]);
+    }, [draftKey, initialState, methods, phase, repository]);
 
     const retryLoad = useCallback(() => {
         if (phase !== 'load_error') return;
@@ -216,36 +234,36 @@ export function useTenantDraftController(
             } catch (error) {
                 throw new DraftPayloadValidationError(error);
             }
-            const saved = await repository.save(tenantDraftDefinition, {
-                mode: 'create',
-                payload,
-            });
+            const saved = await repository.save(tenantDraftDefinition, targetMode === 'edit'
+                ? { mode: 'edit', entityId: targetEntityId as string, payload }
+                : { mode: 'create', payload });
+            if (!mountedRef.current) return;
             const snapshot = cloneSnapshot(saved.payload);
             lastSavedSnapshotRef.current = cloneSnapshot(snapshot);
             methods.reset(snapshot);
             setDraftSuccess('Bozza salvata.');
         } catch (error) {
             const message = saveErrorMessage(error);
-            setDraftError(message);
+            if (mountedRef.current) setDraftError(message);
             throw new Error(message);
         } finally {
             savePendingRef.current = false;
-            setIsSavingDraft(false);
+            if (mountedRef.current) setIsSavingDraft(false);
         }
-    }, [methods, phase, repository]);
+    }, [methods, phase, repository, targetEntityId, targetMode]);
 
     const deletePersistedDraft = useCallback((): Promise<void> => {
         if (persistedDeletePromiseRef.current) {
             return persistedDeletePromiseRef.current;
         }
-        const operation = repository.delete(TENANT_DRAFT_KEY)
+        const operation = repository.delete(draftKey)
             .then(() => undefined)
             .finally(() => {
                 persistedDeletePromiseRef.current = null;
             });
         persistedDeletePromiseRef.current = operation;
         return operation;
-    }, [repository]);
+    }, [draftKey, repository]);
 
     const discardChanges = useCallback(() => {
         methods.reset(cloneSnapshot(lastSavedSnapshotRef.current));

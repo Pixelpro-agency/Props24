@@ -15,6 +15,13 @@ import { DuplicateTenantFiscalIdentityError, TenantNotFoundError } from '../../s
 import { setActiveDatabaseAccount } from '../../src/db/jsonDb';
 import { MemoryStorage } from '../db/jsonDbStorageHarness';
 
+const draftRepository = vi.hoisted(() => ({
+    get: vi.fn(async () => null),
+    save: vi.fn(async (_definition: unknown, input: { payload: TenantFormData }) => ({ payload: input.payload })),
+    delete: vi.fn(async () => false),
+}));
+vi.mock('../../src/drafts/DraftRepositoryContext', () => ({ useDraftRepository: () => draftRepository }));
+
 const authState = vi.hoisted(() => ({ account: { id: 'user-001' } }));
 vi.mock('../../src/auth/AuthContext', () => ({
     useAuth: () => ({ account: authState.account, isInitializing: false }),
@@ -31,6 +38,9 @@ afterEach(() => {
     cleanup();
     setActiveDatabaseAccount(null);
     if (originalLocalStorage) Object.defineProperty(window, 'localStorage', originalLocalStorage);
+    draftRepository.get.mockReset().mockResolvedValue(null);
+    draftRepository.save.mockReset().mockImplementation(async (_definition: unknown, input: { payload: TenantFormData }) => ({ payload: input.payload }));
+    draftRepository.delete.mockReset().mockResolvedValue(false);
 });
 const file = (id: string) => ({ id, name: `${id}.pdf`, type: 'application/pdf', size: 1, lastModified: 1, dataUrl: 'data:application/pdf;base64,WA==' });
 const record = (overrides: Partial<TenantRecord> = {}): TenantRecord => ({
@@ -92,7 +102,8 @@ function Fields() {
 }
 
 function Harness({ initial, update, error }: { initial: TenantFormData; update: (data: TenantFormData) => unknown; error: (value: string) => void }) {
-    return <TenantEditFormProvider initialState={initial} activeTab="info2" setActiveTab={vi.fn()} onUpdateTenant={update} onTenantUpdated={vi.fn()} onSubmitError={error}><Fields /></TenantEditFormProvider>;
+    const router = createMemoryRouter([{ path: '/', element: <TenantEditFormProvider entityId="tenant-a" initialState={initial} activeTab="info2" setActiveTab={vi.fn()} onUpdateTenant={update} onTenantUpdated={vi.fn()} onExitDraft={vi.fn()} onSubmitError={error}><Fields /></TenantEditFormProvider> }]);
+    return <RouterProvider router={router} />;
 }
 
 describe('Edit Tenant form C5.2', () => {
@@ -116,11 +127,10 @@ describe('Edit Tenant form C5.2', () => {
         const user = userEvent.setup();
         const update = vi.fn();
         render(<Harness initial={tenantRecordToFormData(record())} update={update} error={vi.fn()} />);
-        expect(screen.queryByText('Salva bozza')).toBeNull();
-        const name = screen.getByLabelText(/^Nome/);
+        const name = await screen.findByLabelText(/^Nome/);
         expect((name as HTMLInputElement).value).toBe('Ada');
         await user.clear(name); await user.type(name, 'Augusta');
-        await user.click(screen.getByText('Salva modifiche'));
+        await user.click(await screen.findByText('Salva modifiche'));
         await waitFor(() => expect(update).toHaveBeenCalledWith(expect.objectContaining({ TenantFirstName: 'Augusta' })));
         expect((name as HTMLInputElement).value).toBe('Augusta');
     });
@@ -134,18 +144,20 @@ describe('Edit Tenant form C5.2', () => {
         const error = vi.fn();
         const initial = tenantRecordToFormData(record({ type, companyName: type === 'company' ? 'Acme' : '' }));
         render(<Harness initial={initial} update={() => { throw new DuplicateTenantFiscalIdentityError(field, 'other'); }} error={error} />);
-        await user.click(screen.getByText('Salva modifiche'));
+        await user.click(await screen.findByText('Salva modifiche'));
         expect((await screen.findByTestId(target)).textContent).toMatch(/stess/);
         expect(error).toHaveBeenCalled();
+        expect(draftRepository.delete).not.toHaveBeenCalled();
     });
 
     it('Tenant scomparso mostra messaggio e preserva il form', async () => {
         const user = userEvent.setup(); const error = vi.fn();
         render(<Harness initial={tenantRecordToFormData(record())} update={() => { throw new TenantNotFoundError('tenant-a'); }} error={error} />);
-        const name = screen.getByLabelText('Nome'); await user.clear(name); await user.type(name, 'Locale');
+        const name = await screen.findByLabelText('Nome'); await user.clear(name); await user.type(name, 'Locale');
         await user.click(screen.getByText('Salva modifiche'));
         await waitFor(() => expect(error).toHaveBeenCalledWith('Inquilino non più disponibile.'));
         expect((name as HTMLInputElement).value).toBe('Locale');
+        expect(draftRepository.delete).not.toHaveBeenCalled();
     });
 
     it('missing iniziale isola account A da un Tenant presente soltanto in B senza write', async () => {
@@ -170,7 +182,7 @@ describe('Edit Tenant form C5.2', () => {
         expect((screen.getByLabelText('Codice fiscale') as HTMLInputElement).value).toBe('PERSON-CF');
         expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('ada@example.test');
         expect((screen.getByLabelText('Indirizzo') as HTMLInputElement).value).toBe('Via Roma 1');
-        expect(screen.queryByText('Salva bozza')).toBeNull();
+        expect(screen.getByText('Salva bozza')).toBeTruthy();
         expect(screen.getByRole('button', { name: 'Salva modifiche' })).toBeTruthy();
         expect(screen.queryByText('Bozza modifica inquilino disponibile')).toBeNull();
         expect(screen.queryByText('Modifiche non salvate')).toBeNull();
@@ -178,6 +190,21 @@ describe('Edit Tenant form C5.2', () => {
         rerender(<RouterProvider router={router} />);
         expect((name as HTMLInputElement).value).toBe('Locale');
         expect(storage.writesFor(KEY_A)).toHaveLength(0);
+    });
+
+    it('Annulla dal restore edit preserva la bozza e naviga al dettaglio con replace', async () => {
+        installStorage(database([record()]));
+        const payload = tenantRecordToFormData(record({ firstName: 'Bozza' }));
+        draftRepository.get.mockResolvedValueOnce({
+            id: 'draft-edit-a', accountId: ACCOUNT_A, formType: 'tenant', mode: 'edit', entityId: 'tenant-a',
+            payload, schemaVersion: 1, createdAt: NOW, updatedAt: NOW,
+        });
+        const { router } = renderPage('tenant-a');
+        expect(await screen.findByText('Bozza modifica inquilino disponibile')).toBeTruthy();
+        await userEvent.click(screen.getByRole('button', { name: 'Annulla' }));
+        await waitFor(() => expect(router.state.location.pathname).toBe('/tenants/tenant-a'));
+        expect(router.state.historyAction).toBe('REPLACE');
+        expect(draftRepository.delete).not.toHaveBeenCalled();
     });
 
     it('cambio Tenant ID ricrea tutta la hydration identity senza stato o write del Tenant precedente', async () => {
@@ -197,7 +224,14 @@ describe('Edit Tenant form C5.2', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Informazioni aggiuntive' }));
         storage.resetOperationLogs();
 
-        await router.navigate('/tenants/tenant-b/edit');
+        const navigation = router.navigate('/tenants/tenant-b/edit');
+        await waitFor(() => {
+            expect(router.state.location.pathname === '/tenants/tenant-b/edit'
+                || screen.queryByRole('button', { name: 'Abbandona' }) !== null).toBe(true);
+        });
+        const discard = screen.queryByRole('button', { name: 'Abbandona' });
+        if (discard) await userEvent.click(discard);
+        await navigation;
 
         expect(await screen.findByRole('heading', { name: 'Tipo' }, { timeout: 10_000 })).toBeTruthy();
         expect((screen.getByLabelText(/^Nome/) as HTMLInputElement).value).toBe('Grace');
