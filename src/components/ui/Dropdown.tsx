@@ -9,6 +9,7 @@ export interface DropdownItem {
     href?: string;
     danger?: boolean;
     warning?: boolean;
+    disabled?: boolean;
     onClick?: () => void;
 }
 
@@ -53,6 +54,8 @@ export function Dropdown({ trigger, items, align = 'left', className = '' }: Dro
         e.preventDefault();
         e.stopPropagation();
 
+        if (item.disabled) return;
+
         if (item.onClick) {
             item.onClick();
         }
@@ -91,11 +94,13 @@ export function Dropdown({ trigger, items, align = 'left', className = '' }: Dro
                                 <button
                                     key={item.id}
                                     type="button"
+                                    disabled={item.disabled}
+                                    aria-disabled={item.disabled}
                                     onClick={(e) => handleItemClick(e, item)}
                                     style={warningStyle}
                                     className={`
                     w-full flex items-center gap-2 px-4 py-2 text-sm
-                    transition-colors duration-150 cursor-pointer
+                    transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60
                     ${item.danger
                                             ? 'text-red-600 hover:bg-red-50'
                                             : item.warning

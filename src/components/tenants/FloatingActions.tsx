@@ -41,7 +41,7 @@ export function FloatingActions({ selectedCount, onDelete, onArchive, onRestore,
                     {view === 'active' ? <Button variant="secondary" size="sm" icon={Archive} onClick={onArchive}>Archivia</Button> : <Button variant="secondary" size="sm" icon={RotateCcw} onClick={onRestore}>Ripristina</Button>}
 
                     {/* Message */}
-                    <Button variant="secondary" size="sm" icon={MessageCircle} onClick={onMessage}>
+                    <Button variant="secondary" size="sm" icon={MessageCircle} disabled aria-disabled="true" title="Funzione non ancora implementata" className="border border-yellow-300 bg-yellow-100 text-yellow-700" onClick={onMessage}>
                         Messaggio
                     </Button>
                 </motion.div>

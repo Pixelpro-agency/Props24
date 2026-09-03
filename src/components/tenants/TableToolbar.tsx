@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, ArrowUpDown, Settings, ChevronDown, Download, X } from 'lucide-react';
+import { Search, Settings, ChevronDown, Download, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { VisibilityState } from '@tanstack/react-table';
 
@@ -24,17 +24,7 @@ const toggleableColumns = [
     { id: 'status', label: 'Stato' },
 ];
 
-const sortOptions = [
-    { field: 'displayName', label: 'Inquilino' },
-    { field: 'type', label: 'Tipo' },
-    { field: 'propertyName', label: 'Proprietà' },
-    { field: 'mobilePhone', label: 'Telefono' },
-    { field: 'email', label: 'Email' },
-    { field: 'balance', label: 'Saldo' },
-    { field: 'status', label: 'Stato' },
-];
-
-type OpenDropdown = null | 'pageSize' | 'columns' | 'sort';
+type OpenDropdown = null | 'pageSize' | 'columns';
 
 export function TableToolbar({
     pageSize,
@@ -132,9 +122,11 @@ export function TableToolbar({
                 {onExportClick && (
                     <button
                         type="button"
-                        onClick={onExportClick}
-                        className="p-2 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
-                        title="Esporta"
+                        disabled
+                        aria-disabled="true"
+                        aria-label="Esporta"
+                        className="p-2 rounded border border-yellow-300 bg-yellow-100 text-yellow-700 disabled:cursor-not-allowed disabled:opacity-70"
+                        title="Funzione non ancora implementata"
                     >
                         <Download className="w-4 h-4" />
                     </button>
@@ -184,44 +176,6 @@ export function TableToolbar({
                         <Search className="w-4 h-4" />
                     </button>
                 )}
-
-                {/* Sort dropdown */}
-                <div className="relative">
-                    <button
-                        type="button"
-                        onClick={() => toggleDropdown('sort')}
-                        className="p-2 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
-                        title="Ordina"
-                    >
-                        <ArrowUpDown className="w-4 h-4" />
-                    </button>
-
-                    <AnimatePresence>
-                        {openDropdown === 'sort' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -4 }}
-                                transition={{ duration: 0.12 }}
-                                className="absolute right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg py-1 min-w-[160px]"
-                            >
-                                <div className="px-3 pb-1.5 text-xs font-semibold text-gray-400 uppercase">
-                                    Ordina per
-                                </div>
-                                {sortOptions.map((opt) => (
-                                    <button
-                                        key={opt.field}
-                                        type="button"
-                                        onClick={() => setOpenDropdown(null)}
-                                        className="w-full text-left px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors"
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
 
                 {/* Columns visibility */}
                 <div className="relative">
