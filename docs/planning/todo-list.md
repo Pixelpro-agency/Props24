@@ -2,7 +2,7 @@
 
 ## Scopo
 
-Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementazioni residue](./implementazioni.md) contiene dettaglio, dipendenze e criteri di chiusura; [Decisioni da validare](./decisioni-da-validare.md) contiene le decisioni professionali ancora aperte o rinviate e le decisioni validate ancora rilevanti per task non concluse. Specifiche e codice verificato restano le fonti tecniche. La Todo non sostituisce la futura documentazione architetturale.
+Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementazioni residue](./implementazioni.md) contiene dettaglio, dipendenze e criteri di chiusura; [Decisioni da validare](./decisioni-da-validare.md) contiene le decisioni professionali ancora aperte o rinviate e le decisioni validate ancora rilevanti per task non concluse. Specifiche e codice verificato restano le fonti tecniche.
 
 - [Implementazioni residue](./implementazioni.md)
 - [Decisioni da validare](./decisioni-da-validare.md)
@@ -13,16 +13,16 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 
 ## Riepilogo
 
-- Task principali: 72
+- Task principali: 67
 - Completate integralmente: 27
 - Parzialmente completate: 3
-- Non concluse: 42
+- Non concluse: 37
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
 - Prossimo punto tecnico: da definire dopo il riallineamento del piano
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 42 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 37 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
@@ -192,7 +192,6 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
 ## Blocco G — Azioni simulate, mock e route
 
 - [ ] G1 — Inventario statico aggiornato — **APERTO**
-- [ ] G2 — Integrare l’inventario route nella documentazione tecnica — **APERTO; dipende da G1 e confluisce in L2**
 - [ ] G3 — Residui azioni unità e inquilini — **DA RIVALUTARE DOPO G1; non deve riaprire i lifecycle già completati delle Unit o dei Tenant, non deve duplicare B7 e non deve riaprire azioni Tenant già classificate dalla specifica della fase locale**
 - [ ] G4 — Locazioni — **DECISIONE PRODOTTO / FUTURO**
 - [ ] G5 — Dashboard e navbar — **DECISIONE PRODOTTO**
@@ -311,26 +310,6 @@ Baseline tecnica corrente: 113 file di test / 1288 test PASS. J1 resta parziale 
 - [ ] K2 — Collaudo browser CRUD — **FINALE**
 - [ ] K3 — Audit globale azioni e route — **FINALE**
 - [ ] K4 — Gate tecnico finale — **FINALE**
-
-## Blocco L — Documentazione tecnica
-
-- [ ] L1 — Acquisizione modello — **IN ATTESA dei documenti modello dell’altro progetto**
-- [ ] L2 — Documentazione Props24 — **FUTURO**
-  - [ ] Entrypoint e composizione dell’app — **FUTURO**
-  - [ ] Struttura delle cartelle e ownership dei moduli — **FUTURO**
-  - [ ] Route e navigazione — **FUTURO**
-  - [ ] API, fetch e integrazioni esterne — **FUTURO**
-  - [ ] Database locale e storage — **FUTURO**
-  - [ ] Porte, repository e adapter — **FUTURO**
-  - [ ] Subscription e flussi di aggiornamento — **FUTURO**
-  - [ ] Autenticazione e isolamento account — **FUTURO**
-  - [ ] Lifecycle dei quattro CRUD — **FUTURO**
-  - [ ] Documenti e pagamenti — **FUTURO**
-  - [ ] Contratti e invarianti da preservare — **FUTURO**
-  - [ ] Test e comandi di verifica — **FUTURO**
-  - [ ] Estensione futura PostgreSQL/Supabase — **FUTURO**
-- [ ] L3 — README — **FUTURO**
-- [ ] L4 — README database — **FUTURO**
 
 ## Decisioni professionali ancora aperte o rinviate
 

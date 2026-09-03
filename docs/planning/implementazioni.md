@@ -17,7 +17,6 @@ Non è:
 - cronologia delle modifiche;
 - raccolta di prompt già eseguiti;
 - elenco delle funzionalità già completate;
-- sostituto della futura documentazione tecnica.
 
 Stato verificato sul repository:
 
@@ -378,20 +377,6 @@ Classificare:
 - mock runtime;
 - codice mock non più usato;
 - richiede browser.
-
-## TASK G2 — Integrare l’inventario route nella documentazione tecnica
-
-**Dipendenza:** G1.
-
-Dopo la TASK G1, l’inventario verificato delle route deve confluire nella futura documentazione tecnica.
-
-La task deve:
-
-- distinguere route reali, route mancanti, controlli disabilitati e servizi non-route;
-- usare come fonte tecnica il confronto tra `src/App.tsx`, `src/utils/routes.ts` e gli accessi UI reali;
-- non creare pagine vuote soltanto per far risultare una route esistente;
-- non assegnare priorità di prodotto non approvate dall’utente;
-- non creare un registro parallelo separato dalla documentazione tecnica.
 
 ## TASK G3 — Residui azioni unità e inquilini
 
@@ -829,7 +814,7 @@ Scenario minimo:
 
 ## TASK K3 — Audit globale azioni e route
 
-Basato sulle decisioni G1–G7:
+Basato sulle decisioni applicabili del Blocco G:
 
 - ogni route dichiarata;
 - ogni link visibile;
@@ -847,59 +832,6 @@ Basato sulle decisioni G1–G7:
 - suite automatica completa positiva;
 - report separato del debito globale residuo;
 - nessun allargamento automatico.
-
-# BLOCCO L — Documentazione tecnica
-
-## TASK L1 — Acquisizione modello
-
-L’utente fornirà i documenti dell’altro progetto per definire:
-
-- struttura;
-- convenzioni;
-- frontmatter;
-- indici;
-- livello di dettaglio;
-- stile per programmatori e AI.
-
-Non progettare la struttura definitiva prima di riceverli.
-
-## TASK L2 — Documentazione Props24
-
-La futura documentazione dovrà permettere di individuare rapidamente:
-
-- entrypoint;
-- route;
-- moduli owner;
-- dati e relazioni;
-- repository e mutazioni;
-- lifecycle dei quattro CRUD;
-- autenticazione e isolamento account;
-- documenti e pagamenti;
-- contratti da preservare;
-- comandi di sviluppo e verifica;
-- estensioni previste e loro dipendenze.
-
-Non copiare il piano operativo nella documentazione tecnica.
-
-## TASK L3 — README
-
-Il `README.md` root è ancora quello del template Vite e deve essere sostituito.
-
-Il nuovo README dovrà essere una porta d’ingresso breve verso:
-
-- scopo del progetto;
-- prerequisiti;
-- installazione e avvio;
-- build e lint;
-- mappa della documentazione;
-- stato locale/produzione;
-- regole per contribuire.
-
-## TASK L4 — README database
-
-`src/db/README.md` contiene previsioni ormai superate e va riscritto o sostituito dalla documentazione tecnica del modulo database.
-
-Non deve continuare a descrivere come futuro ciò che è già presente.
 
 # 5. Criteri di chiusura complessivi
 
@@ -938,13 +870,12 @@ Il ciclo delle implementazioni può essere chiuso soltanto quando:
 - le funzioni future sono visibili ma gialle e disabilitate;
 - i mock runtime sono rimossi dai flussi approvati.
 
-### 6. Gate tecnici e documentali
+### 6. Gate tecnici e di collaudo
 
 - build positiva;
 - lint mirato positivo;
 - audit statico completato;
 - collaudo browser completato;
-- documentazione tecnica separata e aggiornata.
 
 Supabase resta una fase successiva e non blocca il collaudo locale. Le task backend e i servizi esterni non bloccano la chiusura della fase locale, purché:
 
