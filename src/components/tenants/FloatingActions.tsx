@@ -7,11 +7,10 @@ interface FloatingActionsProps {
     onDelete: () => void;
     onArchive: () => void;
     onRestore: () => void;
-    onMessage: () => void;
     view: 'active' | 'archived';
 }
 
-export function FloatingActions({ selectedCount, onDelete, onArchive, onRestore, onMessage, view }: FloatingActionsProps) {
+export function FloatingActions({ selectedCount, onDelete, onArchive, onRestore, view }: FloatingActionsProps) {
     return (
         <AnimatePresence>
             {selectedCount > 0 && (
@@ -41,7 +40,7 @@ export function FloatingActions({ selectedCount, onDelete, onArchive, onRestore,
                     {view === 'active' ? <Button variant="secondary" size="sm" icon={Archive} onClick={onArchive}>Archivia</Button> : <Button variant="secondary" size="sm" icon={RotateCcw} onClick={onRestore}>Ripristina</Button>}
 
                     {/* Message */}
-                    <Button variant="secondary" size="sm" icon={MessageCircle} disabled aria-disabled="true" title="Funzione non ancora implementata" className="border border-yellow-300 bg-yellow-100 text-yellow-700" onClick={onMessage}>
+                    <Button variant="secondary" size="sm" icon={MessageCircle} disabled aria-disabled="true" title="Funzione non ancora implementata" className="border border-yellow-300 bg-yellow-100 text-yellow-700">
                         Messaggio
                     </Button>
                 </motion.div>

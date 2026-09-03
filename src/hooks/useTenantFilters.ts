@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import type { TenantListItem } from '../db/tenantRepository';
 import { useTenantsDb } from './useTenantsDb';
 
 export interface TenantFilterState {
@@ -56,22 +55,4 @@ export function useTenantFilters({ activeTab }: UseTenantFiltersOptions) {
         filteredData,
         updateQuery,
     };
-}
-
-/**
- * Builds email recipients from the currently selected rows.
- */
-export function useTenantRecipients(
-    selectedIds: string[],
-    filteredData: TenantListItem[],
-) {
-    return useMemo(() => {
-        return selectedIds
-            .map((id) => {
-                const tenant = filteredData.find((item) => item.id === id);
-                if (!tenant || !tenant.email) return null;
-                return { id: tenant.id, name: tenant.displayName, email: tenant.email };
-            })
-            .filter(Boolean) as { id: string; name: string; email: string }[];
-    }, [selectedIds, filteredData]);
 }

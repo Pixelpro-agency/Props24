@@ -9,29 +9,17 @@ import { TableToolbar } from '../components/tenants/TableToolbar';
 import { DataTable } from '../components/tenants/DataTable';
 import { EmptyState } from '../components/tenants/EmptyState';
 import { FloatingActions } from '../components/tenants/FloatingActions';
-import { ExportModal } from '../components/tenants/ExportModal';
-import { DownloadModal } from '../components/tenants/DownloadModal';
-import { ImportErrorModal } from '../components/tenants/ImportErrorModal';
-import { TerminateLeaseModal } from '../components/tenants/TerminateLeaseModal';
-import { EmailNotificationModal } from '../components/tenants/EmailNotificationModal';
 import { FeedbackBox } from '../components/tenants/FeedbackBox';
 import { StatusToast, type StatusToastState } from '../components/ui/StatusToast';
 
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useTableSelection } from '../hooks/useTableSelection';
-import { useTenantFilters, useTenantRecipients } from '../hooks/useTenantFilters';
-import { useTenantActions } from '../hooks/useTenantActions';
+import { useTenantFilters } from '../hooks/useTenantFilters';
 import { createTenantRepository, sendTenantInvite } from '../db/tenantRepository';
 import { useAuth } from '../auth/AuthContext';
 import { TenantActionModal, type TenantActionOperation } from '../components/tenants/TenantActionModal';
 
 
-
-// Opzioni locali usate dai modali ancora non collegati.
-const leaseOptions = [
-    { value: 'lease-001', label: 'Appartamento Centrale - dal 01/01/2025' },
-    { value: 'lease-002', label: 'Ufficio Duomo - dal 15/03/2024' },
-];
 
 export function TenantsPage() {
     const navigate = useNavigate();
@@ -57,15 +45,6 @@ export function TenantsPage() {
     // Row selection
     const { rowSelection, setRowSelection, selectedCount, selectedIds, clearSelection } = useTableSelection();
 
-    // Bulk actions & modals (hook)
-    const {
-        isModalOpen,
-        openModalByName,
-        closeModal,
-        handleMessage,
-        handleExport,
-    } = useTenantActions();
-
     const requestSingleAction = useCallback((operation: TenantActionOperation, tenantId: string) => setPendingAction({ operation, mode: 'single', ids: [tenantId] }), []);
     const requestBulkAction = useCallback((operation: TenantActionOperation) => setPendingAction({ operation, mode: 'bulk', ids: [...selectedIds] }), [selectedIds]);
     const confirmAction = useCallback(() => {
@@ -78,9 +57,6 @@ export function TenantsPage() {
             setPendingAction(null); clearSelection(); setToast({ title: 'Operazione completata', message: `${ids.length} ${ids.length === 1 ? 'inquilino aggiornato' : 'inquilini aggiornati'}.` });
         } catch (error) { setToast({ variant: 'error', title: 'Errore', message: error instanceof Error ? error.message : 'Operazione non riuscita.' }); }
     }, [clearSelection, pendingAction, repository]);
-
-    // Email recipients from selection
-    const emailRecipients = useTenantRecipients(selectedIds, filteredData);
 
     // Tab change clears selection
     const handleTabChange = useCallback(
@@ -134,7 +110,6 @@ export function TenantsPage() {
                     onColumnVisibilityChange={setColumnVisibility}
                     searchQuery={filters.query}
                     onSearchChange={(query) => { updateQuery(query); clearSelection(); }}
-                    onExportClick={() => openModalByName('export')}
                 />
 
                 {/* Table or Empty State */}
@@ -162,40 +137,11 @@ export function TenantsPage() {
                 onDelete={() => requestBulkAction('delete')}
                 onArchive={() => requestBulkAction('archive')}
                 onRestore={() => requestBulkAction('restore')}
-                onMessage={handleMessage}
             />
 
             {/* Feedback */}
             <FeedbackBox />
 
-            {/* === Modals === */}
-            <ExportModal
-                isOpen={isModalOpen('export')}
-                onClose={closeModal}
-                onConfirm={handleExport}
-            />
-
-            <DownloadModal
-                isOpen={isModalOpen('download')}
-                onClose={closeModal}
-            />
-
-            <ImportErrorModal
-                isOpen={isModalOpen('importError')}
-                onClose={closeModal}
-            />
-
-            <TerminateLeaseModal
-                isOpen={isModalOpen('terminateLease')}
-                onClose={closeModal}
-                leaseOptions={leaseOptions}
-            />
-
-            <EmailNotificationModal
-                isOpen={isModalOpen('emailNotification')}
-                onClose={closeModal}
-                recipients={emailRecipients}
-            />
             <TenantActionModal isOpen={pendingAction !== null} operation={pendingAction?.operation ?? 'archive'} count={pendingAction?.ids.length ?? 0} onClose={() => setPendingAction(null)} onConfirm={confirmAction} />
         </div>
     );

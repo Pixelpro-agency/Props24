@@ -10,7 +10,6 @@ interface TableToolbarProps {
     onColumnVisibilityChange: (vis: VisibilityState) => void;
     searchQuery: string;
     onSearchChange: (query: string) => void;
-    onExportClick?: () => void;
 }
 
 const pageSizeOptions = [5, 10, 20, 30, 40, 50, 100];
@@ -33,7 +32,6 @@ export function TableToolbar({
     onColumnVisibilityChange,
     searchQuery,
     onSearchChange,
-    onExportClick,
 }: TableToolbarProps) {
     const [openDropdown, setOpenDropdown] = useState<OpenDropdown>(null);
     const [searchOpen, setSearchOpen] = useState(false);
@@ -119,8 +117,7 @@ export function TableToolbar({
             {/* Right — Action icons */}
             <div className="flex items-center gap-1">
                 {/* Export button */}
-                {onExportClick && (
-                    <button
+                <button
                         type="button"
                         disabled
                         aria-disabled="true"
@@ -129,8 +126,7 @@ export function TableToolbar({
                         title="Funzione non ancora implementata"
                     >
                         <Download className="w-4 h-4" />
-                    </button>
-                )}
+                </button>
 
                 {/* Inline search */}
                 <AnimatePresence>
