@@ -107,6 +107,30 @@ describe('Tenant repository update e lifecycle C5.1', () => {
         expect(update).toEqual(original);
     });
 
+    it('update company same-type preserva i documenti identita legacy con una sola write', async () => {
+        const tenants = await modules();
+        const fixture = fakeRepository(database());
+        const repository = tenants.createTenantRepositoryOperations(fixture.gateway);
+        const created = repository.create(companyForm({ TenantCompanyName: 'Acme iniziale' }));
+        const front = { id: 'legacy-company-front', name: 'front.pdf', type: 'application/pdf', size: 1, lastModified: 1, dataUrl: 'data:application/pdf;base64,WA==' };
+        const back = { id: 'legacy-company-back', name: 'back.pdf', type: 'application/pdf', size: 1, lastModified: 1, dataUrl: 'data:application/pdf;base64,WA==' };
+        const persisted: TenantRecord = { ...created, identityDocumentFile: front, identityDocumentBackFile: back };
+        fixture.gateway.saveDatabase({ ...fixture.current(), tenants: [persisted] });
+        fixture.saves.length = 0;
+
+        const updated = repository.update(persisted.id, companyForm({ TenantCompanyName: 'Acme aggiornata' }));
+
+        expect(updated.companyName).toBe('Acme aggiornata');
+        expect(updated.identityDocumentFile).toEqual(front);
+        expect(updated.identityDocumentBackFile).toEqual(back);
+        expect(updated.identityDocumentFile?.id).toBe('legacy-company-front');
+        expect(updated.identityDocumentBackFile?.id).toBe('legacy-company-back');
+        const stored = fixture.current().tenants.find((tenant) => tenant.id === persisted.id)!;
+        expect(stored.identityDocumentFile).toEqual(front);
+        expect(stored.identityDocumentBackFile).toEqual(back);
+        expect(fixture.saves).toHaveLength(1);
+    });
+
     it('return update deriva dal database restituito dalla persistence e save failure non ritenta', async () => {
         const tenants = await modules();
         const seed = fakeRepository(database());

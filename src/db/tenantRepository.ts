@@ -182,6 +182,7 @@ function tenantDeleteBlockers(database: LocalDatabase, ids: string[]): TenantDel
 }
 
 function updateTenantCandidate(current: TenantRecord, formData: TenantFormData, updatedAt: string): TenantRecord {
+    const preserveExistingCompanyIdentity = current.type === 'company' && formData.TenantType === 'company';
     return {
         ...current,
         updatedAt,
@@ -202,8 +203,12 @@ function updateTenantCandidate(current: TenantRecord, formData: TenantFormData, 
         idType: formData.TenantIDType === 'ID' || formData.TenantIDType === 'passport' || formData.TenantIDType === 'drivinglicense' || formData.TenantIDType === 'residencepermit' ? formData.TenantIDType : '',
         idNumber: stringValue(formData.TenantIDNumber),
         idExpiry: stringValue(formData.TenantIDExpiry),
-        identityDocumentFile: formData.TenantType === 'person' ? formData.TenantIDCard : null,
-        identityDocumentBackFile: formData.TenantType === 'person' ? formData.TenantIDCardBack : null,
+        identityDocumentFile: formData.TenantType === 'person'
+            ? formData.TenantIDCard
+            : preserveExistingCompanyIdentity ? current.identityDocumentFile : null,
+        identityDocumentBackFile: formData.TenantType === 'person'
+            ? formData.TenantIDCardBack
+            : preserveExistingCompanyIdentity ? current.identityDocumentBackFile : null,
         companyName: stringValue(formData.TenantCompanyName),
         companyFiscalCode: formData.TenantType === 'company' ? normalizeFiscalCode(formData.TenantCompanyFiscalCode) : '',
         vatNumber: stringValue(formData.TenantVatNumber),

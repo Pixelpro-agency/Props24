@@ -184,4 +184,33 @@ describe('Tenant edit draft C5.3', () => {
         await waitFor(() => expect(updated).toHaveBeenCalledOnce());
         expect(update).toHaveBeenCalledOnce(); expect(draft.delete).toHaveBeenCalledTimes(2);
     });
+
+    it('retry cleanup fallisce ancora e poi riesce senza ripetere update', async () => {
+        const update = vi.fn().mockResolvedValue(undefined);
+        const updated = vi.fn();
+        draft.delete
+            .mockRejectedValueOnce(new Error('delete fail 1'))
+            .mockRejectedValueOnce(new Error('delete fail 2'))
+            .mockResolvedValueOnce(true);
+        mount(update, updated);
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Salva modifiche' }));
+        expect(await screen.findByText('Inquilino aggiornato, pulizia incompleta')).toBeTruthy();
+        expect(update).toHaveBeenCalledTimes(1);
+        expect(draft.delete).toHaveBeenCalledTimes(1);
+        expect(updated).not.toHaveBeenCalled();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Riprova pulizia' }));
+        await waitFor(() => expect(draft.delete).toHaveBeenCalledTimes(2));
+        expect(update).toHaveBeenCalledTimes(1);
+        expect(updated).not.toHaveBeenCalled();
+        expect(screen.getByText('Inquilino aggiornato, pulizia incompleta')).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Riprova pulizia' })).toBeTruthy();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Riprova pulizia' }));
+        await waitFor(() => expect(updated).toHaveBeenCalledTimes(1));
+        expect(update).toHaveBeenCalledTimes(1);
+        expect(draft.delete).toHaveBeenCalledTimes(3);
+        expect(screen.queryByText('Inquilino aggiornato, pulizia incompleta')).toBeNull();
+    });
 });
