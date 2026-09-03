@@ -11,10 +11,7 @@ export type ModalName =
  * Hook that manages modal visibility and bulk action handlers
  * for the tenants page.
  */
-export function useTenantActions(
-    selectedCount: number,
-    clearSelection: () => void,
-) {
+export function useTenantActions() {
     const [openModal, setOpenModal] = useState<ModalName | null>(null);
 
     const openModalByName = useCallback((name: ModalName) => {
@@ -30,21 +27,6 @@ export function useTenantActions(
         [openModal],
     );
 
-    // Bulk action handlers
-    const handleDelete = useCallback(() => {
-        if (window.confirm(`Sei sicuro di voler eliminare ${selectedCount} inquilini selezionati?`)) {
-            console.log(`Deleted ${selectedCount} tenants`);
-            clearSelection();
-        }
-    }, [selectedCount, clearSelection]);
-
-    const handleArchive = useCallback(() => {
-        if (window.confirm(`Conferma prima di archiviare ${selectedCount} locatari selezionati`)) {
-            console.log(`Archived ${selectedCount} tenants`);
-            clearSelection();
-        }
-    }, [selectedCount, clearSelection]);
-
     const handleMessage = useCallback(() => {
         setOpenModal('emailNotification');
     }, []);
@@ -59,8 +41,6 @@ export function useTenantActions(
         openModalByName,
         closeModal,
         isModalOpen,
-        handleDelete,
-        handleArchive,
         handleMessage,
         handleExport,
     };

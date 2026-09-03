@@ -14,11 +14,12 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import {
     AlertTriangle, Archive, ArrowDown, ArrowUp, ArrowUpDown, CalendarDays,
     ChevronLeft, ChevronRight, Coins, KeyRound, Mail, MessageSquare,
-    MoreHorizontal, Pencil, Trash2, UserRound, WalletCards, type LucideIcon,
+    MoreHorizontal, Pencil, RotateCcw, Trash2, UserRound, WalletCards, type LucideIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { TenantListItem } from '../../db/tenantRepository';
 import { TENANT_STATUS_CONFIG } from '../../db/tenantRepository';
+import type { TenantActionOperation } from './TenantActionModal';
 
 interface DataTableProps {
     data: TenantListItem[];
@@ -29,6 +30,7 @@ interface DataTableProps {
     onRowSelectionChange: (sel: RowSelectionState) => void;
     onSendInvite?: (tenantId: string) => void | Promise<void>;
     sendingInviteId?: string | null;
+    onRequestAction: (operation: TenantActionOperation, tenantId: string) => void;
 }
 
 const columnHelper = createColumnHelper<TenantListItem>();
@@ -74,6 +76,7 @@ export function DataTable({
     onRowSelectionChange,
     onSendInvite,
     sendingInviteId,
+    onRequestAction,
 }: DataTableProps) {
     const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -266,7 +269,7 @@ export function DataTable({
                                 >
                                     {/* TODO: collegare le azioni in giallo alle rispettive route,
                                         modali e operazioni repository quando i relativi flussi saranno completi. */}
-                                    <PendingAction icon={Pencil} label="Modifica" />
+                                    <MenuItem><Link to={`/tenants/${tenant.id}/edit`} className="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700"><Pencil className="h-4 w-4" />Modifica</Link></MenuItem>
                                     <MenuItem>
                                         <Link
                                             to={`/tenants/${tenant.id}`}
@@ -298,8 +301,8 @@ export function DataTable({
                                     <PendingAction icon={WalletCards} label="Saldo locatario" />
                                     <PendingAction icon={Coins} label="Finanze" />
                                     <MenuSeparator />
-                                    <PendingAction icon={Archive} label="Archivia" />
-                                    <PendingAction icon={Trash2} label="Elimina" />
+                                    <MenuItem><button type="button" onClick={() => onRequestAction(tenant.archived ? 'restore' : 'archive', tenant.id)} className="flex w-full items-center gap-3 px-3 py-2 text-sm">{tenant.archived ? <RotateCcw className="h-4 w-4" /> : <Archive className="h-4 w-4" />}{tenant.archived ? 'Ripristina' : 'Archivia'}</button></MenuItem>
+                                    <MenuItem><button type="button" onClick={() => onRequestAction('delete', tenant.id)} className="flex w-full items-center gap-3 px-3 py-2 text-sm text-red-600"><Trash2 className="h-4 w-4" />Elimina</button></MenuItem>
                                 </MenuItems>
                             </Menu>
                         </div>
@@ -310,9 +313,10 @@ export function DataTable({
                 enableHiding: false,
             }),
         ],
-        [onSendInvite, sendingInviteId],
+        [onRequestAction, onSendInvite, sendingInviteId],
     );
 
+    // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is the established table authority here.
     const table = useReactTable({
         data,
         columns,

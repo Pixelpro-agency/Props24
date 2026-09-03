@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Archive, ArrowLeft, MoreHorizontal, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import type { TenantActionOperation } from '../tenants/TenantActionModal';
 
 interface TenantDetailHeaderProps {
     title: string;
-    onDeleteClick: () => void;
+    tenantId: string;
+    archived: boolean;
+    onRequestAction: (operation: TenantActionOperation) => void;
 }
 
-export function TenantDetailHeader({ title, onDeleteClick }: TenantDetailHeaderProps) {
+export function TenantDetailHeader({ title, tenantId, archived, onRequestAction }: TenantDetailHeaderProps) {
     const [menuOpen, setMenuOpen] = useState(false);
 
     return (
@@ -24,6 +27,7 @@ export function TenantDetailHeader({ title, onDeleteClick }: TenantDetailHeaderP
                     <h1 className="text-lg sm:text-xl font-semibold text-gray-800 leading-tight">
                         {title}
                     </h1>
+                    {archived && <span className="mt-1 inline-flex rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium">Archiviato</span>}
                 </div>
             </div>
             <div className="relative">
@@ -40,16 +44,16 @@ export function TenantDetailHeader({ title, onDeleteClick }: TenantDetailHeaderP
                         <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
                         {/* Dropdown menu */}
                         <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
-                            <button
-                                onClick={() => setMenuOpen(false)}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                            >
+                            <Link to={`/tenants/${tenantId}/edit`} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
                                 <Pencil className="w-4 h-4" /> Modifica
+                            </Link>
+                            <button onClick={() => { setMenuOpen(false); onRequestAction(archived ? 'restore' : 'archive'); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                                {archived ? <RotateCcw className="w-4 h-4" /> : <Archive className="w-4 h-4" />}{archived ? 'Ripristina' : 'Archivia'}
                             </button>
                             <button
                                 onClick={() => {
                                     setMenuOpen(false);
-                                    onDeleteClick();
+                                    onRequestAction('delete');
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                             >

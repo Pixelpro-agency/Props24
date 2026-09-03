@@ -1,5 +1,6 @@
 ﻿import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
 import type { VisibilityState } from '@tanstack/react-table';
 
 import { PageHeader } from '../components/tenants/PageHeader';
@@ -20,7 +21,9 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useTableSelection } from '../hooks/useTableSelection';
 import { useTenantFilters, useTenantRecipients } from '../hooks/useTenantFilters';
 import { useTenantActions } from '../hooks/useTenantActions';
-import { sendTenantInvite } from '../db/tenantRepository';
+import { createTenantRepository, sendTenantInvite } from '../db/tenantRepository';
+import { useAuth } from '../auth/AuthContext';
+import { TenantActionModal, type TenantActionOperation } from '../components/tenants/TenantActionModal';
 
 
 
@@ -32,6 +35,9 @@ const leaseOptions = [
 
 export function TenantsPage() {
     const navigate = useNavigate();
+    const { account } = useAuth();
+    const repository = useMemo(() => account?.id ? createTenantRepository({ accountId: account.id }) : null, [account?.id]);
+    const [pendingAction, setPendingAction] = useState<{ operation: TenantActionOperation; mode: 'single' | 'bulk'; ids: string[] } | null>(null);
 
     // Tab state
     const [activeTab, setActiveTab] = useState('active');
@@ -56,11 +62,22 @@ export function TenantsPage() {
         isModalOpen,
         openModalByName,
         closeModal,
-        handleDelete,
-        handleArchive,
         handleMessage,
         handleExport,
-    } = useTenantActions(selectedCount, clearSelection);
+    } = useTenantActions();
+
+    const requestSingleAction = useCallback((operation: TenantActionOperation, tenantId: string) => setPendingAction({ operation, mode: 'single', ids: [tenantId] }), []);
+    const requestBulkAction = useCallback((operation: TenantActionOperation) => setPendingAction({ operation, mode: 'bulk', ids: [...selectedIds] }), [selectedIds]);
+    const confirmAction = useCallback(() => {
+        if (!pendingAction) return;
+        if (!repository) { setToast({ variant: 'error', title: 'Errore', message: 'Database locale non disponibile: nessun account autenticato.' }); return; }
+        try {
+            const { operation, mode, ids } = pendingAction;
+            if (mode === 'bulk') { if (operation === 'archive') repository.archiveMany(ids); else if (operation === 'restore') repository.restoreMany(ids); else repository.deleteMany(ids); }
+            else if (operation === 'archive') repository.archive(ids[0]); else if (operation === 'restore') repository.restore(ids[0]); else repository.delete(ids[0]);
+            setPendingAction(null); clearSelection(); setToast({ title: 'Operazione completata', message: `${ids.length} ${ids.length === 1 ? 'inquilino aggiornato' : 'inquilini aggiornati'}.` });
+        } catch (error) { setToast({ variant: 'error', title: 'Errore', message: error instanceof Error ? error.message : 'Operazione non riuscita.' }); }
+    }, [clearSelection, pendingAction, repository]);
 
     // Email recipients from selection
     const emailRecipients = useTenantRecipients(selectedIds, filteredData);
@@ -105,7 +122,7 @@ export function TenantsPage() {
             <PageHeader activeTab={activeTab} onTabChange={handleTabChange} />
 
             {/* Filter Bar */}
-            <FilterPanel filters={filters} onFilterChange={setFilters} />
+            <FilterPanel filters={filters} onFilterChange={(next) => { setFilters(next); clearSelection(); }} />
 
             {/* Table container */}
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
@@ -116,7 +133,7 @@ export function TenantsPage() {
                     columnVisibility={columnVisibility}
                     onColumnVisibilityChange={setColumnVisibility}
                     searchQuery={filters.query}
-                    onSearchChange={updateQuery}
+                    onSearchChange={(query) => { updateQuery(query); clearSelection(); }}
                     onExportClick={() => openModalByName('export')}
                 />
 
@@ -131,6 +148,7 @@ export function TenantsPage() {
                         onRowSelectionChange={setRowSelection}
                         onSendInvite={handleSendInvite}
                         sendingInviteId={sendingInviteId}
+                        onRequestAction={requestSingleAction}
                     />
                 ) : (
                     <EmptyState onCreateClick={() => navigate('/tenants/new')} />
@@ -140,8 +158,10 @@ export function TenantsPage() {
             {/* Floating actions */}
             <FloatingActions
                 selectedCount={selectedCount}
-                onDelete={handleDelete}
-                onArchive={handleArchive}
+                view={activeTab === 'archived' ? 'archived' : 'active'}
+                onDelete={() => requestBulkAction('delete')}
+                onArchive={() => requestBulkAction('archive')}
+                onRestore={() => requestBulkAction('restore')}
                 onMessage={handleMessage}
             />
 
@@ -176,6 +196,7 @@ export function TenantsPage() {
                 onClose={closeModal}
                 recipients={emailRecipients}
             />
+            <TenantActionModal isOpen={pendingAction !== null} operation={pendingAction?.operation ?? 'archive'} count={pendingAction?.ids.length ?? 0} onClose={() => setPendingAction(null)} onConfirm={confirmAction} />
         </div>
     );
 }

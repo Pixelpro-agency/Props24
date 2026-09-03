@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 
@@ -7,24 +8,27 @@ import { useTenantDetail } from '../hooks/useTenantDetail';
 import { TenantDetailHeader } from '../components/tenant-detail/TenantDetailHeader';
 import { TenantInfoCard } from '../components/tenant-detail/TenantInfoCard';
 import { TenantDetailTabs } from '../components/tenant-detail/TenantDetailTabs';
-import { DeleteTenantModal } from '../components/tenant-detail/DeleteTenantModal';
+import { TenantActionModal, type TenantActionOperation } from '../components/tenants/TenantActionModal';
 import { StatusToast, type StatusToastState } from '../components/ui/StatusToast';
+import { useAuth } from '../auth/AuthContext';
+import { createTenantRepository } from '../db/tenantRepository';
 
 export function TenantDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
+    const { account } = useAuth();
+    const repository = useMemo(() => account?.id ? createTenantRepository({ accountId: account.id }) : null, [account?.id]);
 
     const {
         tenant,
         loading,
         error,
-        deleteTenant,
         inviteTenant,
         copyInviteLink
     } = useTenantDetail(id);
 
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [pendingAction, setPendingAction] = useState<TenantActionOperation | null>(null);
     const [toast, setToast] = useState<StatusToastState | null>(() => {
         const state = location.state as { toast?: StatusToastState } | null;
         return state?.toast || null;
@@ -34,19 +38,16 @@ export function TenantDetailPage() {
         if (toast && location.state) navigate(location.pathname, { replace: true, state: null });
     }, [location.pathname, location.state, navigate, toast]);
 
-    const getFullName = () => {
-        if (!tenant) return '';
-        if (tenant.type === 'company') return tenant.companyName || 'Azienda';
-        return `${tenant.firstName || ''} ${tenant.lastName || ''}`.trim();
-    };
-
-    const handleDelete = async () => {
+    const handleLifecycle = async () => {
+        if (!pendingAction || !id) return;
         try {
-            await deleteTenant();
-            setIsDeleteModalOpen(false);
-            navigate('/tenants');
+            if (!repository) throw new Error('Database locale non disponibile: nessun account autenticato.');
+            if (pendingAction === 'archive') repository.archive(id);
+            else if (pendingAction === 'restore') repository.restore(id);
+            else { repository.delete(id); navigate('/tenants', { replace: true }); }
+            setPendingAction(null);
+            setToast({ title: 'Operazione completata', message: 'Stato inquilino aggiornato.' });
         } catch (error) {
-            setIsDeleteModalOpen(false);
             setToast({
                 variant: 'error',
                 title: 'Errore',
@@ -102,11 +103,12 @@ export function TenantDetailPage() {
         );
     }
 
-    const fadeIn: any = {
+    const fadeIn = {
         initial: { opacity: 0, y: 12 },
         animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.35, ease: 'easeOut' },
+        transition: { duration: 0.35, ease: 'easeOut' as const },
     };
+    const archived = repository?.getById(id!)?.archived ?? false;
 
     return (
         <div className="min-h-screen">
@@ -115,7 +117,9 @@ export function TenantDetailPage() {
                 {/* Header */}
                 <TenantDetailHeader
                     title="Dati inquilino"
-                    onDeleteClick={() => setIsDeleteModalOpen(true)}
+                    tenantId={tenant.id}
+                    archived={archived}
+                    onRequestAction={setPendingAction}
                 />
 
                 {/* Grid a 2 colonne */}
@@ -140,12 +144,7 @@ export function TenantDetailPage() {
             </div>
 
             {/* Modali */}
-            <DeleteTenantModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleDelete}
-                tenantName={getFullName()}
-            />
+            <TenantActionModal isOpen={pendingAction !== null} operation={pendingAction ?? 'archive'} count={1} onClose={() => setPendingAction(null)} onConfirm={handleLifecycle} />
         </div>
     );
 }

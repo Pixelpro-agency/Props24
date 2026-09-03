@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import type { TenantDetail } from '../types/tenantDetail';
-import { deleteTenantById, getTenantById, sendTenantInvite } from '../db/tenantRepository';
+import { getTenantById, sendTenantInvite } from '../db/tenantRepository';
 import { subscribeJsonDb } from '../db/jsonDb';
 
 interface UseTenantDetailReturn {
     tenant: TenantDetail | null;
     loading: boolean;
     error: string | null;
-    deleteTenant: () => Promise<void>;
     inviteTenant: () => Promise<void>;
     copyInviteLink: () => void;
 }
@@ -45,11 +44,6 @@ export function useTenantDetail(id: string | undefined): UseTenantDetailReturn {
         return subscribeJsonDb(loadTenant);
     }, [id]);
 
-    const deleteTenant = async () => {
-        if (!tenant) return;
-        deleteTenantById(tenant.id);
-    };
-
     const inviteTenant = async () => {
         if (!tenant) return;
         sendTenantInvite(tenant.id);
@@ -65,7 +59,6 @@ export function useTenantDetail(id: string | undefined): UseTenantDetailReturn {
         tenant,
         loading,
         error,
-        deleteTenant,
         inviteTenant,
         copyInviteLink,
     };

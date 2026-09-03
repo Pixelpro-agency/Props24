@@ -1,15 +1,17 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Trash2, Archive, MessageCircle } from 'lucide-react';
+import { Trash2, Archive, MessageCircle, RotateCcw } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface FloatingActionsProps {
     selectedCount: number;
     onDelete: () => void;
     onArchive: () => void;
+    onRestore: () => void;
     onMessage: () => void;
+    view: 'active' | 'archived';
 }
 
-export function FloatingActions({ selectedCount, onDelete, onArchive, onMessage }: FloatingActionsProps) {
+export function FloatingActions({ selectedCount, onDelete, onArchive, onRestore, onMessage, view }: FloatingActionsProps) {
     return (
         <AnimatePresence>
             {selectedCount > 0 && (
@@ -36,9 +38,7 @@ export function FloatingActions({ selectedCount, onDelete, onArchive, onMessage 
                     </Button>
 
                     {/* Archive */}
-                    <Button variant="secondary" size="sm" icon={Archive} onClick={onArchive}>
-                        Archivia
-                    </Button>
+                    {view === 'active' ? <Button variant="secondary" size="sm" icon={Archive} onClick={onArchive}>Archivia</Button> : <Button variant="secondary" size="sm" icon={RotateCcw} onClick={onRestore}>Ripristina</Button>}
 
                     {/* Message */}
                     <Button variant="secondary" size="sm" icon={MessageCircle} onClick={onMessage}>
