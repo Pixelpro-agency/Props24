@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Home, Key, Search, User, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { NavbarSearchResult, SearchResultType } from '../../types/navbar';
-import { getJsonDb, subscribeJsonDb } from '../../db/jsonDb';
+import { useAuth } from '../../auth/AuthContext';
+import { createJsonDbAccountScope } from '../../db/jsonDb';
+import type { LocalDatabase } from '../../db/database.types';
 import { tenantDisplayName } from '../../db/dataSelectors';
 import { leaseRecordToListItem } from '../../db/leaseRepository';
 
-function buildSearchIndex(): NavbarSearchResult[] {
-    const db = getJsonDb();
+function buildSearchIndex(db: LocalDatabase): NavbarSearchResult[] {
     const results: NavbarSearchResult[] = [];
 
     db.properties.filter((property) => !property.archived).forEach((property) => {
@@ -69,25 +70,39 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ query, onQueryChange }: SearchBarProps) {
+    const { account } = useAuth();
+    const accountId = account?.id ?? null;
     const [isFocused, setIsFocused] = useState(false);
-    const [searchIndex, setSearchIndex] = useState<NavbarSearchResult[]>(() => buildSearchIndex());
+    const [searchState, setSearchState] = useState<{
+        accountId: string | null;
+        index: NavbarSearchResult[];
+    }>({ accountId: null, index: [] });
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const refresh = () => setSearchIndex(buildSearchIndex());
+        if (accountId === null) return undefined;
+
+        const scope = createJsonDbAccountScope(accountId);
+        const refresh = () => setSearchState({
+            accountId,
+            index: buildSearchIndex(scope.getDatabase()),
+        });
         refresh();
-        return subscribeJsonDb(refresh);
-    }, []);
+        return scope.subscribe(refresh);
+    }, [accountId]);
 
     const results = useMemo(() => {
         if (query.length < 2) return [];
         const q = query.toLowerCase();
+        const searchIndex = searchState.accountId === accountId
+            ? searchState.index
+            : [];
         return searchIndex
             .filter((result) => result.label.toLowerCase().includes(q) || (result.subtitle && result.subtitle.toLowerCase().includes(q)))
             .slice(0, 8);
-    }, [query, searchIndex]);
+    }, [accountId, query, searchState]);
 
     const showDropdown = isFocused && results.length > 0;
 

@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
     RouterProvider,
     createBrowserRouter,
+    MemoryRouter,
 } from 'react-router-dom';
 import {
     afterEach,
@@ -17,7 +18,7 @@ import {
     vi,
 } from 'vitest';
 
-import { AuthProvider } from '../../src/auth/AuthContext';
+import { AuthProvider, useAuth } from '../../src/auth/AuthContext';
 import {
     AUTH_SESSION_STORAGE_KEY,
     clearSession,
@@ -26,6 +27,7 @@ import {
 } from '../../src/auth/authStorage';
 import { getJsonDb, setActiveDatabaseAccount } from '../../src/db/jsonDb';
 import { createAppRoutes } from '../../src/router';
+import { SearchBar } from '../../src/components/navbar/SearchBar';
 
 const guardActions = vi.hoisted(() => ({
     saveDraft: vi.fn().mockResolvedValue(undefined),
@@ -139,6 +141,38 @@ function renderProductionTree() {
     return { ...view, queryClient, router };
 }
 
+function SearchBarRemountHarness() {
+    const { account, isInitializing } = useAuth();
+    const [searchKey, setSearchKey] = React.useState(0);
+    const [query, setQuery] = React.useState('');
+
+    if (isInitializing || account === null) return <p>Auth loading</p>;
+
+    return (
+        <>
+            <p data-testid="authenticated-account">{account.id}</p>
+            <button onClick={() => setSearchKey((value) => value + 1)}>
+                Rimonta SearchBar
+            </button>
+            <SearchBar
+                key={searchKey}
+                query={query}
+                onQueryChange={setQuery}
+            />
+        </>
+    );
+}
+
+function renderSearchBarRemountHarness() {
+    return render(
+        <MemoryRouter>
+            <AuthProvider>
+                <SearchBarRemountHarness />
+            </AuthProvider>
+        </MemoryRouter>,
+    );
+}
+
 beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
@@ -182,6 +216,47 @@ async function expectCompletedLogout(
 }
 
 describe('logout database teardown con albero production', () => {
+    it('rimonta SearchBar dopo il teardown DB mantenendo AuthContext autenticato', async () => {
+        const consoleError = vi.spyOn(console, 'error');
+        const unhandledRejections: unknown[] = [];
+        const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+            unhandledRejections.push(event.reason);
+            event.preventDefault();
+        };
+        window.addEventListener('unhandledrejection', onUnhandledRejection);
+        renderSearchBarRemountHarness();
+
+        expect((await screen.findByTestId('authenticated-account')).textContent)
+            .toBe('user-001');
+        expect(screen.getByPlaceholderText('Cerca...')).toBeTruthy();
+        expect(getJsonDb()).toBeTruthy();
+
+        setActiveDatabaseAccount(null);
+        expect(() => getJsonDb()).toThrow(
+            'Database locale non disponibile: nessun account autenticato.',
+        );
+        expect(screen.getByTestId('authenticated-account').textContent)
+            .toBe('user-001');
+        await userEvent.click(screen.getByRole('button', {
+            name: 'Rimonta SearchBar',
+        }));
+
+        expect(screen.getByPlaceholderText('Cerca...')).toBeTruthy();
+        expect(screen.getByTestId('authenticated-account').textContent)
+            .toBe('user-001');
+
+        const errors = consoleError.mock.calls.flat().join('\n');
+        expect(errors).not.toContain(
+            'Database locale non disponibile: nessun account autenticato.',
+        );
+        expect(errors).not.toContain('SearchBar');
+        expect(unhandledRejections).toEqual([]);
+        window.removeEventListener(
+            'unhandledrejection',
+            onUnhandledRejection,
+        );
+    });
+
     it('logout pulito smonta Layout e SearchBar senza errore DB', async () => {
         const consoleError = vi.spyOn(console, 'error');
         const unhandledRejections: unknown[] = [];
