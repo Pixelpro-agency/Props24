@@ -24,7 +24,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: b99a917bb5bab541ec62fc1c81ff76ddb8f7271b
+SHA applicativo esaminato: dc274d9a7d3b55ce0ee0650fbb8caa7ec39a80be
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -169,9 +169,7 @@ Affittate = unità non archiviate collegate a una locazione attiva secondo lo st
 
 # BLOCCO C — Inquilini e contatti
 
-Per il ciclo locale Inquilini e Contatti resta da eseguire C10 — Collaudo inquilini. I contratti permanenti già operativi, comprese le azioni lista non lifecycle non disponibili e l'assenza delle precedenti simulazioni legacy, sono descritti nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md) e non vengono duplicati in questo documento.
-
-C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano attività future separate e non bloccano C10 nel perimetro locale.
+Nel Blocco C non restano attività operative non-future. Le sole attività residue sono C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini, tutte classificate come future e separate dal perimetro locale già approvato.
 
 ## TASK C7 — Inviti email
 
@@ -222,24 +220,7 @@ Comprende:
 - conferma utente prima della compilazione;
 - stati UI che distinguano “file salvato” da “documento verificato”.
 
-## TASK C10 — Collaudo inquilini
-
-Verificare:
-
-- persona e società;
-- documenti;
-- garante esistente e nuovo;
-- contatto emergenza;
-- duplicati fiscali;
-- create/edit;
-- archive/restore;
-- invito locale;
-- reload;
-- isolamento account;
-- ID stabili;
-- nessun record orfano.
-
-### C10A — Card inquilini
+## TASK C10A — Card inquilini
 
 Le tre card approvate sono:
 

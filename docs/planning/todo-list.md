@@ -14,31 +14,31 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 26
+- Completate integralmente: 27
 - Parzialmente completate: 3
-- Non concluse: 43
+- Non concluse: 42
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: C10 — Collaudo inquilini
+- Prossimo punto tecnico: da definire dopo il riallineamento del piano
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 43 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 42 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
-> **COMPLETAMENTO LOCALE INQUILINI E CONTATTI**
+> **BLOCCO C LOCALE COMPLETATO**
 >
-> Baseline applicativa corrente: `b99a917bb5bab541ec62fc1c81ff76ddb8f7271b`.
+> Baseline applicativa corrente: `dc274d9a7d3b55ce0ee0650fbb8caa7ec39a80be`.
 >
-> Baseline tecnica corrente: 113 file di test / 1287 test PASS; build positiva e C6 conclusa.
+> Baseline tecnica corrente: 113 file di test / 1288 test PASS; build positiva. C10 conclusa con PASS CON LIMITAZIONI STRUMENTALI e nessun finding applicativo residuo.
 >
-> Prossima task: C10 — Collaudo inquilini.
+> Il ciclo locale Inquilini e Contatti non contiene altre task operative non-future.
 >
-> Sequenza locale residua: C10.
+> C7 — Inviti email reali, C8 — storage degli allegati delle bozze, C9 — verifica documentale/OCR e C10A — Card inquilini restano future.
 >
-> C7 — Inviti email reali, C8 — storage degli allegati delle bozze, C9 — verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano il completamento del ciclo locale.
+> Il prossimo punto tecnico sarà definito dopo il riallineamento del piano.
 >
-> B9R resta separata e non blocca questo ciclo.
+> B9R resta separata e non blocca la chiusura del Blocco C.
 
 Le attività concluse dei cicli precedenti restano registrate nei rispettivi blocchi; cronologia, evidenze tecniche e modifiche sono conservate nella storia Git.
 
@@ -148,7 +148,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
 - [ ] C7 — Inviti email — **FUTURO — BACKEND**
 - [ ] C8 — Allegati delle bozze — **FUTURO — STORAGE**
 - [ ] C9 — Verifica documentale/OCR — **FUTURO — BACKEND**
-- [ ] C10 — Collaudo inquilini — **PROSSIMA TASK; collaudo browser finale del dominio locale Inquilini e Contatti**
+- [x] C10 — Collaudo inquilini — **COMPLETATA; PASS CON LIMITAZIONI STRUMENTALI; Persona/Società, relazioni Contact, duplicati fiscali, edit, lifecycle, invito locale, reload e isolamento account verificati; finding logout/SearchBar corretto e collaudato; nessun finding applicativo residuo**
   - [ ] C10A — Card inquilini: Attivi, Connessi e Con locazione — **FUTURO**
 
 ## Blocco D — Locazioni e pagamenti
@@ -193,7 +193,7 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
 
 - [ ] G1 — Inventario statico aggiornato — **APERTO**
 - [ ] G2 — Integrare l’inventario route nella documentazione tecnica — **APERTO; dipende da G1 e confluisce in L2**
-- [ ] G3 — Residui azioni unità e inquilini — **DA RIVALUTARE DOPO G1; non deve riaprire i lifecycle già completati delle Unit o dei Tenant né duplicare B7 o C6**
+- [ ] G3 — Residui azioni unità e inquilini — **DA RIVALUTARE DOPO G1; non deve riaprire i lifecycle già completati delle Unit o dei Tenant, non deve duplicare B7 e non deve riaprire azioni Tenant già classificate dalla specifica della fase locale**
 - [ ] G4 — Locazioni — **DECISIONE PRODOTTO / FUTURO**
 - [ ] G5 — Dashboard e navbar — **DECISIONE PRODOTTO**
 - [ ] G6 — Route future — **DECISIONE PRODOTTO / FUTURO**
@@ -294,9 +294,10 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] Creazione atomica Tenant account-scoped, authority unica, integrità delle relazioni e `contactId`, single-save e no partial writes — C4
   - [x] Update, edit/draft, lifecycle e gate tecnico Tenant — C5.1–C5.5
   - [x] Azioni Tenant non lifecycle, controlli future disabled, cleanup legacy e gate consolidato — C6.1–C6.2
+  - [x] Collaudo browser finale Inquilini e Contatti, isolamento account e regressione teardown logout/SearchBar — C10/C10-F01
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline tecnica corrente: 113 file di test / 1287 test PASS. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
+Baseline tecnica corrente: 113 file di test / 1288 test PASS. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**

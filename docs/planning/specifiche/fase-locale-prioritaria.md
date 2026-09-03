@@ -348,8 +348,6 @@ Il perimetro locale Tenant già disponibile comprende:
 
 I servizi email, import/export reali, generazione documentale, terminazione Lease e nuovi contratti di prefill della locazione restano fuori dal perimetro locale Tenant corrente e richiedono task dedicate.
 
-C10 è il collaudo browser finale del dominio locale Inquilini e Contatti.
-
 C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano attività future separate.
 
 ## 8. Funzioni documentali future
@@ -360,11 +358,9 @@ Le integrazioni documentali che richiedono backend, storage definitivo, OCR, fir
 
 ## 9. Ordine operativo prioritario
 
-Per il ciclo locale Inquilini e Contatti resta:
+Nel ciclo locale Inquilini e Contatti non restano attività operative non-future.
 
-1. C10 — collaudo browser finale Inquilini e Contatti.
-
-C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano il completamento del ciclo locale.
+C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano attività future separate.
 
 B7, B8, B9R e B9A restano attività separate del dominio Unit.
 
