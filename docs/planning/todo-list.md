@@ -14,27 +14,27 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 72
-- Completate integralmente: 25
+- Completate integralmente: 26
 - Parzialmente completate: 3
-- Non concluse: 44
+- Non concluse: 43
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: C6.1 — Chiusura controlli Tenant simulati visibili
+- Prossimo punto tecnico: C10 — Collaudo inquilini
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 44 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 43 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
 > **COMPLETAMENTO LOCALE INQUILINI E CONTATTI**
 >
-> Baseline applicativa corrente: `1a9f89e10e50f39ef8ca28fe23ad33f0a3af6102`.
+> Baseline applicativa corrente: `b99a917bb5bab541ec62fc1c81ff76ddb8f7271b`.
 >
-> Baseline tecnica corrente: 112 file di test / 1284 test PASS; build positiva e gate C5 conclusi.
+> Baseline tecnica corrente: 113 file di test / 1287 test PASS; build positiva e C6 conclusa.
 >
-> Prossima task: C6.1 — Chiusura controlli Tenant simulati visibili.
+> Prossima task: C10 — Collaudo inquilini.
 >
-> Sequenza locale residua: C6.1 → C6.2 → C10.
+> Sequenza locale residua: C10.
 >
 > C7 — Inviti email reali, C8 — storage degli allegati delle bozze, C9 — verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano il completamento del ciclo locale.
 >
@@ -142,13 +142,13 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] C5.4 — Lifecycle reale lista e dettaglio Tenant
   - [x] C5.5 — Gate tecnico consolidato C5
   - [x] C5.6 — Collaudo browser C5 — **PASS CON LIMITAZIONI STRUMENTALI non bloccanti**
-- [ ] C6 — Azioni lista ancora simulate — **PROSSIMA TASK; scomposta in C6.1–C6.2**
-  - [ ] C6.1 — Chiusura controlli Tenant simulati visibili — **PROSSIMA TASK; Importa/Esporta/Messaggio realmente disabilitati, azioni singole pending coerenti e falso menu Ordina rimosso**
-  - [ ] C6.2 — Cleanup legacy e gate consolidato C6 — **DOPO C6.1; rimozione modali/handler dead, nessun `console.log` applicativo o URL legacy nel perimetro C6, regressioni C5/full/build/lint**
+- [x] C6 — Azioni lista ancora simulate — **COMPLETATA; controlli non disponibili realmente disabilitati e codice legacy Tenant simulato rimosso**
+  - [x] C6.1 — Chiusura controlli Tenant simulati visibili — **COMPLETATA; Importa/Esporta/Messaggio realmente disabilitati, azioni singole pending coerenti e falso menu Ordina rimosso**
+  - [x] C6.2 — Cleanup legacy e gate consolidato C6 — **COMPLETATA; modali e handler legacy rimossi, nessun URL export legacy o simulazione C6 residua; 113 file / 1287 test PASS, build e lint mirato positivi**
 - [ ] C7 — Inviti email — **FUTURO — BACKEND**
 - [ ] C8 — Allegati delle bozze — **FUTURO — STORAGE**
 - [ ] C9 — Verifica documentale/OCR — **FUTURO — BACKEND**
-- [ ] C10 — Collaudo inquilini — **DOPO C6**
+- [ ] C10 — Collaudo inquilini — **PROSSIMA TASK; collaudo browser finale del dominio locale Inquilini e Contatti**
   - [ ] C10A — Card inquilini: Attivi, Connessi e Con locazione — **FUTURO**
 
 ## Blocco D — Locazioni e pagamenti
@@ -293,9 +293,10 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] Gate fiscale consolidato C3, legacy, empty IDs, no cross-domain Contact↔Tenant e regressioni — C3.4
   - [x] Creazione atomica Tenant account-scoped, authority unica, integrità delle relazioni e `contactId`, single-save e no partial writes — C4
   - [x] Update, edit/draft, lifecycle e gate tecnico Tenant — C5.1–C5.5
+  - [x] Azioni Tenant non lifecycle, controlli future disabled, cleanup legacy e gate consolidato — C6.1–C6.2
   - [ ] Copertura progressiva delle task future — **APERTO**
 
-Baseline tecnica corrente: 112 file di test / 1284 test PASS. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
+Baseline tecnica corrente: 113 file di test / 1287 test PASS. J1 resta parziale perché accompagna le implementazioni ancora residue. Il lint globale resta materia di J2 e non viene dedotto dai gate mirati.
 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
@@ -353,6 +354,5 @@ Baseline tecnica corrente: 112 file di test / 1284 test PASS. J1 resta parziale 
 
 ## Decisioni prodotto ancora aperte
 
-- [ ] Azioni lista inquilini — **DECISIONE PRODOTTO; riferimento C6**
 - [ ] Dashboard e navbar — **DECISIONE PRODOTTO; riferimento G5**
 - [ ] Route future — **DECISIONE PRODOTTO; riferimento G6**

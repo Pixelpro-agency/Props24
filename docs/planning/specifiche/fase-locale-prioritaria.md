@@ -344,12 +344,11 @@ Il perimetro locale Tenant già disponibile comprende:
 - create e update atomici;
 - bozza create/edit manuale e guard;
 - lifecycle singolo e bulk.
+- azioni lista non lifecycle non disponibili allineate alla convenzione delle funzioni future, senza route, callback, modali o handler simulati.
 
-C6 riguarda esclusivamente la chiusura delle azioni lista Tenant non lifecycle ancora simulate: prima l'allineamento dei controlli visibili alla convenzione delle funzioni non disponibili, poi la rimozione del codice legacy non più raggiungibile e il gate tecnico consolidato.
+I servizi email, import/export reali, generazione documentale, terminazione Lease e nuovi contratti di prefill della locazione restano fuori dal perimetro locale Tenant corrente e richiedono task dedicate.
 
-C6 non implementa servizi email, import/export reali, document generation, terminazione Lease o nuovi contratti di prefill della locazione.
-
-C10 resta il collaudo browser finale del dominio dopo la chiusura tecnica di C6.
+C10 è il collaudo browser finale del dominio locale Inquilini e Contatti.
 
 C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano attività future separate.
 
@@ -361,11 +360,9 @@ Le integrazioni documentali che richiedono backend, storage definitivo, OCR, fir
 
 ## 9. Ordine operativo prioritario
 
-Per il ciclo locale Inquilini e Contatti restano:
+Per il ciclo locale Inquilini e Contatti resta:
 
-1. C6.1 — chiusura dei controlli Tenant simulati visibili;
-2. C6.2 — cleanup legacy e gate tecnico consolidato C6;
-3. C10 — collaudo browser finale Inquilini e Contatti, dopo C6.
+1. C10 — collaudo browser finale Inquilini e Contatti.
 
 C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano il completamento del ciclo locale.
 
