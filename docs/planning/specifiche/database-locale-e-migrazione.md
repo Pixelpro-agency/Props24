@@ -119,7 +119,7 @@ Il lifecycle Contact comprende `restore`. La delete protection considera sia `Le
 
 Un Contact creato esplicitamente dall'utente mediante `ContactRepository.create` è una mutazione autonoma della rubrica e può esistere senza Tenant o Lease collegati. Non viene cancellato automaticamente quando un form Tenant viene abbandonato o la successiva create Tenant fallisce.
 
-La create atomica C4 è completata. Il dominio Tenant usa una authority di create basata su gateway con repository account-scoped; il bridge legacy `createTenant` cattura l'account attivo all'inizio della mutation e delega alla stessa authority.
+Il dominio Tenant usa una authority di create basata su gateway con repository account-scoped; il bridge legacy `createTenant` cattura l'account attivo all'inizio della mutation e delega alla stessa authority.
 
 Prima della persistenza definitiva vengono completati normalizzazione, quota allegati, duplicate fiscal enforcement C3, integrità delle relazioni e validazione dei riferimenti Contact. Soltanto dopo queste verifiche viene generato l'ID Tenant e viene costruito il database candidato. La mutation esegue una sola save e restituisce il Tenant rileggendolo dal database restituito dalla persistenza.
 
@@ -131,17 +131,19 @@ Il vincolo C4 sulle nuove create non trasforma la normalizzazione del database i
 
 Un Contact creato esplicitamente dall'utente mediante `ContactRepository.create` resta una mutazione autonoma della rubrica e non viene rollbackato se la successiva create Tenant fallisce.
 
-La canonicalizzazione degli ID annidati Tenant è completata e consolidata da C2. L'enforcement dei duplicati fiscali account-scoped CT-01–CT-05 è completato e consolidato da C3. L'atomicità e l'integrità referenziale della create Tenant sono consolidate da C4.
+Gli ID annidati Tenant seguono il contratto create-once/preserve-thereafter. L'enforcement dei duplicati fiscali CT-01–CT-05 è account-scoped. La create Tenant è atomica e valida l'integrità referenziale prima della persistenza definitiva.
 
 ### Update e lifecycle Tenant
 
-C5 estende il boundary Tenant oltre la create C4 introducendo update e lifecycle account-scoped senza creare una seconda authority indipendente per le stesse mutation.
+Il repository Tenant comprende create, update e lifecycle account-scoped senza creare authority indipendenti per le stesse mutation.
 
 L'update opera sul Tenant esistente dello scope catturato dal repository. Prima della persistenza definitiva completa normalizzazione, quota allegati, duplicate fiscal enforcement con exclude-current, integrità delle relazioni e validazione referenziale applicabile.
 
 Per i riferimenti Contact, un `contactId` nuovo o sostituito deve esistere nello stesso account. Un riferimento archived resta valido. Un riferimento legacy già persistito e non risolvibile può essere preservato se resta invariato: l'update non esegue read-repair e non obbliga una modifica non correlata a cancellare o ricostruire quel riferimento.
 
 L'update preserva identità e campi non posseduti dal form, inclusi `id`, `createdAt`, `archived`, `leaseIds` e `invitation`. I nested ID persistenti seguono il contratto C2. La mutation costruisce il database candidato prima della write, esegue una sola persistenza definitiva e rilegge il Tenant dal database restituito dalla persistenza.
+
+Per i Tenant società, una create continua a non introdurre `identityDocumentFile` o `identityDocumentBackFile`. Durante un update `company → company`, eventuali documenti identità legacy già persistiti e non posseduti dal form società vengono preservati senza read-repair o cancellazione implicita. Un cambio `person → company` mantiene invece la semantica canonica del target società e azzera tali documenti; un update verso `person` usa i documenti identità forniti dal form persona.
 
 Il lifecycle comprende archive, restore e delete singole e bulk.
 
@@ -216,7 +218,7 @@ I record Tenant company legacy che non possiedono `companyFiscalCode` vengono no
 
 Il confronto fiscale usa business rules condivise e deterministiche. `ContactRepository.create` e `ContactRepository.update` eseguono il controllo prima della scrittura definitiva; l'update Contact esclude il record corrente tramite ID. La create Tenant account-scoped consolidata da C4 esegue lo stesso controllo prima della validazione referenziale finale, della generazione dell'ID Tenant e dell'unica persistenza definitiva.
 
-L'update Tenant reale non è ancora implementato e appartiene a C5. Quando verrà introdotto dovrà riusare le stesse pure business rules C3, escludendo il Tenant corrente tramite ID invece di duplicare la logica fiscale.
+L'update Tenant riusa le stesse business rules fiscali condivise, escludendo il Tenant corrente tramite ID invece di duplicare la logica fiscale.
 
 Anche i record archived partecipano al controllo dei duplicati; account differenti restano isolati e possono contenere gli stessi identificativi. Contact e Tenant vengono confrontati esclusivamente all'interno della propria collezione: non esiste hard block fiscale `Contact ↔ Tenant`.
 

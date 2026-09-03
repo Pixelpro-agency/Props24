@@ -247,20 +247,11 @@ L'enforcement corrente è:
 - UI Nuovo inquilino con errore sul campo fiscale corretto e ritorno alla scheda `Informazioni generali`;
 - nessun hard block Contact↔Tenant.
 
-L'update Tenant reale non è ancora implementato e appartiene a C5; quando verrà introdotto dovrà riusare le pure business rules C3 con esclusione del Tenant corrente.
-
-C3 è stata completata tramite:
-
-- C3.1 — contratto identità fiscale e modello company Tenant;
-- C3.2 — enforcement `ContactRepository`;
-- C3.3 — enforcement Tenant create e UI;
-- C3.4 — gate tecnico consolidato.
-
-Il gate fiscale consolidato C3 verifica 7 file / 37 test PASS. Le due full-suite globali eseguite durante C3.4 hanno mostrato intermittenze fuori scope nei test NewProperty; il successivo collaudo isolato e combinato dei test coinvolti ha concluso con 44/44 PASS, nessun timeout e nessuna failure riproducibile.
+L'update Tenant riusa le pure business rules fiscali condivise con esclusione del Tenant corrente tramite ID.
 
 ### Creazione atomica Tenant
 
-C4 ha consolidato la create definitiva del Tenant come mutation account-scoped e atomica.
+La create definitiva del Tenant è una mutation account-scoped e atomica.
 
 `tenantRepository` espone una authority unica per la create tramite operations basate su gateway e una factory account-scoped. Il bridge legacy `createTenant` resta compatibile per i consumer esistenti ma cattura l'account attivo all'inizio della mutation e delega alla stessa authority; non esistono due implementazioni indipendenti della create.
 
@@ -295,11 +286,9 @@ Il vincolo sui nuovi `contactId` dangling riguarda la mutation definitiva. Draft
 
 Un Contact creato esplicitamente mediante `ContactRepository` resta un'entità autonoma: il fallimento della successiva create Tenant non esegue rollback, delete o altra mutation del Contact.
 
-C4 è stata verificata con 14 test dedicati. Dopo il fix della fixture C2 che conteneva due `contactId` senza i corrispondenti `ContactRecord`, le regressioni C1/C2/C3, submit/draft e tenant-form sono risultate positive; la full suite finale ha concluso con 106 file / 1206 test PASS, build positiva e lint mirato senza errori o warning.
-
 ### Modifica, bozza edit e lifecycle Tenant
 
-C5 completa il CRUD locale del Tenant senza riaprire i contratti consolidati da C1–C4.
+Il CRUD locale del Tenant comprende create, modifica e lifecycle account-scoped.
 
 La modifica usa la route canonica `/tenants/:id/edit` e parte dal record persistito dello stesso account. L'update modifica il Tenant esistente e non crea una nuova anagrafica.
 
@@ -332,20 +321,24 @@ Lista e dettaglio espongono lifecycle coerente con lo stato persistito:
 - Tenant attivo: Modifica, Archivia, Elimina;
 - Tenant archiviato: Modifica, Ripristina, Elimina.
 
-Le operazioni lifecycle reali appartengono a C5. Le altre azioni lista simulate restano separate in C6.
-
-C5 viene eseguita come C5.1 repository update/lifecycle, C5.2 route e form edit, C5.3 bozza edit e guard, C5.4 azioni lifecycle UI e C5.5 gate tecnico consolidato. C5.6 è il collaudo browser separato e non sostituisce C10.
+Modifica, Archivia, Ripristina, Elimina e le corrispondenti operazioni bulk costituiscono il lifecycle Tenant già operativo. Le ulteriori azioni lista non lifecycle restano separate in C6.
 
 ### Confini del ciclo
 
-C1 definisce e integra il modello Contact–Tenant e il lifecycle Contact. C2 consolida le identità persistenti annidate Tenant con il contratto create-once/preserve-thereafter. C3 consolida e applica le regole fiscali CT-01–CT-05. C4 consolida la create Tenant account-scoped, atomica e referenzialmente valida.
+Il perimetro locale Tenant già disponibile comprende:
 
-Restano task separate:
+- rubrica Contact canonica e relazioni Tenant–Contact;
+- identità annidate persistenti;
+- duplicati fiscali account-scoped;
+- create e update atomici;
+- bozza create/edit manuale e guard;
+- lifecycle singolo e bulk.
 
-- C5 — edit e lifecycle Tenant, articolato in C5.1–C5.5 con collaudo browser separato C5.6 e preservazione dei contratti C1–C4;
-- C6 — ulteriori azioni lista non appartenenti al lifecycle C5.
+C6 riguarda esclusivamente le ulteriori azioni lista non lifecycle ancora residue.
 
-C1–C4 costituiscono quindi la baseline completata che C5 deve preservare.
+C10 resta il collaudo browser finale del dominio dopo C6.
+
+C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano attività future separate.
 
 ## 8. Funzioni documentali future
 
@@ -355,42 +348,14 @@ Le integrazioni documentali che richiedono backend, storage definitivo, OCR, fir
 
 ## 9. Ordine operativo prioritario
 
-### Baseline repository già raggiunta
+Per il ciclo locale Inquilini e Contatti restano:
 
-L'audit del confine repository locale è concluso. Il pilot contacts comprende porta e adapter, isolamento account, provider e hook asincrono, oltre alla migrazione e al collaudo dei consumer dei garanti. Questa baseline non implica che tutti i domini o consumer siano già migrati.
+1. C6 — Azioni lista Tenant ancora simulate o da classificare;
+2. C10 — Collaudo browser finale Inquilini e Contatti, dopo C6.
 
-Dopo l'audit del confine repository e il pilot contacts già conclusi, lo stato raggiunto è:
+C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano il completamento del ciclo locale.
 
-1. repository condiviso delle bozze manuali — implementato;
-2. guard condiviso delle modifiche non salvate — implementato;
-3. Nuovo inquilino — integrato e collaudato;
-4. Nuova unità — integrata e collaudata;
-5. Nuova locazione — integrata e collaudata;
-6. repository edifici — implementato e verificato;
-7. relazione unità–edificio — implementata, verificata e collaudata;
-8. Nuovo edificio — implementato, verificato e collaudato;
-9. route, lista, lifecycle e dettaglio edifici — completati e collaudati;
-10. integrazione bozza e guard di Nuovo edificio — F3.4 completata;
-11. collaudo trasversale dei quattro flussi create — F4 completato con PASS senza finding.
-12. duplicati delle Unit — B2 completata e collaudata;
-13. campi e cataloghi canonici delle Unit — B3 completata e verificata;
-14. ID annidati canonici delle Unit — B4 completata e verificata.
-15. modifica e lifecycle delle Unit — B6 completata e verificata tecnicamente, inclusi lifecycle repository, edit reale, bozza e guard edit, azioni lista/dettaglio e gate consolidato.
-16. collaudo browser finale delle Unit — B9 completata con PASS funzionale e nessun finding applicativo riproducibile; restano rinviate a B9R, per limitazioni dello strumento, la verifica browser del caricamento reale degli allegati, degli ID annidati dopo create/reload/edit, del doppio submit create e dell'assenza di scritture persistite nei percorsi read-only. I relativi contratti restano già coperti dai gate automatizzati B4/B6.
-17. Garanti e rubrica — C1.1–C1.4 completate e verificate: `ContactRecord` canonico condiviso da Lease e Tenant, `contactId` distinto dall'ID delle relazioni Tenant, lifecycle Contact con restore e delete protection Lease/Tenant, Garanti Tenant e contatti di emergenza migrati alla rubrica reale, compatibilità legacy e gate tecnico consolidato concluso con 95 file / 1137 test PASS.
-18. ID annidati canonici Tenant — C2.1–C2.3 completate e verificate: 8 categorie di ID persistenti annidati usano il generatore canonico condiviso nei nuovi writer e rispettano create-once/preserve-thereafter; normalization, draft, `createTenant`, JSON persistito e reload preservano byte-for-byte gli ID canonici e legacy già presenti; il reload del database canonico non produce read-repair; gate concluso con 98 file / 1155 test PASS.
-19. duplicati anagrafici — C3.1–C3.4 completate e verificate: identità fiscale person/company distinta, `TenantCompanyFiscalCode` e `companyFiscalCode` consolidati, hard block Contact create/update e Tenant create account-scoped, archived ed exclude-current verificati, nessun vincolo fiscale Contact↔Tenant, mapping UI fiscale e compatibilità legacy verificati; gate fiscale concluso con 7 file / 37 test PASS. Le intermittenze NewProperty osservate nelle full-suite globali C3.4 non sono risultate riproducibili nel collaudo mirato successivo, concluso con 44/44 test PASS.
-20. creazione atomica Tenant — C4 completata e verificata: authority unica account-scoped per la create, bridge legacy compatibile, quota e duplicati fiscali verificati prima della mutation, relation ID non vuoti/univoci, riferimenti Contact validati nello stesso account, archived consentiti, inline legacy preservati, cross-account/dangling bloccati, massimo 5 Emergency ed exactly-one primary, una sola write sul successo e zero write sulle validation failure. Il FIX C4-F01 ha reso referenzialmente valida una fixture C2 senza rimuovere `contactId` o alterare gli ID annidati. Gate concluso con 14 test C4 PASS e full suite 106 file / 1206 test PASS.
-
-Il ciclo locale corrente delle Unit è concluso dopo il collaudo B9. B7 — Import/Export resta rinviata, B8 — Analisi catastale/OCR resta futura/backend e B9A — Card e KPI Unit resta futura; queste attività non riaprono né bloccano la chiusura del perimetro Unit già verificato.
-
-Il ciclo locale prioritario di Inquilini e Contatti ha completato C1 — Garanti e rubrica, C2 — ID annidati canonici Tenant, C3 — Duplicati anagrafici e C4 — Creazione atomica Tenant. La prossima task è C5 — Modifica e lifecycle Tenant; seguono C6 e quindi C10. Il modello Contact–Tenant consolidato da C1, il contratto create-once/preserve-thereafter consolidato da C2, le regole fiscali account-scoped consolidate da C3 e l'authority atomica/referenziale della create consolidata da C4 costituiscono boundary da preservare nelle task successive. Le funzioni C7–C9 e C10A dipendenti da backend, storage o sviluppo futuro non bloccano il collaudo locale di questo dominio.
-
-Il comportamento manuale delle bozze e il guard condiviso sono integrati nei quattro flussi create supportati: Nuovo edificio, Nuova unità, Nuovo inquilino e Nuova locazione.
-
-`Elimina e ricomincia` cancella esplicitamente la bozza persistita. Il collaudo trasversale F4 ha verificato restore, salvataggio manuale, dirty state, navigazione protetta, `Resta`, `Abbandona`, logout, submit riuscito e fallito, cleanup e persistenza.
-
-Per refresh e chiusura della scheda resta valido il contratto `beforeunload` nativo. Durante F4 il dialog nativo non è stato osservabile dallo strumento di collaudo; la circostanza è stata classificata come limitazione strumentale, senza evidenza di difetto applicativo.
+B7, B8, B9R e B9A restano attività separate del dominio Unit.
 
 ## Decisioni approvate, futuro e questioni aperte
 
