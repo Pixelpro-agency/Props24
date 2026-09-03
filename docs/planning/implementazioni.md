@@ -177,19 +177,166 @@ C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OC
 
 ## TASK C6 — Azioni lista ancora simulate
 
-**Stato:** richiede decisione per ogni azione.
+**Stato:** prossima task; scomposta in C6.1 e C6.2.
 
-Elementi:
+**Obiettivo:** chiudere il residuo UI Tenant non lifecycle senza introdurre feature backend, route fittizie o nuovi contratti di dominio. Le funzioni non disponibili devono rispettare la convenzione gialla e realmente disabilitata; i componenti legacy non raggiungibili o basati esclusivamente su `console.log` devono essere rimossi.
 
-- export;
-- download;
-- notifica email;
-- terminazione locazione;
-- opzioni statiche nei modali.
+Il lifecycle Tenant completato non appartiene a C6 e resta congelato:
 
-Per ciascuno: implementare, collegare, disabilitare o rimuovere.
+- Modifica;
+- Archivia;
+- Ripristina;
+- Elimina;
+- archive/restore/delete bulk atomiche.
 
-Import/export e azioni non operative rispettano la convenzione gialla e disabilitata.
+Restano inoltre fuori scope:
+
+- invito Tenant locale e futuro invio email reale — C7;
+- allegati delle bozze — C8;
+- OCR/verifica documentale — C9;
+- FeedbackBox — G8;
+- funzioni Unit — B7/B8/B9R/B9A;
+- route future generali — G6;
+- lifecycle e contratti Lease.
+
+### C6.1 — Chiusura dei controlli Tenant simulati visibili
+
+Allineare i controlli attualmente visibili della lista Tenant alla convenzione delle funzioni non disponibili.
+
+#### Importa
+
+`src/components/tenants/PageHeader.tsx` espone `Importa` come `warning: true`, ma il controllo resta cliccabile e naviga a `/tenants/import`, route inesistente.
+
+C6.1 deve:
+
+- mantenere `Importa` visibile quando utile;
+- mantenerlo giallo;
+- renderlo realmente disabilitato;
+- impedire qualunque `navigate('/tenants/import')`;
+- non creare una route `/tenants/import` vuota o fittizia.
+
+`src/components/ui/Dropdown.tsx` deve supportare esplicitamente un item disabilitato senza trasformare automaticamente tutti gli item `warning` in item disabled. Un item disabilitato non esegue `onClick` e deve esporre `disabled`/`aria-disabled` quando applicabile.
+
+#### Esporta
+
+Il toolbar Tenant apre oggi `ExportModal`, il cui confirm termina in `useTenantActions.handleExport()` e produce soltanto una URL legacy `/landlord/tenants/?action=exportHTML...` tramite `console.log`.
+
+C6.1 deve:
+
+- mantenere il controllo Esporta visibile;
+- applicare stile giallo;
+- renderlo realmente disabilitato;
+- mostrare tooltip/testo coerente con la funzione non disponibile;
+- non aprire `ExportModal`;
+- non generare URL legacy;
+- non mostrare falso successo.
+
+C6 non implementa CSV, Excel, PDF o altri formati di export.
+
+#### Messaggio bulk
+
+`FloatingActions` espone `Messaggio`; oggi apre `EmailNotificationModal`, che permette di configurare email/posta, oggetto, corpo, copia e PDF ma al submit esegue soltanto `console.log`.
+
+C6.1 deve:
+
+- mantenere il controllo visibile quando esiste una selezione;
+- renderlo giallo e realmente disabilitato;
+- non aprire `EmailNotificationModal`;
+- non simulare email, posta, copia o PDF;
+- non mostrare falsi successi.
+
+L'azione singola `Invia un messaggio` nel menu Tenant è già pending/disabled e deve restare coerente con il bulk.
+
+#### Altre azioni singole pending
+
+Restano visibili, gialle e realmente disabilitate:
+
+- `Invia un messaggio`;
+- `Crea un affitto`;
+- `Appuntamento`;
+- `Saldo locatario`;
+- `Finanze`.
+
+`Crea un affitto` non deve essere collegato semplicemente a `/leases/new`: il form nuova locazione non possiede ancora un contratto di ingresso Tenant-scoped tramite query/state e il draft Lease ha già proprie regole di restore e reconciliation. Un eventuale prefill Tenant richiede una task Lease separata.
+
+#### Ordina
+
+`src/components/tenants/TableToolbar.tsx` espone un menu `Ordina per` le cui voci chiudono soltanto il dropdown senza modificare l'ordinamento.
+
+Poiché la tabella possiede già ordinamento reale tramite gli header TanStack:
+
+- rimuovere il falso menu `Ordina per`;
+- non introdurre un secondo sorting state;
+- preservare l'ordinamento reale tramite header.
+
+#### Gate C6.1
+
+La copertura automatizzata deve dimostrare almeno:
+
+- `Importa` non naviga;
+- `Importa` è realmente disabled;
+- `Esporta` non apre modal e non produce effetti;
+- `Messaggio` bulk non apre modal e non produce effetti;
+- le cinque azioni singole pending restano realmente disabled;
+- nessun falso successo;
+- lifecycle C5 invariato;
+- invito locale invariato;
+- ordinamento reale tramite header ancora funzionante.
+
+### C6.2 — Cleanup legacy e gate consolidato
+
+Dopo la chiusura dei controlli visibili, rimuovere i componenti e gli handler Tenant che non possiedono più alcun ingresso reale.
+
+Candidati da eliminare se non risultano referenziati da altri consumer reali:
+
+```text
+src/components/tenants/ExportModal.tsx
+src/components/tenants/DownloadModal.tsx
+src/components/tenants/EmailNotificationModal.tsx
+src/components/tenants/ImportErrorModal.tsx
+src/components/tenants/TerminateLeaseModal.tsx
+src/hooks/useTenantActions.ts
+```
+
+Ripulire conseguentemente src/pages/TenantsPage.tsx eliminando:
+
+import dei modali rimossi;
+mount dei modali rimossi;
+leaseOptions hardcoded;
+openModalByName;
+closeModal;
+handleMessage;
+handleExport;
+ogni altro stato o handler divenuto morto.
+
+Se EmailNotificationModal viene eliminata, rimuovere anche useTenantRecipients da src/hooks/useTenantFilters.ts se non possiede altri consumer reali.
+
+Il cleanup deve inoltre verificare l'assenza nel perimetro Tenant di:
+
+console.log usati come sostituto di azioni applicative;
+URL legacy /landlord/tenants/?action=...;
+riferimenti ai modali eliminati;
+route /tenants/import attiva;
+opzioni Lease hardcoded in TenantsPage;
+import morti;
+falsi messaggi di successo.
+
+Non modificare FeedbackBox in C6: il falso invio feedback appartiene a G8.
+
+Non modificare il wording/backend degli inviti Tenant in C6: appartiene a C7.
+
+Il gate consolidato C6 deve includere:
+
+test C6.1;
+regressioni lifecycle C5;
+regressioni Tenant list/detail rilevanti;
+full suite;
+build;
+lint mirato;
+git diff --check;
+UTF-8/NUL/mojibake.
+
+C6.2 chiude tecnicamente C6. Il successivo collaudo browser del dominio avviene in C10; non introdurre un ulteriore collaudo browser C6 separato.
 
 ## TASK C7 — Inviti email
 

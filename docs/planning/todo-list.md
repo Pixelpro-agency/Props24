@@ -20,9 +20,9 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: C6 — Azioni lista ancora simulate
+- Prossimo punto tecnico: C6.1 — Chiusura controlli Tenant simulati visibili
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 45 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 44 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
@@ -32,9 +32,9 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >
 > Baseline tecnica corrente: 112 file di test / 1284 test PASS; build positiva e gate C5 conclusi.
 >
-> Prossima task: C6 — Azioni lista ancora simulate.
+> Prossima task: C6.1 — Chiusura controlli Tenant simulati visibili.
 >
-> Sequenza locale residua: C6 → C10.
+> Sequenza locale residua: C6.1 → C6.2 → C10.
 >
 > C7 — Inviti email reali, C8 — storage degli allegati delle bozze, C9 — verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano il completamento del ciclo locale.
 >
@@ -142,7 +142,9 @@ Le attività concluse dei cicli precedenti restano registrate nei rispettivi blo
   - [x] C5.4 — Lifecycle reale lista e dettaglio Tenant
   - [x] C5.5 — Gate tecnico consolidato C5
   - [x] C5.6 — Collaudo browser C5 — **PASS CON LIMITAZIONI STRUMENTALI non bloccanti**
-- [ ] C6 — Azioni lista ancora simulate — **PROSSIMA TASK**
+- [ ] C6 — Azioni lista ancora simulate — **PROSSIMA TASK; scomposta in C6.1–C6.2**
+  - [ ] C6.1 — Chiusura controlli Tenant simulati visibili — **PROSSIMA TASK; Importa/Esporta/Messaggio realmente disabilitati, azioni singole pending coerenti e falso menu Ordina rimosso**
+  - [ ] C6.2 — Cleanup legacy e gate consolidato C6 — **DOPO C6.1; rimozione modali/handler dead, nessun `console.log` applicativo o URL legacy nel perimetro C6, regressioni C5/full/build/lint**
 - [ ] C7 — Inviti email — **FUTURO — BACKEND**
 - [ ] C8 — Allegati delle bozze — **FUTURO — STORAGE**
 - [ ] C9 — Verifica documentale/OCR — **FUTURO — BACKEND**

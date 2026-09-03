@@ -20,7 +20,7 @@ Qualunque funzione visibile che non sia ancora implementata, realmente funzionan
 
 La convenzione si applica alle funzioni realmente non disponibili, come Importa, Esporta, FeedbackBox, OCR, firme digitali, scraping, automazioni email, generazione documentale e integrazioni che richiedono backend o storage non ancora implementati. Non disabilita automaticamente i campi e i flussi locali già supportati e persistiti nei form.
 
-Importa ed Esporta devono restare visibili, gialli e disabilitati fino all'implementazione. Anche FeedbackBox deve restare visibile, giallo e disabilitato. Questa task documentale non implementa la convenzione.
+Importa ed Esporta devono restare visibili, gialli e realmente disabilitati fino all'implementazione. Anche FeedbackBox deve restare visibile, giallo e realmente disabilitato. La sola colorazione `warning` non è sufficiente: un controllo non disponibile non deve eseguire callback, navigazioni, aperture di modali o altri effetti applicativi.
 
 ## 3. Bozze manuali
 
@@ -321,7 +321,18 @@ Lista e dettaglio espongono lifecycle coerente con lo stato persistito:
 - Tenant attivo: Modifica, Archivia, Elimina;
 - Tenant archiviato: Modifica, Ripristina, Elimina.
 
-Modifica, Archivia, Ripristina, Elimina e le corrispondenti operazioni bulk costituiscono il lifecycle Tenant già operativo. Le ulteriori azioni lista non lifecycle restano separate in C6.
+Modifica, Archivia, Ripristina, Elimina e le corrispondenti operazioni bulk costituiscono il lifecycle Tenant già operativo.
+
+Le azioni Tenant non disponibili rispettano la convenzione delle funzioni future:
+
+- `Importa` resta visibile, giallo e realmente disabilitato finché non esiste un flusso Import Tenant reale; non deve navigare a `/tenants/import` se la route non esiste;
+- `Esporta` resta visibile, giallo e realmente disabilitato finché non esiste un export reale; non usa URL legacy o `console.log` come sostituto dell'operazione;
+- `Messaggio`, sia singolo sia bulk, resta visibile quando utile ma realmente disabilitato finché non esiste un servizio di messaggistica/invio reale;
+- `Crea un affitto`, `Appuntamento`, `Saldo locatario` e `Finanze` restano realmente disabilitati finché i relativi flussi non possiedono un contratto applicativo completo.
+
+Un controllo attivo che non produce alcun effetto reale non deve essere mantenuto come simulazione. Se esiste già un'altra authority UI per la stessa funzione, il controllo ridondante viene rimosso invece di introdurre una seconda implementazione. In particolare l'ordinamento della lista Tenant usa l'ordinamento reale degli header della tabella e non richiede un secondo menu di sorting senza effetto.
+
+Modali o handler legacy privi di ingresso reale, basati soltanto su dati hardcoded, URL legacy o `console.log`, non fanno parte dell'interfaccia locale approvata e possono essere rimossi.
 
 ### Confini del ciclo
 
@@ -334,9 +345,11 @@ Il perimetro locale Tenant già disponibile comprende:
 - bozza create/edit manuale e guard;
 - lifecycle singolo e bulk.
 
-C6 riguarda esclusivamente le ulteriori azioni lista non lifecycle ancora residue.
+C6 riguarda esclusivamente la chiusura delle azioni lista Tenant non lifecycle ancora simulate: prima l'allineamento dei controlli visibili alla convenzione delle funzioni non disponibili, poi la rimozione del codice legacy non più raggiungibile e il gate tecnico consolidato.
 
-C10 resta il collaudo browser finale del dominio dopo C6.
+C6 non implementa servizi email, import/export reali, document generation, terminazione Lease o nuovi contratti di prefill della locazione.
+
+C10 resta il collaudo browser finale del dominio dopo la chiusura tecnica di C6.
 
 C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano attività future separate.
 
@@ -350,8 +363,9 @@ Le integrazioni documentali che richiedono backend, storage definitivo, OCR, fir
 
 Per il ciclo locale Inquilini e Contatti restano:
 
-1. C6 — Azioni lista Tenant ancora simulate o da classificare;
-2. C10 — Collaudo browser finale Inquilini e Contatti, dopo C6.
+1. C6.1 — chiusura dei controlli Tenant simulati visibili;
+2. C6.2 — cleanup legacy e gate tecnico consolidato C6;
+3. C10 — collaudo browser finale Inquilini e Contatti, dopo C6.
 
 C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini restano future e non bloccano il completamento del ciclo locale.
 
