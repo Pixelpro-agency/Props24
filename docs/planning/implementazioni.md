@@ -155,6 +155,8 @@ Quando il tooling consentirà file chooser reale e accesso read-only affidabile 
 
 Queste verifiche residue non riaprono B9 e non costituiscono finding applicativi. I contratti interessati sono già coperti dai test automatizzati B4/B6; B9R conserva esclusivamente il debito di verifica browser diretta e potrà essere chiusa quando lo strumento permetterà di osservare realmente tali comportamenti.
 
+Le verifiche che dipendono dalla persistence/storage devono essere rieseguite contro l'authority effettiva al momento del collaudo. Dopo il cutover del Blocco S non devono richiedere l'ispezione del vecchio `localStorage`; B9-35 dovrà verificare l'assenza di mutation read-only sulla nuova authority Supabase.
+
 ## TASK B9A — Card e KPI unità
 
 **Stato:** futuro.
@@ -522,23 +524,607 @@ La prossima task tecnica è S1.
 
 **Stato:** prossima task / priorità corrente.
 
-### S1.1 — Principi strutturali
-...
+S1 trasforma la matrice S0 nel contratto target approvato prima di qualsiasi cutover applicativo Supabase.
+
+### S1.1 — Principi strutturali del modello target
+
+Definire:
+
+* naming;
+* strategia ID;
+* timestamp;
+* archive/delete;
+* workspace scope;
+* policy dei dati derivati;
+* criteri d'uso JSONB;
+* divieto di ricostruire un mega-record equivalente a `LocalDatabase`.
+
+### S1.2 — Auth identity, Profile, Workspace e Membership
+
+Definire la separazione fra:
+
+* utente autenticato;
+* profilo applicativo;
+* workspace;
+* membership;
+* eventuale business/landlord profile minimo necessario al runtime.
+
+Non implementare il permission model avanzato H2.
+
+### S1.3 — Schema Buildings / Properties
+
+Definire:
+
+* Building;
+* Property;
+* relazione Building–Property;
+* identità catastale;
+* child data Property;
+* note;
+* attachment metadata;
+* campi derivati da non rendere seconda authority.
+
+### S1.4 — Schema Contacts / Tenants
+
+Definire:
+
+* Contact person/company;
+* Tenant person/company;
+* fiscal identity e constraint;
+* Tenant guarantor relations;
+* emergency relations;
+* nested data;
+* archived Contact references;
+* attachment metadata.
+
+Preservare `relation.id != contactId` e nessun matching euristico.
+
+### S1.5 — Schema Lease / Payments
+
+Definire:
+
+* Lease;
+* relazione Lease–Property;
+* partecipazione Tenant;
+* guarantor Contact;
+* configurazione contrattuale;
+* Payment;
+* generated installment identity;
+* deposit;
+* prepaid;
+* confirmation;
+* distinzione fra business payment state e temporal overdue state.
+
+### S1.6 — Schema Documents / Files / Communications / Drafts
+
+Definire:
+
+* metadata documento;
+* storage object/reference;
+* ownership/link/provenance;
+* Property/Tenant/Lease document model;
+* Message come comunicazione preparata;
+* Draft metadata;
+* Draft ownership;
+* Draft payload versionato.
+
+### S1.7 — Lease Activity / audit necessario al runtime corrente
+
+Definire almeno il modello append-oriented necessario alle command già esistenti su:
+
+* Lease;
+* Payment;
+* Documents;
+* Communications;
+* signature/lifecycle.
+
+Non trasformare automaticamente Property activity in un audit domain separato.
+
+### S1.8 — Matrice constraint e index
+
+Per ogni entity/table definire:
+
+* PK;
+* FK;
+* unique constraint;
+* eventuali partial/expression constraint;
+* workspace identity;
+* delete rule;
+* interazione con archived;
+* index necessari.
+
+### S1.9 — Matrice delle transaction command
+
+Formalizzare le operation che devono essere atomiche, incluse almeno:
+
+* Property aggregate mutation;
+* Tenant aggregate mutation;
+* bulk lifecycle;
+* Lease create/update;
+* Lease terminate;
+* Payment confirmation;
+* deposit return;
+* prepaid;
+* Document + Lease activity.
+
+### S1.10 — Contratti query/read-model
+
+Definire almeno:
+
+* BuildingDetailQuery;
+* PropertyListQuery;
+* PropertyDetailQuery;
+* TenantListQuery;
+* TenantDetailQuery;
+* LeaseListQuery;
+* LeaseDetailQuery;
+* FinancialQueries;
+* DashboardQueries;
+* WorkspaceSearchQuery;
+* reference lookup queries.
+
+Le query devono essere side-effect free.
+
+### S1.11 — Matrice RLS
+
+Definire per ogni dominio:
+
+* user;
+* membership;
+* workspace;
+* read;
+* insert;
+* update;
+* delete;
+* accesso Storage.
+
+Il client non costituisce security boundary.
+
 ### S1.12 — Seed e contratto di cutover
+
+Definire:
+
+* niente import automatico dei dataset locali correnti;
+* seed dev/test esplicito;
+* una sola authority runtime per capability;
+* nessun dual-write implicito;
+* nessun silent fallback;
+* criterio formale di cutover dominio per dominio.
 
 **Gate S1:** nessuna implementazione applicativa Supabase prima dell'approvazione di schema, relation authority, constraint, transaction, query e RLS matrix.
 
+---
+
 ## TASK S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
 
-### S2.1 ...
-...
-### S2.10 ...
+**Dipende da:** S1.
+
+### S2.1 — Configurazione Supabase e ambienti
+
+Definire configurazione progetto, environment e separazione degli ambienti.
+
+### S2.2 — Migration SQL e versioning
+
+Introdurre un meccanismo riproducibile e versionato per creare e aggiornare lo schema.
+
+### S2.3 — Supabase Auth adapter
+
+Sostituire progressivamente:
+
+* password locali;
+* registry account locali;
+* sessione `{accountId}`;
+
+con Auth reale.
+
+### S2.4 — Profile, Workspace e Membership foundation
+
+Implementare soltanto il modello minimo approvato da S1.
+
+### S2.5 — Bootstrap/join workspace minimo
+
+Distinguere:
+
+* creazione di un workspace;
+* accesso/membership a workspace esistente.
+
+Nuovo utente non significa automaticamente nuovo database isolato.
+
+### S2.6 — RLS baseline e test cross-workspace
+
+Verificare almeno:
+
+```text
+User A membro Workspace X
+→ accesso X
+
+User B membro Workspace X
+→ accesso X
+
+User C non membro Workspace X
+→ accesso negato
+```
+
+### S2.7 — Supabase Storage foundation
+
+Introdurre:
+
+* bucket necessari;
+* path/naming strategy;
+* authorization minima;
+* test upload/read/delete.
+
+Non eseguire ancora il consolidamento completo del dominio Documents.
+
+### S2.8 — Session, logout, cache e scope transition
+
+Preservare i contratti correnti di teardown, cache invalidation e unsaved-changes guard.
+
+### S2.9 — Seed sviluppo/test
+
+Creare seed minimi espliciti separati dai dati locali storici.
+
+### S2.10 — Gate S2
+
+Verificare Auth reale, workspace/membership, RLS e Storage foundation.
 
 **Gate S2:** Auth reale, membership/workspace minimo, RLS cross-workspace e Storage foundation verificati.
 
-## TASK S3 — Repository, command, query, Storage e composition
+---
 
-...
+## TASK S3 — Repository, command, query, Storage adapter e composition Supabase
+
+**Dipende da:** S1/S2.
+
+### S3.1 — Supabase client infrastructure
+
+Centralizzare client e configurazione.
+
+Nessuna pagina/component business deve importare direttamente Supabase come data layer.
+
+### S3.2 — Workspace runtime context
+
+Rendere disponibile lo scope workspace autorizzato alle dependency applicative.
+
+### S3.3 — Convenzioni repository async
+
+Definire i contratti comuni per entity CRUD/lifecycle.
+
+### S3.4 — Convenzioni transactional command
+
+Definire il boundary applicativo delle mutation complesse.
+
+### S3.5 — Query/read-model layer
+
+Separare list/detail/analytics/search dai repository di mutation.
+
+### S3.6 — Cache e invalidation
+
+Definire policy per refresh, stale data e invalidazione delle query interessate.
+
+### S3.7 — Subscription/Realtime policy
+
+Stabilire dove servono:
+
+* refetch;
+* invalidation;
+* Supabase Realtime;
+* combinazioni.
+
+Non introdurre Realtime ovunque per replicare `subscribeJsonDb()`.
+
+### S3.8 — File/Storage port
+
+Introdurre una dependency astratta per upload/read/delete file.
+
+UI e domain repository non devono conoscere bucket/path raw.
+
+### S3.9 — Policy authority locale/Supabase e cutover
+
+Formalizzare:
+
+```text
+prima del cutover
+→ local authority
+
+dopo il cutover
+→ Supabase authority
+```
+
+senza fallback o dual-write impliciti.
+
+### S3.10 — Integration test harness Supabase
+
+Preparare test per:
+
+* repository async;
+* workspace isolation;
+* RLS;
+* transaction rollback;
+* stale scope;
+* errori remoti.
+
+**Gate S3:** repository/query/command/Storage composition pronta per i primi cutover senza accesso Supabase diretto dalla UI.
+
+---
+
+## TASK S4 — Pilot e migrazione domini semplici
+
+**Dipende da:** S3.
+
+### S4.1 — Contacts pilot Supabase
+
+Verificare:
+
+* CRUD;
+* archive/restore;
+* fiscal uniqueness;
+* delete blockers;
+* workspace sharing;
+* cross-workspace denial;
+* query refresh;
+* constraint concorrenti.
+
+### S4.2 — Cutover completo Contacts
+
+Supabase diventa l'unica authority runtime Contact.
+
+Eliminare i consumer Contact legacy ancora dipendenti da `jsonDb`.
+
+### S4.3 — Buildings
+
+Migrare:
+
+* CRUD;
+* lifecycle;
+* bulk;
+* uniqueness;
+* relation authority;
+* Building detail query;
+* `unitsCount` come derived value.
+
+### S4.4 — Drafts
+
+Dopo la decisione S1 sulla ownership:
+
+* preservare port async;
+* logical key;
+* schemaVersion;
+* payload;
+* cleanup;
+* sostituire l'adapter locale.
+
+### S4.5 — Gate S4
+
+Contacts, Buildings e Drafts migrati non devono usare `jsonDb` come authority runtime.
+
+---
+
+## TASK S5 — Migrazione Property / Tenant e relativi file
+
+**Dipende da:** S4.
+
+### S5.1 — Property commands
+
+Migrare create/update/lifecycle/bulk.
+
+### S5.2 — Property relational children
+
+Migrare i child definiti in S1 preservando nested identity e semantiche correnti.
+
+### S5.3 — Property files → Storage
+
+Migrare foto, documenti, contratti e file catastali secondo il modello S1/S3.
+
+### S5.4 — Property list/detail queries
+
+Eliminare la dipendenza dal `LocalDatabase` globale nei read-model Property.
+
+### S5.5 — Tenant commands
+
+Migrare create/update/lifecycle/bulk preservando business rule C1–C5.
+
+### S5.6 — Tenant Contact relations
+
+Migrare guarantor ed emergency relation preservando identity della relazione e `contactId`.
+
+### S5.7 — Tenant files/documents → Storage
+
+Migrare:
+
+* photo;
+* identity front/back;
+* company registry;
+* Tenant documents.
+
+### S5.8 — Tenant list/detail queries
+
+Eliminare i global reader Tenant.
+
+### S5.9 — Invitation state corrente
+
+Migrare soltanto lo stato realmente esistente.
+
+Non introdurre un servizio email reale dentro S5.
+
+### S5.10 — Eliminazione raw lookup `jsonDb` nei form
+
+Sostituire lookup diretti verso Building, Contact, Documents e altri domini con query/reference dependency esplicite.
+
+### S5.11 — Gate S5
+
+Property e Tenant non devono più utilizzare `LocalDatabase` come authority runtime.
+
+---
+
+## TASK S6 — Migrazione transazionale Lease / Payments
+
+**Dipende da:** S5.
+
+### S6.1 — Lease relations
+
+Migrare Property, Tenant e guarantor relations secondo il modello S1.
+
+### S6.2 — Lease create/update transaction
+
+Garantire atomicità di:
+
+* Lease;
+* relation;
+* Payment generated;
+* deposit;
+* activity;
+* altri child definiti in S1.
+
+### S6.3 — Lease lifecycle
+
+Migrare activate/deactivate/terminate/archive/restore/delete.
+
+### S6.4 — Payment commands
+
+Migrare:
+
+* manual create/update/delete;
+* confirm paid;
+* mark unpaid;
+* deposit;
+* deposit return;
+* prepaid.
+
+### S6.5 — Schedule generation fuori dal read path
+
+Eliminare generation/repair come side effect di normali query.
+
+### S6.6 — Lease Activity append-oriented
+
+Le command devono poter appendere audit event senza riscrivere l'intero aggregate.
+
+### S6.7 — Documenti Lease necessari al runtime
+
+Migrare ciò che serve a:
+
+* contract snapshot;
+* insurance;
+* signature process;
+* flussi Lease correnti.
+
+### S6.8 — Prepared communications
+
+Migrare `MessageRecord` preservando la semantica di comunicazione preparata, non invio certificato.
+
+### S6.9 — Lease/Payment read-model
+
+Migrare list/detail/balance e financial projections.
+
+### S6.10 — Dashboard financial cutover
+
+Dashboard deve leggere dalla nuova financial authority Payment.
+
+### S6.11 — Compatibilità multi-tenant Payment
+
+Preservare il comportamento corrente senza rendere lo schema incompatibile con future allocazioni/ripartizioni.
+
+### S6.12 — Gate transazionale e rollback
+
+Verificare che failure parziali non lascino:
+
+* Lease incompleta;
+* Payment orfani;
+* relation parziali;
+* activity incoerenti.
+
+---
+
+## TASK S7 — Consolidamento documentale, cleanup runtime locale e QA finale
+
+**Dipende da:** S6.
+
+### S7.1 — Consolidamento Property/Tenant/Lease/global Documents
+
+Riconciliare definitivamente le rappresentazioni documentali secondo S1.
+
+### S7.2 — Global Document library se ancora necessaria
+
+Confermare i consumer reali prima di implementare o mantenere la capability.
+
+### S7.3 — Provenance/link cleanup
+
+Migrare e semplificare `sourceDocumentId` o l'equivalente target.
+
+### S7.4 — Eliminazione Data URL runtime
+
+Nessun business file runtime deve restare codificato nel database applicativo.
+
+### S7.5 — Eliminazione local Auth persistence
+
+Rimuovere account/session storage locale quando nessun consumer ne dipende.
+
+### S7.6 — Eliminazione runtime `jsonDb`
+
+Rimuovere, quando zero consumer:
+
+```text
+getJsonDb
+saveJsonDb
+subscribeJsonDb
+createJsonDbAccountScope
+activeDatabaseAccountId
+```
+
+### S7.7 — Eliminazione runtime seed locale
+
+`database.json` non deve più inizializzare utenti/runtime reali.
+
+Può restare soltanto se isolato intenzionalmente come fixture di test.
+
+### S7.8 — Eliminazione migration/read-repair legacy
+
+Rimuovere normalizzazioni e repair richiesti esclusivamente dal vecchio JSON runtime.
+
+### S7.9 — Cleanup placeholder collection
+
+Eliminare le collection senza owner reale che non fanno parte del modello target.
+
+### S7.10 — Final storage audit
+
+Verificare che eventuali residui localStorage siano esclusivamente browser/UI preference intenzionali.
+
+### S7.11 — Full automated gate
+
+Eseguire suite completa, build e gate tecnici richiesti.
+
+### S7.12 — Multi-user browser QA
+
+Scenario minimo:
+
+```text
+User A + User B
+→ stesso workspace
+→ stessa mutation CRUD visibile
+
+User C
+→ workspace differente
+→ nessun accesso
+```
+
+### S7.13 — Collaboration/concurrency QA
+
+Verificare almeno:
+
+* create/edit concorrenti;
+* refresh;
+* logout;
+* workspace switch;
+* stale data;
+* errori rete;
+* duplicate race;
+* transaction failure.
+
+### S7.14 — Chiusura formale Blocco S
+
+Il Blocco S può essere chiuso soltanto quando la persistence locale non è più business authority runtime.
+
+**Gate S7:** zero business consumer della persistence locale, collaborazione e isolamento verificati, Storage attivo, Data URL runtime rimossi e suite/QA finali positivi.
 
 # BLOCCO G — Azioni simulate, mock e route
 

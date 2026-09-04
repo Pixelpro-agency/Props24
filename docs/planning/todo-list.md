@@ -211,8 +211,6 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
   - [ ] B9R — Verifiche browser residue delle Unit — **IN ATTESA DI STRUMENTO ADEGUATO; B9 resta completata con PASS funzionale. Da rieseguire quando il browser/tooling consentirà file chooser reale e ispezione read-only affidabile dello storage: B9-06 allegati reali; B9-07 ID annidati dopo create; B9-13 doppio submit create osservato nel browser; B9-15 stabilità ID dopo reload; B9-20 stabilità ID dopo edit; B9-35 assenza di scritture persistite durante operazioni read-only. I relativi contratti sono già coperti dai gate automatizzati B4/B6, ma la verifica browser diretta resta pendente.**
   - [ ] B9A — Card unità: Affittate, Valore locativo, Valore patrimoniale, Guadagno lordo e Guadagno netto; Tasso di occupazione solo per futuri affitti brevi e Copertura locativa soprattutto aggregata — **FUTURO; KPI-01 e KPI-02 validate**
 
-Le verifiche che dipendono dalla persistence/storage devono essere rieseguite contro l'authority effettiva al momento del collaudo. Dopo il cutover del Blocco S non devono richiedere l'ispezione del vecchio `localStorage`; B9-35 dovrà verificare l'assenza di mutation read-only sulla nuova authority Supabase.
-
 ## Blocco C — Inquilini e contatti
 
 - [x] C1 — Garanti e rubrica — **COMPLETATA; ContactRepository e lifecycle account-scoped, `contactId` canonico Tenant, compatibilità legacy, delete protection Lease/Tenant, Garanti Tenant e contatti di emergenza sulla rubrica reale, draft/guard e gate consolidato verificati**
