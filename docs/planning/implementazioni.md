@@ -32,7 +32,7 @@ Le task completate non vengono replicate in questo documento. Il loro stato sint
 
 - [Todo list e stato di avanzamento](./todo-list.md)
 - [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md)
-- [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md)
+- [Database locale e migrazione Supabase](./specifiche/database-locale-e-migrazione.md)
 - [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md)
 - [Ruoli, inviti e workspace](./specifiche/ruoli-inviti-e-workspace.md)
 - [Decisioni da validare](./decisioni-da-validare.md)
@@ -258,7 +258,7 @@ Gli stati degli inviti restano documentati nella TASK C7 e non sostituiscono le 
 
 D1B deve essere implementata con una task separata e non deve essere accorpata a D2.
 
-Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md) e [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md).
+Riferimenti: [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md) e [Database locale e migrazione Supabase](./specifiche/database-locale-e-migrazione.md).
 
 ## TASK D2 — Addebito senza incasso automatico
 
@@ -311,7 +311,7 @@ Canoni di affitto e Depositi cauzionali restano subordinati a KPI-03 per base te
 
 # BLOCCO E — Preferenze account-scoped
 
-Le preferenze devono usare il contratto repository e l'isolamento descritti in [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md), senza trasformare questo blocco in un redesign delle preferenze.
+Le preferenze devono usare il contratto repository e l'isolamento descritti in [Database locale e migrazione Supabase](./specifiche/database-locale-e-migrazione.md), senza trasformare questo blocco in un redesign delle preferenze.
 
 ## TASK E1 — Visibilità colonne nel database
 
@@ -381,7 +381,7 @@ I comportamenti già consolidati nei Blocchi A, B e C restano contratti applicat
 
 La migrazione non deve modificare implicitamente:
 
-* identificità canoniche e ID persistiti;
+* identità canoniche e ID persistiti;
 * duplicate rule;
 * relazioni tramite ID;
 * lifecycle;
@@ -977,7 +977,7 @@ I FeedbackBox restano visibili, gialli e disabilitati, senza falso invio. Import
 
 # BLOCCO H — Sicurezza, backend e storage
 
-Riferimenti: [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md) e [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md). Storage documentale definitivo, gestione sicura di password e codici, OCR, PDF, scraping, firme e servizi esterni restano funzioni future dipendenti da backend e storage sicuro. I dati e gli allegati già supportati localmente restano validi nel perimetro di collaudo.
+Riferimenti: [Database locale e migrazione Supabase](./specifiche/database-locale-e-migrazione.md) e [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md). Storage documentale definitivo, gestione sicura di password e codici, OCR, PDF, scraping, firme e servizi esterni restano funzioni future dipendenti da backend e storage sicuro. I dati e gli allegati già supportati localmente restano validi nel perimetro di collaudo.
 
 ## TASK H1 — Autenticazione di produzione
 
@@ -1048,7 +1048,7 @@ Dipendenze:
 
 Queste task derivano da commenti espliciti nel codice. Non unirle al fix D1/D2.
 
-Sono attività future dipendenti dal backend: PDF, OCR, scraping, firme, email, automazioni e generazione documentale. Vedere [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md) e [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
+Sono attività future dipendenti dal backend: PDF, OCR, scraping, firme, email, automazioni e generazione documentale. Vedere [Database locale e migrazione Supabase](./specifiche/database-locale-e-migrazione.md) e [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
 ## TASK I1 — Indici ISTAT aggiornabili
 

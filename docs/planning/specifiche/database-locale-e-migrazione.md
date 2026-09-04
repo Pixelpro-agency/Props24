@@ -1,8 +1,8 @@
-# Props24 — Database locale e migrazione futura
+# Props24 — Database locale e migrazione Supabase
 
 ## 1. Destinazione approvata
 
-Provider futuro approvato: Supabase. Database: PostgreSQL.
+Provider approvato e priorità tecnica corrente: Supabase. Database: PostgreSQL.
 
 MongoDB non è il target corrente. Il database locale non deve imitare API proprietarie di Supabase, ma usare contratti di dominio e repository migrabili.
 

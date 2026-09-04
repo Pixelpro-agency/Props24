@@ -7,7 +7,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - [Implementazioni residue](./implementazioni.md)
 - [Decisioni da validare](./decisioni-da-validare.md)
 - [Fase locale prioritaria](./specifiche/fase-locale-prioritaria.md)
-- [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md)
+- [Database locale e migrazione Supabase](./specifiche/database-locale-e-migrazione.md)
 - [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md)
 - [Ruoli, inviti e workspace](./specifiche/ruoli-inviti-e-workspace.md)
 
@@ -22,7 +22,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Di cui ancora senza risposta: 6
 - Prossimo punto tecnico: S0 — Analisi tecnica della persistenza corrente e piano di migrazione Supabase
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 37 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 45 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
