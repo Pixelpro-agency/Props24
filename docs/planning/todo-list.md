@@ -13,34 +13,63 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 
 ## Riepilogo
 
-- Task principali: 67
+- Task principali: 75
 - Completate integralmente: 27
 - Parzialmente completate: 3
-- Non concluse: 37
+- Non concluse: 45
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: da definire dopo il riallineamento del piano
+- Prossimo punto tecnico: S0 — Analisi tecnica della persistenza corrente e piano di migrazione Supabase
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 37 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
-> **BLOCCO C LOCALE COMPLETATO**
+> **NUOVA PRIORITÀ — BLOCCO S: SUPABASE E PERSISTENZA CONDIVISA**
 >
-> Baseline applicativa corrente: `dc274d9a7d3b55ce0ee0650fbb8caa7ec39a80be`.
+> Baseline applicativa di partenza: `4007e98e9f821ffe15b4724303d138f99307b70d`.
 >
-> Baseline tecnica corrente: 113 file di test / 1288 test PASS; build positiva. C10 conclusa con PASS CON LIMITAZIONI STRUMENTALI e nessun finding applicativo residuo.
+> I Blocchi A, B e C già completati costituiscono la baseline funzionale da preservare durante la migrazione. La migrazione della persistenza non autorizza regressioni dei CRUD, delle business rule, degli ID persistenti, dell'isolamento dei dati, delle bozze, dei lifecycle o dei flussi già collaudati.
 >
-> Il ciclo locale Inquilini e Contatti non contiene altre task operative non-future.
+> La priorità tecnica corrente è S0 — analisi completa dell'attuale persistenza locale, dei repository, dei reader/writer, delle authority e dei consumer.
 >
-> C7 — Inviti email reali, C8 — storage degli allegati delle bozze, C9 — verifica documentale/OCR e C10A — Card inquilini restano future.
+> Nessuna migrazione Supabase e nessuna eliminazione del database locale devono iniziare prima della chiusura di S0 e dell'approvazione della scomposizione risultante.
 >
-> Il prossimo punto tecnico sarà definito dopo il riallineamento del piano.
+> I dati correnti di `database.json` e dei database `localStorage` sono dati temporanei di sviluppo e collaudo. Non sono dati di produzione e non devono essere importati automaticamente nel database Supabase definitivo. Il nuovo ambiente condiviso verrà popolato tramite seed di test espliciti e soprattutto tramite i CRUD reali dell'applicazione.
 >
-> B9R resta separata e non blocca la chiusura del Blocco C.
+> Sequenza prioritaria decisa:
+>
+> 1. Blocco S — migrazione a Supabase/PostgreSQL e rimozione progressiva della persistenza runtime locale;
+> 2. sezione Finanze, da progettare anche sulla base dei riferimenti Rentila forniti dall'utente;
+> 3. risposta e riallineamento delle decisioni da validare;
+> 4. prosecuzione delle altre task di progetto ancora rilevanti.
+>
+> Le task esistenti che potrebbero diventare obsolete, cambiare ownership o essere assorbite dalla migrazione Supabase verranno rivalutate soltanto sulla base della matrice finale S0.12.
 
-Le attività concluse dei cicli precedenti restano registrate nei rispettivi blocchi; cronologia, evidenze tecniche e modifiche sono conservate nella storia Git.
+## Blocco S — Supabase e persistenza condivisa
+
+* [ ] S0 — Analisi tecnica della persistenza corrente e piano di migrazione — **PROSSIMA TASK / PRIORITÀ CORRENTE**
+
+  * [ ] S0.1 — Schema corrente `LocalDatabase`, collection, record, nested data e seed
+  * [ ] S0.2 — `jsonDb`, localStorage, inizializzazione, migrazioni, validazione, cache e subscription
+  * [ ] S0.3 — CRUD e persistenza Buildings
+  * [ ] S0.4 — CRUD e persistenza Properties / Unit
+  * [ ] S0.5 — CRUD e persistenza Contacts
+  * [ ] S0.6 — CRUD e persistenza Tenants
+  * [ ] S0.7 — CRUD e persistenza Leases
+  * [ ] S0.8 — CRUD e persistenza Payments
+  * [ ] S0.9 — Documents, Drafts, Settings e collection residue
+  * [ ] S0.10 — Auth locale, account isolation e composition root
+  * [ ] S0.11 — Consumer, read-model, selector, subscription e dipendenze runtime
+  * [ ] S0.12 — Matrice finale keep/adapt/delete, ordine di migrazione e scomposizione definitiva S1–S7
+* [ ] S1 — Contratto target e schema PostgreSQL/Supabase — **DIPENDE DA S0**
+* [ ] S2 — Infrastruttura Supabase, Auth e workspace minimo condiviso — **DIPENDE DA S1**
+* [ ] S3 — Repository boundary, adapter asincroni e composition root Supabase — **DIPENDE DA S1/S2**
+* [ ] S4 — Migrazione domini semplici e pilot CRUD — **DIPENDE DA S3**
+* [ ] S5 — Migrazione domini core Tenant e Property/Unit — **DIPENDE DA S4**
+* [ ] S6 — Migrazione transazionale Lease e Payments — **DIPENDE DA S5**
+* [ ] S7 — Storage/documenti, residui, rimozione runtime locale e collaudo finale — **DIPENDE DA S6**
 
 ## Blocco A — Edifici
 

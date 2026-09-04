@@ -23,7 +23,7 @@ Stato verificato sul repository:
 ```txt
 Repository: Pixelpro-agency/Props24
 Branch: main
-SHA applicativo esaminato: dc274d9a7d3b55ce0ee0650fbb8caa7ec39a80be
+SHA applicativo esaminato: 4007e98e9f821ffe15b4724303d138f99307b70d
 ```
 
 Le task completate non vengono replicate in questo documento. Il loro stato sintetico è mantenuto nella Todo list, mentre cronologia, evidenze tecniche e modifiche restano nella storia Git e nei test. Le sezioni seguenti contengono esclusivamente attività residue o task parziali con componenti ancora aperte.
@@ -91,15 +91,17 @@ Non:
 
 Le funzioni non disponibili restano visibili quando utili, gialle, realmente disabilitate, non cliccabili e accompagnate da spiegazione. Non usano route fittizie o falsi successi. La convenzione è definita nella [Specifica della fase locale prioritaria](./specifiche/fase-locale-prioritaria.md).
 
-### 3.2 Backend e produzione
+### 3.2 Supabase, backend e produzione
 
-La destinazione approvata è Supabase con PostgreSQL, secondo [Database locale e migrazione futura](./specifiche/database-locale-e-migrazione.md). Restano da definire in task future:
+La destinazione approvata è Supabase con PostgreSQL e il relativo Blocco S è ora la priorità tecnica corrente.
 
-- autenticazione e autorizzazione;
-- storage documentale;
-- invio email;
-- servizi documentali;
-- deployment.
+La fase locale già costruita non viene considerata lavoro da buttare: costituisce la baseline funzionale e di dominio da preservare. Devono invece essere sostituiti progressivamente lo storage runtime locale, l'autenticazione simulata, i seed runtime temporanei e gli adapter specifici del database JSON quando non avranno più consumer.
+
+H1, H2 e H3 non vengono automaticamente chiuse dal Blocco S:
+- S2 implementerà soltanto l'identità, autenticazione e workspace minimi necessari alla persistenza condivisa;
+- H1 conserverà l'eventuale hardening e i flussi di autenticazione di produzione non necessari al primo ambiente condiviso;
+- H2 conserverà portale inquilino, multi-ruolo completo, deleghe e permission model avanzato;
+- S7 potrà introdurre la base Supabase Storage necessaria a eliminare i Data URL runtime, mentre H3 conserverà il modello documentale e autorizzativo completo ancora futuro.
 
 # BLOCCO B — Unità
 
@@ -347,6 +349,524 @@ Verificare:
 - preferenze differenti;
 - migrazione idempotente;
 - nessuna lettura o scrittura diretta dalle pagine.
+
+# BLOCCO S — Supabase e persistenza condivisa
+
+## Scopo
+
+Il Blocco S sostituisce progressivamente l'attuale persistenza runtime locale con Supabase/PostgreSQL per consentire:
+
+* un database condiviso fra più collaboratori;
+* test realistici dei CRUD già implementati;
+* verifica delle relazioni e delle business rule su persistenza reale;
+* autenticazione e isolamento server-side minimi;
+* sviluppo successivo del progetto sulla nuova authority di persistenza;
+* eliminazione finale del database JSON locale, dei seed runtime temporanei e del codice di compatibilità non più necessario.
+
+Non è una semplice copia di `database.json` dentro PostgreSQL.
+
+La migrazione deve distinguere:
+
+* contratti di dominio da preservare;
+* business rule da preservare;
+* repository e port da mantenere o adattare;
+* adapter locali da sostituire;
+* reader/writer ancora accoppiati direttamente a `jsonDb`;
+* dati di test da non migrare;
+* codice legacy da eliminare soltanto dopo il cutover verificato.
+
+## Baseline da preservare
+
+I comportamenti già consolidati nei Blocchi A, B e C restano contratti applicativi.
+
+La migrazione non deve modificare implicitamente:
+
+* identificità canoniche e ID persistiti;
+* duplicate rule;
+* relazioni tramite ID;
+* lifecycle;
+* delete protection;
+* atomicità delle operazioni bulk;
+* business rule fiscali;
+* integrità Contact–Tenant;
+* Building–Property;
+* Tenant–Lease;
+* Property–Lease;
+* Payment–Lease;
+* draft create/edit e logical key;
+* guard delle modifiche non salvate;
+* semantica corrente dei pagamenti;
+* isolamento dei dati;
+* read-model già approvati.
+
+Una modifica a uno di questi contratti richiede una task funzionale esplicita e non può essere introdotta come semplice conseguenza tecnica della migrazione.
+
+## Principi obbligatori della migrazione
+
+### 1. Nessun big-bang
+
+La migrazione avviene per dominio e per authority.
+
+Il database locale può continuare temporaneamente a servire i domini non ancora migrati, ma ogni dominio deve avere in ogni momento una sola authority runtime dichiarata.
+
+### 2. Nessun dual-write implicito
+
+Non introdurre, salvo task esplicitamente progettata e verificata, scritture parallele dello stesso dato su localStorage e Supabase.
+
+Una write Supabase fallita non deve produrre un fallback silenzioso sul database locale.
+
+Il fallback silenzioso creerebbe due authority divergenti.
+
+### 3. Cutover esplicito
+
+Per ogni dominio devono essere identificati:
+
+* reader;
+* writer;
+* repository/port;
+* adapter;
+* consumer;
+* subscription;
+* test;
+* authority prima del cutover;
+* authority dopo il cutover.
+
+Il codice locale viene eliminato soltanto quando non esistono più consumer runtime del vecchio adapter.
+
+### 4. Repository prima dello storage
+
+La UI non deve conoscere:
+
+* localStorage;
+* SQL;
+* dettagli fisici delle tabelle;
+* query Supabase non appartenenti al proprio adapter.
+
+Quando un dominio usa ancora direttamente `getJsonDb()` o `saveJsonDb()`, S0 deve identificarlo e la migrazione deve introdurre o completare il relativo repository boundary prima del cutover.
+
+### 5. Contratti asincroni
+
+Supabase è una persistenza remota.
+
+I repository destinati a Supabase devono avere contratti compatibili con operazioni asincrone, errori remoti, loading, retry e risposte obsolete.
+
+Non creare wrapper fittizi sincroni sopra operazioni remote.
+
+### 6. PostgreSQL reale, non JSON globale
+
+`LocalDatabase` non viene tradotto in una singola riga o tabella JSONB contenente tutto il database.
+
+Il modello target deve usare tabelle, foreign key, unique constraint, index e transaction boundary dove rappresentano realmente il dominio.
+
+JSONB resta possibile per payload realmente variabili o snapshot quando motivato, non come sostituto automatico dello schema relazionale.
+
+### 7. Workspace come confine condiviso
+
+L'attuale separazione `props24.localDb.<accountId>` non può essere copiata come modello definitivo perché il nuovo obiettivo comprende collaborazione sullo stesso dataset.
+
+S1/S2 devono definire almeno:
+
+* identità autenticata;
+* workspace;
+* membership;
+* `workspace_id` o equivalente sui dati condivisi;
+* accesso minimo necessario ai collaboratori;
+* isolamento fra workspace differenti.
+
+Il permission engine completo di H2 resta fuori dal primo cutover salvo quanto strettamente necessario alla sicurezza del database condiviso.
+
+### 8. RLS e autorizzazione server-side
+
+Il client non costituisce il confine di sicurezza.
+
+Le tabelle esposte all'app devono essere protette mediante il modello autorizzativo Supabase/PostgreSQL definito in S1/S2.
+
+Chiavi amministrative o privilegi server-side non devono essere inclusi nel frontend.
+
+### 9. Atomicità multi-record
+
+Le operazioni che oggi modificano più collection con una singola `saveJsonDb()` devono ottenere una vera boundary transazionale nel modello target.
+
+Particolare attenzione:
+
+* creazione e modifica Lease;
+* generazione e riconciliazione Payments;
+* relazioni Property/Lease/Tenant;
+* deposito;
+* operazioni bulk;
+* eventuali mutation che toccano più tabelle.
+
+Non sostituire una write atomica locale con una sequenza di mutation remote indipendenti che può lasciare persistenza parziale.
+
+### 10. File fuori dal database relazionale
+
+Gli attuali Data URL runtime non costituiscono il modello target.
+
+Quando il dominio documentale viene migrato:
+
+* PostgreSQL conserva metadata e relazioni;
+* lo storage binario usa Supabase Storage o il meccanismo approvato;
+* il database non deve contenere l'intero file codificato come Data URL salvo fixture di test isolate.
+
+### 11. Dati correnti non migrati come produzione
+
+`src/db/database.json`, `props24.localDb.*`, gli account locali e i dataset creati durante A/B/C sono dati di sviluppo e collaudo.
+
+Non costituiscono una sorgente dati di produzione.
+
+Il database Supabase di sviluppo può avere seed dedicati minimi, ma il comportamento principale deve essere verificato creando nuovi record tramite i CRUD dell'applicazione.
+
+Fixture isolate usate esclusivamente dai test automatizzati possono restare se utili e chiaramente separate dal runtime.
+
+### 12. Eliminazione progressiva
+
+Non eliminare anticipatamente:
+
+* `jsonDb.ts`;
+* `database.json`;
+* adapter locali;
+* migration locali;
+* auth locale;
+* chiavi localStorage;
+* subscription locali;
+
+finché esistono consumer runtime che ne dipendono.
+
+La cancellazione finale richiede una ricerca verificata dei consumer residui, test positivi e collaudo browser sulla nuova authority.
+
+---
+
+## Stato tecnico preliminare da verificare e completare in S0
+
+L'analisi iniziale del repository mostra già un'architettura non uniforme.
+
+### Persistenza fisica
+
+L'attuale `LocalDatabase` contiene in un unico oggetto collection quali:
+
+* buildings;
+* properties;
+* tenants;
+* leases;
+* payments;
+* contacts;
+* documents;
+* messages;
+* drafts;
+* settings;
+* altre collection ancora vuote o future.
+
+`jsonDb` usa database locali account-scoped e il salvataggio corrente lavora sull'intero oggetto database.
+
+Il primo account locale usa inoltre `database.json` come seed runtime quando necessario.
+
+### Boundary già parzialmente migrabili
+
+Esistono già boundary utili da preservare o evolvere, fra cui:
+
+* `ContactRepository` con port asincrono e adapter locale;
+* `DraftRepository` con port asincrono e adapter locale;
+* `BuildingRepository` con gateway account-scoped;
+* `TenantRepository` con operations/gateway per una parte importante delle mutation.
+
+### Boundary ancora misti o diretti
+
+Esistono ancora flussi che usano direttamente o parzialmente:
+
+* `getJsonDb`;
+* `saveJsonDb`;
+* accesso all'intero `LocalDatabase`.
+
+Properties/Unit e Lease sono esempi da analizzare con particolare attenzione.
+
+Tenant contiene sia boundary repository sia reader o funzioni legacy ancora legate al database globale.
+
+### Auth locale
+
+L'autenticazione corrente è una simulazione locale con account e sessione persistiti nel browser.
+
+Il collegamento fra account autenticato e database avviene attivando lo scope locale relativo all'account.
+
+Questo modello non è il target del database condiviso.
+
+Questi punti sono evidenze preliminari e non sostituiscono S0.
+
+---
+
+## TASK S0 — Analisi tecnica della persistenza corrente e piano di migrazione
+
+**Stato:** priorità corrente.
+
+**Modalità:** analisi read-only del repository. Nessuna implementazione Supabase durante S0.
+
+### Obiettivo
+
+Costruire una mappa verificata dell'intera persistence architecture corrente prima di decidere schema, adapter e ordine definitivo di migrazione.
+
+Per ogni dominio o infrastruttura devono essere identificati almeno:
+
+* record e struttura dati;
+* reader;
+* writer;
+* authority della mutation;
+* repository/port;
+* adapter/gateway;
+* consumer UI/hook;
+* read-model e selector;
+* account scope;
+* relazioni;
+* business rule;
+* errori di dominio;
+* operazioni singole e bulk;
+* requisiti di atomicità;
+* subscription/invalidation;
+* seed o migration legacy coinvolti;
+* test che proteggono il contratto;
+* codice da preservare;
+* codice da adattare;
+* codice da eliminare al termine della migrazione.
+
+### S0.1 — Schema LocalDatabase e seed
+
+Analizzare:
+
+* `database.types.ts`;
+* `database.json`;
+* struttura di tutte le collection;
+* dati annidati;
+* relazioni duplicate o derivate;
+* metadata;
+* schemaVersion;
+* seedVersion;
+* dati legacy;
+* record e collection ancora placeholder.
+
+Output richiesto:
+
+mappa concettuale delle entità e delle relazioni correnti, senza ancora trasformarla nello schema SQL definitivo.
+
+### S0.2 — jsonDb e persistenza fisica
+
+Analizzare integralmente:
+
+* inizializzazione;
+* account key;
+* default account;
+* database secondari;
+* seed;
+* cache in memoria;
+* read;
+* write;
+* normalize;
+* validate;
+* repair;
+* migration;
+* rollback;
+* quota;
+* rilettura dopo write;
+* subscription;
+* eventi browser;
+* reset;
+* cleanup legacy.
+
+Output richiesto:
+
+flusso completo dalla richiesta di lettura/scrittura fino al localStorage e ritorno.
+
+### S0.3 — Buildings
+
+Mappare CRUD, lifecycle, bulk, repository, gateway, relation con Unit, business rule, subscription e test.
+
+### S0.4 — Properties / Unit
+
+Mappare CRUD, lifecycle, Building relation, Lease/Tenant projection, read-model, accessi diretti a `jsonDb`, business rule e test.
+
+### S0.5 — Contacts
+
+Mappare port, operations, local adapter, composition, consumer, lifecycle, fiscal identity, referential protection e test.
+
+### S0.6 — Tenants
+
+Mappare create/update/lifecycle, gateway, reader legacy, Contact relation, fiscal rule, nested identity, delete blocker, drafts, consumer e test.
+
+### S0.7 — Leases
+
+Mappare create/update/lifecycle e soprattutto tutte le mutation multi-collection:
+
+* Lease;
+* Property;
+* Tenant;
+* Payment;
+* Documents;
+* activity;
+* deposit;
+* signature/communication quando rilevanti.
+
+Identificare le transaction boundary richieste dal target.
+
+### S0.8 — Payments
+
+Mappare schedule, create/update, conferma pagamento, depositi, prepagato, repair, consumer finanziari, relazioni e atomicità.
+
+### S0.9 — Documents, Drafts, Settings e residui
+
+Analizzare:
+
+* document repository;
+* file/Data URL;
+* draft port e adapter;
+* settings;
+* userProfile;
+* messages;
+* collection placeholder;
+* eventuali chiavi storage esterne al database principale.
+
+### S0.10 — Auth e isolamento
+
+Analizzare:
+
+* `AuthContext`;
+* `authStorage`;
+* account seed;
+* login;
+* register;
+* session;
+* logout;
+* collegamento account → database;
+* isolamento corrente;
+* implicazioni per workspace condivisi.
+
+Non progettare ancora il permission engine completo H2.
+
+### S0.11 — Consumer e dipendenze runtime
+
+Cercare tutti i consumer di:
+
+* `getJsonDb`;
+* `saveJsonDb`;
+* `createJsonDbAccountScope`;
+* repository locali;
+* port;
+* subscription;
+* `database.json`;
+* auth locale;
+* chiavi localStorage.
+
+Classificare ogni consumer come:
+
+* già dietro boundary;
+* da adattare;
+* da spostare dietro repository;
+* test-only;
+* legacy eliminabile;
+* ancora necessario durante la transizione.
+
+### S0.12 — Matrice finale e decomposizione
+
+Produrre una matrice finale almeno con:
+
+`dominio | reader | writer | authority | repository/port | storage | scope | relazioni | atomicità | subscription | test | keep/adapt/delete`
+
+Da questa matrice devono derivare:
+
+* schema target preliminare;
+* ordine reale di migrazione;
+* dipendenze;
+* task esistenti potenzialmente assorbite o rese obsolete;
+* scomposizione dettagliata di S1–S7.
+
+S0 non si chiude finché ogni accesso runtime rilevante alla persistence corrente non ha un owner noto.
+
+---
+
+## TASK S1 — Contratto target e schema PostgreSQL/Supabase
+
+Da dettagliare dopo S0.
+
+Deve trasformare la matrice S0 in modello target:
+
+* entità;
+* tabelle;
+* relazioni;
+* FK;
+* unique constraint;
+* index;
+* JSONB motivati;
+* transaction boundary;
+* workspace boundary;
+* RLS;
+* migrations.
+
+Nessun CRUD viene migrato soltanto perché è stata creata una tabella.
+
+## TASK S2 — Infrastruttura Supabase, Auth e workspace minimo
+
+Da dettagliare dopo S1.
+
+Comprende solo l'infrastruttura minima necessaria al database condiviso:
+
+* configurazione client;
+* environment;
+* migrations;
+* Supabase Auth;
+* workspace minimo;
+* membership minima;
+* RLS;
+* test dedicati.
+
+Non chiude automaticamente H1/H2.
+
+## TASK S3 — Repository boundary e adapter Supabase
+
+Da dettagliare dopo S0–S2.
+
+Obiettivo:
+
+eliminare l'accoppiamento diretto fra UI e persistence fisica e rendere esplicito il cutover adapter per adapter.
+
+Deve affrontare anche i repository ancora sincroni o parzialmente legati a `LocalDatabase`.
+
+## TASK S4 — Domini semplici e pilot
+
+Ordine definitivo deciso dopo S0.
+
+Candidati preliminari:
+
+* Contacts come pilot dell'adapter asincrono;
+* Buildings come primo CRUD completo visibile;
+* Drafts se la matrice conferma che il relativo port è sufficientemente isolato.
+
+## TASK S5 — Domini core Tenant e Property/Unit
+
+Da scomporre dopo i pilot.
+
+Preservare tutti i contratti A/B/C già approvati.
+
+## TASK S6 — Lease e Payments
+
+Da affrontare soltanto dopo i domini da cui dipendono.
+
+Richiede transaction boundary esplicite e non può essere una sequenza non atomica di write client indipendenti.
+
+## TASK S7 — Storage, residui e rimozione della persistence locale
+
+Da dettagliare sulla base dei consumer residui.
+
+Comprende progressivamente:
+
+* document/file storage supportato;
+* settings e residui;
+* rimozione dei consumer `jsonDb`;
+* rimozione adapter locali runtime non più necessari;
+* rimozione seed runtime temporanei;
+* rimozione account/auth locali quando sostituiti;
+* cleanup delle chiavi locali obsolete;
+* audit finale dei riferimenti;
+* suite automatica;
+* browser QA sul database condiviso.
+
+La rimozione del runtime locale è l'ultimo effetto del cutover, non il primo.
+
 
 # BLOCCO G — Azioni simulate, mock e route
 
@@ -851,7 +1371,7 @@ Il ciclo delle implementazioni può essere chiuso soltanto quando:
 
 - tutti i campi nello scope effettuano round-trip;
 - le preferenze sono isolate per account;
-- i dati locali sono migrabili tramite repository.
+- i dati applicativi non dipendono direttamente dalla persistenza browser e il runtime target usa repository/adapter verso Supabase/PostgreSQL.
 
 ### 3. Bozze e navigazione
 
@@ -877,7 +1397,7 @@ Il ciclo delle implementazioni può essere chiuso soltanto quando:
 - audit statico completato;
 - collaudo browser completato;
 
-Supabase resta una fase successiva e non blocca il collaudo locale. Le task backend e i servizi esterni non bloccano la chiusura della fase locale, purché:
+Supabase/PostgreSQL è la priorità tecnica corrente del Blocco S. Il database locale resta scaffolding transitorio soltanto per i domini non ancora migrati e per fixture di test esplicitamente isolate. Dopo il cutover completo non costituisce più una persistence authority runtime. Le task backend e i servizi esterni non bloccano la chiusura della fase locale, purché:
 
 - siano classificati esplicitamente;
 - i controlli non operativi siano disabilitati;
