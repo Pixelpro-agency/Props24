@@ -98,10 +98,11 @@ La destinazione approvata è Supabase con PostgreSQL e il relativo Blocco S è o
 La fase locale già costruita non viene considerata lavoro da buttare: costituisce la baseline funzionale e di dominio da preservare. Devono invece essere sostituiti progressivamente lo storage runtime locale, l'autenticazione simulata, i seed runtime temporanei e gli adapter specifici del database JSON quando non avranno più consumer.
 
 H1, H2 e H3 non vengono automaticamente chiuse dal Blocco S:
-- S2 implementerà soltanto l'identità, autenticazione e workspace minimi necessari alla persistenza condivisa;
-- H1 conserverà l'eventuale hardening e i flussi di autenticazione di produzione non necessari al primo ambiente condiviso;
-- H2 conserverà portale inquilino, multi-ruolo completo, deleghe e permission model avanzato;
-- S7 potrà introdurre la base Supabase Storage necessaria a eliminare i Data URL runtime, mentre H3 conserverà il modello documentale e autorizzativo completo ancora futuro.
+
+- S2 implementa Supabase Auth, Profile/Workspace/Membership e RLS minimi necessari alla persistence condivisa; H1 conserva hardening, recupero credenziali e altri flussi di autenticazione di produzione non necessari al primo ambiente condiviso;
+- S2 implementa soltanto workspace, membership e authorization minimi; H2 conserva portale inquilino, multi-ruolo completo, deleghe e permission model avanzato;
+- la foundation Supabase Storage viene introdotta già in S2, il relativo port/adapter in S3 e i file dei domini vengono migrati progressivamente in S5/S6; S7 consolida il dominio documentale ed elimina Data URL e persistence locale residua;
+- H3 conserva quindi esclusivamente il modello documentale/autorizzativo avanzato non necessario al cutover iniziale, comprese eventuali policy avanzate di sharing, quote, deduplicazione, retention e access grants.
 
 # BLOCCO B — Unità
 
@@ -170,7 +171,9 @@ Affittate = unità non archiviate collegate a una locazione attiva secondo lo st
 
 # BLOCCO C — Inquilini e contatti
 
-Nel Blocco C non restano attività operative non-future. Le sole attività residue sono C7 — Inviti email, C8 — Allegati delle bozze, C9 — Verifica documentale/OCR e C10A — Card inquilini, tutte classificate come future e separate dal perimetro locale già approvato.
+Nel Blocco C non restano attività operative non-future. Le attività residue autonome sono C7 — Inviti email, C9 — Verifica documentale/OCR e C10A — Card inquilini.
+
+La precedente C8 — Allegati delle bozze — è stata assorbita dal Blocco S dopo S0.12: modello file/draft in S1, Storage port in S3, file Property/Tenant in S5 e cleanup finale dei Data URL in S7. Non introdurre una soluzione IndexedDB intermedia.
 
 ## TASK C7 — Inviti email
 
@@ -190,19 +193,6 @@ Nel Blocco C non restano attività operative non-future. Le sole attività resid
 - “Revoca” disponibile soltanto quando esiste un invito revocabile;
 - nessuna azione deve fingere un invio reale;
 - accettazione esplicita, collegamento account–partecipante e accesso limitato a “Le mie locazioni”.
-
-## TASK C8 — Allegati delle bozze
-
-**Origine:** commento in `useTenantFormPersistence.ts`.
-
-**Obiettivo:**
-
-- spostare allegati fuori dai Data URL nel database localStorage;
-- valutare IndexedDB nel periodo locale;
-- definire storage backend/cloud per produzione;
-- evitare aumento arbitrario delle quote;
-- migrazione e cleanup sicuri;
-- mantenere bozza e record coerenti.
 
 ## TASK C9 — Verifica documentale/OCR
 
@@ -309,46 +299,13 @@ Usare “Deposito cauzionale”. Le tre card approvate sono:
 
 Canoni di affitto e Depositi cauzionali restano subordinati a KPI-03 per base temporale e distinzione tra valori contrattuali e incassi reali. Non modificare modelli dati o nomi tecnici persistiti.
 
-# BLOCCO E — Preferenze account-scoped
+# BLOCCO E — Preferenze — riallineamento S0.12
 
-Le preferenze devono usare il contratto repository e l'isolamento descritti in [Database locale e migrazione Supabase](./specifiche/database-locale-e-migrazione.md), senza trasformare questo blocco in un redesign delle preferenze.
+Le precedenti E1 ed E2 non costituiscono più task operative autonome.
 
-## TASK E1 — Visibilità colonne nel database
+La visibilità colonne corrente è una preferenza UI/browser-local e non deve essere trasferita nel database business Supabase soltanto per renderla persistente. `properties-column-visibility`, `tenants-column-visibility` e preferenze analoghe possono restare locali salvo futura decisione esplicita di sincronizzazione cross-device.
 
-**Obiettivo:**
-
-- struttura tipizzata in `settings`;
-- repository preferenze;
-- isolamento per account;
-- migrazione di `properties-column-visibility` e `tenants-column-visibility`;
-- rimozione chiavi legacy soltanto dopo scrittura verificata;
-- subscription UI;
-- nessuna perdita di altre impostazioni.
-
-**Non eliminare:**
-
-- chiavi auth;
-- `props24.localDb.<accountId>`;
-- indice account/migrazione;
-- meccanismi di isolamento.
-
-## TASK E2 — Audit storage
-
-Inventariare e classificare:
-
-- auth;
-- database per account;
-- indice/migrazione;
-- preferenze legacy;
-- allegati;
-- chiavi estranee.
-
-Verificare:
-
-- login/logout fra due account;
-- preferenze differenti;
-- migrazione idempotente;
-- nessuna lettura o scrittura diretta dalle pagine.
+L'audit dello storage/persistence locale previsto da E2 è stato assorbito da S0.1, S0.2, S0.9, S0.10 e S0.11. Il controllo conclusivo dei residui appartiene a S7 — Final storage audit.
 
 # BLOCCO S — Supabase e persistenza condivisa
 
@@ -536,337 +493,52 @@ La cancellazione finale richiede una ricerca verificata dei consumer residui, te
 
 ---
 
-## Stato tecnico preliminare da verificare e completare in S0
+## Esito dell'analisi S0
 
-L'analisi iniziale del repository mostra già un'architettura non uniforme.
+S0.1–S0.12 sono completate.
 
-### Persistenza fisica
+L'analisi ha identificato reader, writer, authority, repository/port, storage, scope, relazioni, transaction boundary, subscription, consumer runtime e classificazione keep/adapt/delete dell'attuale persistence.
 
-L'attuale `LocalDatabase` contiene in un unico oggetto collection quali:
+Le evidenze tecniche S0 sono conservate sotto:
 
-* buildings;
-* properties;
-* tenants;
-* leases;
-* payments;
-* contacts;
-* documents;
-* messages;
-* drafts;
-* settings;
-* altre collection ancora vuote o future.
+`docs/planning/specifiche/analisi-s0-supabase/`
 
-`jsonDb` usa database locali account-scoped e il salvataggio corrente lavora sull'intero oggetto database.
+S0 ha inoltre stabilito che:
 
-Il primo account locale usa inoltre `database.json` come seed runtime quando necessario.
+- `LocalDatabase` non deve sopravvivere come runtime contract ricostruito sopra PostgreSQL;
+- query/read-model devono essere distinti dalle command/repository;
+- Supabase Auth deve essere distinto da Workspace/Membership;
+- RLS rappresenta la security authority finale;
+- Contacts è il pilot preferito;
+- Property/Tenant precedono Lease/Payments;
+- Payment resta la financial authority;
+- Storage foundation deve essere disponibile prima della migrazione dei file Property/Tenant;
+- nessun dominio può usare implicit dual-write o silent fallback;
+- i dati locali correnti non costituiscono dati di produzione da importare automaticamente.
 
-### Boundary già parzialmente migrabili
-
-Esistono già boundary utili da preservare o evolvere, fra cui:
-
-* `ContactRepository` con port asincrono e adapter locale;
-* `DraftRepository` con port asincrono e adapter locale;
-* `BuildingRepository` con gateway account-scoped;
-* `TenantRepository` con operations/gateway per una parte importante delle mutation.
-
-### Boundary ancora misti o diretti
-
-Esistono ancora flussi che usano direttamente o parzialmente:
-
-* `getJsonDb`;
-* `saveJsonDb`;
-* accesso all'intero `LocalDatabase`.
-
-Properties/Unit e Lease sono esempi da analizzare con particolare attenzione.
-
-Tenant contiene sia boundary repository sia reader o funzioni legacy ancora legate al database globale.
-
-### Auth locale
-
-L'autenticazione corrente è una simulazione locale con account e sessione persistiti nel browser.
-
-Il collegamento fra account autenticato e database avviene attivando lo scope locale relativo all'account.
-
-Questo modello non è il target del database condiviso.
-
-Questi punti sono evidenze preliminari e non sostituiscono S0.
-
----
-
-## TASK S0 — Analisi tecnica della persistenza corrente e piano di migrazione
-
-**Stato:** priorità corrente.
-
-**Modalità:** analisi read-only del repository. Nessuna implementazione Supabase durante S0.
-
-### Obiettivo
-
-Costruire una mappa verificata dell'intera persistence architecture corrente prima di decidere schema, adapter e ordine definitivo di migrazione.
-
-Per ogni dominio o infrastruttura devono essere identificati almeno:
-
-* record e struttura dati;
-* reader;
-* writer;
-* authority della mutation;
-* repository/port;
-* adapter/gateway;
-* consumer UI/hook;
-* read-model e selector;
-* account scope;
-* relazioni;
-* business rule;
-* errori di dominio;
-* operazioni singole e bulk;
-* requisiti di atomicità;
-* subscription/invalidation;
-* seed o migration legacy coinvolti;
-* test che proteggono il contratto;
-* codice da preservare;
-* codice da adattare;
-* codice da eliminare al termine della migrazione.
-
-### S0.1 — Schema LocalDatabase e seed
-
-Analizzare:
-
-* `database.types.ts`;
-* `database.json`;
-* struttura di tutte le collection;
-* dati annidati;
-* relazioni duplicate o derivate;
-* metadata;
-* schemaVersion;
-* seedVersion;
-* dati legacy;
-* record e collection ancora placeholder.
-
-Output richiesto:
-
-mappa concettuale delle entità e delle relazioni correnti, senza ancora trasformarla nello schema SQL definitivo.
-
-### S0.2 — jsonDb e persistenza fisica
-
-Analizzare integralmente:
-
-* inizializzazione;
-* account key;
-* default account;
-* database secondari;
-* seed;
-* cache in memoria;
-* read;
-* write;
-* normalize;
-* validate;
-* repair;
-* migration;
-* rollback;
-* quota;
-* rilettura dopo write;
-* subscription;
-* eventi browser;
-* reset;
-* cleanup legacy.
-
-Output richiesto:
-
-flusso completo dalla richiesta di lettura/scrittura fino al localStorage e ritorno.
-
-### S0.3 — Buildings
-
-Mappare CRUD, lifecycle, bulk, repository, gateway, relation con Unit, business rule, subscription e test.
-
-### S0.4 — Properties / Unit
-
-Mappare CRUD, lifecycle, Building relation, Lease/Tenant projection, read-model, accessi diretti a `jsonDb`, business rule e test.
-
-### S0.5 — Contacts
-
-Mappare port, operations, local adapter, composition, consumer, lifecycle, fiscal identity, referential protection e test.
-
-### S0.6 — Tenants
-
-Mappare create/update/lifecycle, gateway, reader legacy, Contact relation, fiscal rule, nested identity, delete blocker, drafts, consumer e test.
-
-### S0.7 — Leases
-
-Mappare create/update/lifecycle e soprattutto tutte le mutation multi-collection:
-
-* Lease;
-* Property;
-* Tenant;
-* Payment;
-* Documents;
-* activity;
-* deposit;
-* signature/communication quando rilevanti.
-
-Identificare le transaction boundary richieste dal target.
-
-### S0.8 — Payments
-
-Mappare schedule, create/update, conferma pagamento, depositi, prepagato, repair, consumer finanziari, relazioni e atomicità.
-
-### S0.9 — Documents, Drafts, Settings e residui
-
-Analizzare:
-
-* document repository;
-* file/Data URL;
-* draft port e adapter;
-* settings;
-* userProfile;
-* messages;
-* collection placeholder;
-* eventuali chiavi storage esterne al database principale.
-
-### S0.10 — Auth e isolamento
-
-Analizzare:
-
-* `AuthContext`;
-* `authStorage`;
-* account seed;
-* login;
-* register;
-* session;
-* logout;
-* collegamento account → database;
-* isolamento corrente;
-* implicazioni per workspace condivisi.
-
-Non progettare ancora il permission engine completo H2.
-
-### S0.11 — Consumer e dipendenze runtime
-
-Cercare tutti i consumer di:
-
-* `getJsonDb`;
-* `saveJsonDb`;
-* `createJsonDbAccountScope`;
-* repository locali;
-* port;
-* subscription;
-* `database.json`;
-* auth locale;
-* chiavi localStorage.
-
-Classificare ogni consumer come:
-
-* già dietro boundary;
-* da adattare;
-* da spostare dietro repository;
-* test-only;
-* legacy eliminabile;
-* ancora necessario durante la transizione.
-
-### S0.12 — Matrice finale e decomposizione
-
-Produrre una matrice finale almeno con:
-
-`dominio | reader | writer | authority | repository/port | storage | scope | relazioni | atomicità | subscription | test | keep/adapt/delete`
-
-Da questa matrice devono derivare:
-
-* schema target preliminare;
-* ordine reale di migrazione;
-* dipendenze;
-* task esistenti potenzialmente assorbite o rese obsolete;
-* scomposizione dettagliata di S1–S7.
-
-S0 non si chiude finché ogni accesso runtime rilevante alla persistence corrente non ha un owner noto.
-
----
+La prossima task tecnica è S1.
 
 ## TASK S1 — Contratto target e schema PostgreSQL/Supabase
 
-Da dettagliare dopo S0.
+**Stato:** prossima task / priorità corrente.
 
-Deve trasformare la matrice S0 in modello target:
+### S1.1 — Principi strutturali
+...
+### S1.12 — Seed e contratto di cutover
 
-* entità;
-* tabelle;
-* relazioni;
-* FK;
-* unique constraint;
-* index;
-* JSONB motivati;
-* transaction boundary;
-* workspace boundary;
-* RLS;
-* migrations.
+**Gate S1:** nessuna implementazione applicativa Supabase prima dell'approvazione di schema, relation authority, constraint, transaction, query e RLS matrix.
 
-Nessun CRUD viene migrato soltanto perché è stata creata una tabella.
+## TASK S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
 
-## TASK S2 — Infrastruttura Supabase, Auth e workspace minimo
+### S2.1 ...
+...
+### S2.10 ...
 
-Da dettagliare dopo S1.
+**Gate S2:** Auth reale, membership/workspace minimo, RLS cross-workspace e Storage foundation verificati.
 
-Comprende solo l'infrastruttura minima necessaria al database condiviso:
+## TASK S3 — Repository, command, query, Storage e composition
 
-* configurazione client;
-* environment;
-* migrations;
-* Supabase Auth;
-* workspace minimo;
-* membership minima;
-* RLS;
-* test dedicati.
-
-Non chiude automaticamente H1/H2.
-
-## TASK S3 — Repository boundary e adapter Supabase
-
-Da dettagliare dopo S0–S2.
-
-Obiettivo:
-
-eliminare l'accoppiamento diretto fra UI e persistence fisica e rendere esplicito il cutover adapter per adapter.
-
-Deve affrontare anche i repository ancora sincroni o parzialmente legati a `LocalDatabase`.
-
-## TASK S4 — Domini semplici e pilot
-
-Ordine definitivo deciso dopo S0.
-
-Candidati preliminari:
-
-* Contacts come pilot dell'adapter asincrono;
-* Buildings come primo CRUD completo visibile;
-* Drafts se la matrice conferma che il relativo port è sufficientemente isolato.
-
-## TASK S5 — Domini core Tenant e Property/Unit
-
-Da scomporre dopo i pilot.
-
-Preservare tutti i contratti A/B/C già approvati.
-
-## TASK S6 — Lease e Payments
-
-Da affrontare soltanto dopo i domini da cui dipendono.
-
-Richiede transaction boundary esplicite e non può essere una sequenza non atomica di write client indipendenti.
-
-## TASK S7 — Storage, residui e rimozione della persistence locale
-
-Da dettagliare sulla base dei consumer residui.
-
-Comprende progressivamente:
-
-* document/file storage supportato;
-* settings e residui;
-* rimozione dei consumer `jsonDb`;
-* rimozione adapter locali runtime non più necessari;
-* rimozione seed runtime temporanei;
-* rimozione account/auth locali quando sostituiti;
-* cleanup delle chiavi locali obsolete;
-* audit finale dei riferimenti;
-* suite automatica;
-* browser QA sul database condiviso.
-
-La rimozione del runtime locale è l'ultimo effetto del cutover, non il primo.
-
+...
 
 # BLOCCO G — Azioni simulate, mock e route
 
@@ -981,24 +653,24 @@ Riferimenti: [Database locale e migrazione Supabase](./specifiche/database-local
 
 ## TASK H1 — Autenticazione di produzione
 
-**Origine:** commenti in `AuthContext.tsx` e `authStorage.ts`.
+S2 del Blocco S implementa l'Auth reale minimo necessario al database condiviso.
 
-**Obiettivo futuro:**
+H1 resta aperta soltanto per gli aspetti di produzione non richiesti al primo cutover, fra cui:
 
-- backend di autenticazione;
-- password mai salvate in localStorage;
-- hashing lato server;
-- sessioni con scadenza, rinnovo e revoca;
-- autorizzazione server-side;
-- logout e invalidazione;
-- migrazione degli account locali;
-- gestione errori e recupero credenziali.
+- hardening delle policy Auth;
+- recovery credenziali;
+- eventuale verifica email;
+- gestione avanzata delle sessioni e revoche;
+- UX/error handling di produzione;
+- eventuali requisiti di migrazione soltanto se in futuro esisteranno account reali da migrare.
 
-Non implementare parzialmente dentro una task UI.
+Gli account locali correnti di sviluppo non devono essere importati automaticamente.
 
 ## TASK H2 — Identità, workspace e accessi
 
 **Origine:** commento in `auth.types.ts`.
+
+S2 realizza soltanto la foundation minima `user → membership → workspace` e le policy RLS necessarie alla persistence condivisa. Questo non chiude H2 e non implementa il permission model professionale completo.
 
 ### H2A — Portale inquilino invitato
 
@@ -1007,7 +679,7 @@ Non implementare parzialmente dentro una task UI.
 - isolamento dai dati privati del proprietario e dalla scheda inquilino conservata dal proprietario;
 - test backend e autorizzativi futuri.
 
-### H2B — Account multi-ruolo e workspace
+### H2B — Account multi-ruolo e workspace avanzato
 
 - identità unica con ruoli dipendenti da workspace o relazione;
 - workspace personale/proprietario, accesso come inquilino, studio e cliente delegato;
@@ -1022,27 +694,28 @@ Non implementare parzialmente dentro una task UI.
 - ruoli e permessi futuri, deleghe, revoca e audit;
 - nessun permission engine in questa fase.
 
-## TASK H3 — Storage documentale
+## TASK H3 — Storage documentale avanzato
 
-Definire:
+La foundation Storage necessaria alla migrazione runtime appartiene al Blocco S:
 
-- storage binario;
-- metadati nel database;
-- limiti e quote;
-- deduplicazione;
-- upload, download ed eliminazione;
-- cancellazione coordinata;
-- migrazione dei Data URL;
-- accesso per account e ruoli;
-- `document_access_grants` per visibilità privata, professionisti autorizzati, tutti gli inquilini o inquilini selezionati;
-- gestione offline e retry.
+- S2 — bucket/policy foundation;
+- S3 — File/Storage port;
+- S5 — file Property/Tenant;
+- S6 — documenti/file Lease necessari;
+- S7 — consolidamento e cleanup Data URL.
 
-Dipendenze:
+H3 resta aperta per le capability documentali avanzate oltre il cutover:
 
-- C8;
-- C9;
-- B8;
-- task documentali del Blocco I.
+- quote prodotto definitive;
+- deduplicazione avanzata;
+- retention;
+- gestione offline/retry avanzata;
+- condivisione documentale;
+- grant per professionisti o Tenant selezionati;
+- policy documentali multi-ruolo;
+- modello autorizzativo documentale completo.
+
+Il semplice completamento dello Storage Supabase nel Blocco S non chiude H3.
 
 # BLOCCO I — Automazioni locazione e servizi documentali
 
@@ -1259,21 +932,6 @@ Audit finale di:
 
 Includere anche `LeaseDocumentModal.tsx` se l’ID del file diventa persistente.
 
-## TASK J5 — Performance e quota locale
-
-Verificare:
-
-- serializzazioni complete del database;
-- allegati Data URL;
-- debounce;
-- dimensione delle bozze;
-- subscription;
-- render di tabelle;
-- cleanup;
-- comportamento con dataset realistici.
-
-Non ottimizzare senza misure riproducibili.
-
 ## TASK J6 — Accessibilità e falsi controlli
 
 Audit mirato di:
@@ -1367,11 +1025,16 @@ Il ciclo delle implementazioni può essere chiuso soltanto quando:
 - inquilini e contatti usano modelli canonici;
 - le date delle locazioni sono corrette.
 
-### 2. Persistenza e isolamento
+### 2. Persistenza, workspace e isolamento
 
-- tutti i campi nello scope effettuano round-trip;
-- le preferenze sono isolate per account;
-- i dati applicativi non dipendono direttamente dalla persistenza browser e il runtime target usa repository/adapter verso Supabase/PostgreSQL.
+- tutti i business data nello scope effettuano round-trip sulla authority target;
+- due utenti autorizzati possono operare sullo stesso workspace;
+- utenti non autorizzati non possono accedere a workspace differenti;
+- RLS costituisce l'authority server-side di isolamento;
+- i dati applicativi non dipendono direttamente dalla persistence browser;
+- il runtime target usa repository/command/query verso Supabase/PostgreSQL;
+- i file runtime usano Storage e non Data URL nel business database;
+- le preferenze puramente UI/browser possono restare locali e non costituiscono business persistence.
 
 ### 3. Bozze e navigazione
 

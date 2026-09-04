@@ -13,16 +13,16 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 
 ## Riepilogo
 
-- Task principali: 75
-- Completate integralmente: 27
+- Task principali: 71
+- Completate integralmente: 28
 - Parzialmente completate: 3
-- Non concluse: 45
+- Non concluse: 40
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: S0 — Analisi tecnica della persistenza corrente e piano di migrazione Supabase
+- Prossimo punto tecnico: S1 — Contratto target e schema PostgreSQL/Supabase
 
-`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 45 task non concluse e non vanno sommati nuovamente.
+`IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 40 task non concluse e non vanno sommati nuovamente.
 
 ## Percorso operativo immediato
 
@@ -32,9 +32,11 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >
 > I Blocchi A, B e C già completati costituiscono la baseline funzionale da preservare durante la migrazione. La migrazione della persistenza non autorizza regressioni dei CRUD, delle business rule, degli ID persistenti, dell'isolamento dei dati, delle bozze, dei lifecycle o dei flussi già collaudati.
 >
-> La priorità tecnica corrente è S0 — analisi completa dell'attuale persistenza locale, dei repository, dei reader/writer, delle authority e dei consumer.
+> S0 — Analisi tecnica della persistenza corrente e piano di migrazione — è completata. Le evidenze tecniche S0.1–S0.12 costituiscono ora il contratto di analisi da cui deve derivare il modello target.
 >
-> Nessuna migrazione Supabase e nessuna eliminazione del database locale devono iniziare prima della chiusura di S0 e dell'approvazione della scomposizione risultante.
+> La priorità tecnica corrente è S1 — Contratto target e schema PostgreSQL/Supabase.
+>
+> Nessuna implementazione applicativa Supabase dei CRUD deve iniziare prima della chiusura e approvazione di S1. S2 potrà iniziare soltanto sul contratto target approvato.
 >
 > I dati correnti di `database.json` e dei database `localStorage` sono dati temporanei di sviluppo e collaudo. Non sono dati di produzione e non devono essere importati automaticamente nel database Supabase definitivo. Il nuovo ambiente condiviso verrà popolato tramite seed di test espliciti e soprattutto tramite i CRUD reali dell'applicazione.
 >
@@ -45,30 +47,104 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 > 3. risposta e riallineamento delle decisioni da validare;
 > 4. prosecuzione delle altre task di progetto ancora rilevanti.
 >
-> Le task esistenti che potrebbero diventare obsolete, cambiare ownership o essere assorbite dalla migrazione Supabase verranno rivalutate soltanto sulla base della matrice finale S0.12.
+> La rivalutazione S0.12 è completata: E1 e J5 locale non sono più task autonome; E2 e C8 sono assorbite dal Blocco S; H1/H2 restano future oltre la foundation minima del Blocco S; H3 resta futura per la parte documentale/autorizzativa avanzata oltre lo Storage necessario alla migrazione.
 
 ## Blocco S — Supabase e persistenza condivisa
 
-- [ ] S0 — Analisi tecnica della persistenza corrente e piano di migrazione — **PROSSIMA TASK / PRIORITÀ CORRENTE**
-  - [ ] S0.1 — Schema corrente `LocalDatabase`, collection, record, nested data e seed
-  - [ ] S0.2 — `jsonDb`, localStorage, inizializzazione, migrazioni, validazione, cache e subscription
-  - [ ] S0.3 — CRUD e persistenza Buildings
-  - [ ] S0.4 — CRUD e persistenza Properties / Unit
-  - [ ] S0.5 — CRUD e persistenza Contacts
-  - [ ] S0.6 — CRUD e persistenza Tenants
-  - [ ] S0.7 — CRUD e persistenza Leases
-  - [ ] S0.8 — CRUD e persistenza Payments
-  - [ ] S0.9 — Documents, Drafts, Settings e collection residue
-  - [ ] S0.10 — Auth locale, account isolation e composition root
-  - [ ] S0.11 — Consumer, read-model, selector, subscription e dipendenze runtime
-  - [ ] S0.12 — Matrice finale keep/adapt/delete, ordine di migrazione e scomposizione definitiva S1–S7
-- [ ] S1 — Contratto target e schema PostgreSQL/Supabase — **DIPENDE DA S0**
-- [ ] S2 — Infrastruttura Supabase, Auth e workspace minimo condiviso — **DIPENDE DA S1**
-- [ ] S3 — Repository boundary, adapter asincroni e composition root Supabase — **DIPENDE DA S1/S2**
-- [ ] S4 — Migrazione domini semplici e pilot CRUD — **DIPENDE DA S3**
-- [ ] S5 — Migrazione domini core Tenant e Property/Unit — **DIPENDE DA S4**
-- [ ] S6 — Migrazione transazionale Lease e Payments — **DIPENDE DA S5**
-- [ ] S7 — Storage/documenti, residui, rimozione runtime locale e collaudo finale — **DIPENDE DA S6**
+- [x] S0 — Analisi tecnica della persistenza corrente e piano di migrazione — **COMPLETATA; S0.1–S0.12 verificate e consolidate**
+  - [x] S0.1 — Schema corrente `LocalDatabase`, collection, record, nested data e seed
+  - [x] S0.2 — `jsonDb`, localStorage, inizializzazione, migrazioni, validazione, cache e subscription
+  - [x] S0.3 — CRUD e persistenza Buildings
+  - [x] S0.4 — CRUD e persistenza Properties / Unit
+  - [x] S0.5 — CRUD e persistenza Contacts
+  - [x] S0.6 — CRUD e persistenza Tenants
+  - [x] S0.7 — CRUD e persistenza Leases
+  - [x] S0.8 — CRUD e persistenza Payments
+  - [x] S0.9 — Documents, Drafts, Settings e collection residue
+  - [x] S0.10 — Auth locale, account isolation e composition root
+  - [x] S0.11 — Consumer, read-model, selector, subscription e dipendenze runtime
+  - [x] S0.12 — Matrice finale keep/adapt/delete, ordine di migrazione e scomposizione definitiva S1–S7
+- [ ] S1 — Contratto target e schema PostgreSQL/Supabase — **PROSSIMA TASK / PRIORITÀ CORRENTE**
+  - [ ] S1.1 — Principi strutturali del modello target
+  - [ ] S1.2 — Auth identity, Profile, Workspace e Membership
+  - [ ] S1.3 — Schema Buildings / Properties
+  - [ ] S1.4 — Schema Contacts / Tenants
+  - [ ] S1.5 — Schema Lease / Payments
+  - [ ] S1.6 — Schema Documents / Files / Communications / Drafts
+  - [ ] S1.7 — Lease Activity / audit necessario al runtime corrente
+  - [ ] S1.8 — Matrice constraint e index
+  - [ ] S1.9 — Matrice delle transaction command
+  - [ ] S1.10 — Contratti query/read-model
+  - [ ] S1.11 — Matrice RLS
+  - [ ] S1.12 — Seed e contratto di cutover
+- [ ] S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation — **DIPENDE DA S1**
+  - [ ] S2.1 — Configurazione Supabase e ambienti
+  - [ ] S2.2 — Migration SQL e versioning
+  - [ ] S2.3 — Supabase Auth adapter
+  - [ ] S2.4 — Profile, Workspace e Membership foundation
+  - [ ] S2.5 — Bootstrap/join workspace minimo
+  - [ ] S2.6 — RLS baseline e test cross-workspace
+  - [ ] S2.7 — Supabase Storage foundation
+  - [ ] S2.8 — Session, logout, cache e scope transition
+  - [ ] S2.9 — Seed sviluppo/test
+  - [ ] S2.10 — Gate S2
+- [ ] S3 — Repository, command, query, Storage adapter e composition Supabase — **DIPENDE DA S1/S2**
+  - [ ] S3.1 — Supabase client infrastructure
+  - [ ] S3.2 — Workspace runtime context
+  - [ ] S3.3 — Convenzioni repository async
+  - [ ] S3.4 — Convenzioni transactional command
+  - [ ] S3.5 — Query/read-model layer
+  - [ ] S3.6 — Cache e invalidation
+  - [ ] S3.7 — Subscription/Realtime policy
+  - [ ] S3.8 — File/Storage port
+  - [ ] S3.9 — Policy authority locale/Supabase e cutover
+  - [ ] S3.10 — Integration test harness Supabase
+- [ ] S4 — Pilot e migrazione domini semplici — **DIPENDE DA S3**
+  - [ ] S4.1 — Contacts pilot Supabase
+  - [ ] S4.2 — Cutover completo Contacts
+  - [ ] S4.3 — Buildings
+  - [ ] S4.4 — Drafts
+  - [ ] S4.5 — Gate S4
+- [ ] S5 — Migrazione Property / Tenant e relativi file — **DIPENDE DA S4**
+  - [ ] S5.1 — Property commands
+  - [ ] S5.2 — Property relational children
+  - [ ] S5.3 — Property files → Storage
+  - [ ] S5.4 — Property list/detail queries
+  - [ ] S5.5 — Tenant commands
+  - [ ] S5.6 — Tenant Contact relations
+  - [ ] S5.7 — Tenant files/documents → Storage
+  - [ ] S5.8 — Tenant list/detail queries
+  - [ ] S5.9 — Invitation state corrente
+  - [ ] S5.10 — Eliminazione raw lookup `jsonDb` nei form
+  - [ ] S5.11 — Gate S5
+- [ ] S6 — Migrazione transazionale Lease / Payments — **DIPENDE DA S5**
+  - [ ] S6.1 — Lease relations
+  - [ ] S6.2 — Lease create/update transaction
+  - [ ] S6.3 — Lease lifecycle
+  - [ ] S6.4 — Payment commands
+  - [ ] S6.5 — Schedule generation fuori dal read path
+  - [ ] S6.6 — Lease Activity append-oriented
+  - [ ] S6.7 — Documenti Lease necessari al runtime
+  - [ ] S6.8 — Prepared communications
+  - [ ] S6.9 — Lease/Payment read-model
+  - [ ] S6.10 — Dashboard financial cutover
+  - [ ] S6.11 — Compatibilità multi-tenant Payment
+  - [ ] S6.12 — Gate transazionale e rollback
+- [ ] S7 — Consolidamento documentale, cleanup runtime locale e QA finale — **DIPENDE DA S6**
+  - [ ] S7.1 — Consolidamento Property/Tenant/Lease/global Documents
+  - [ ] S7.2 — Global Document library se ancora necessaria
+  - [ ] S7.3 — Provenance/link cleanup
+  - [ ] S7.4 — Eliminazione Data URL runtime
+  - [ ] S7.5 — Eliminazione local Auth persistence
+  - [ ] S7.6 — Eliminazione runtime `jsonDb`
+  - [ ] S7.7 — Eliminazione runtime seed locale
+  - [ ] S7.8 — Eliminazione migration/read-repair legacy
+  - [ ] S7.9 — Cleanup placeholder collection
+  - [ ] S7.10 — Final storage audit
+  - [ ] S7.11 — Full automated gate
+  - [ ] S7.12 — Multi-user browser QA
+  - [ ] S7.13 — Collaboration/concurrency QA
+  - [ ] S7.14 — Chiusura formale Blocco S
 
 ## Blocco A — Edifici
 
@@ -135,6 +211,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
   - [ ] B9R — Verifiche browser residue delle Unit — **IN ATTESA DI STRUMENTO ADEGUATO; B9 resta completata con PASS funzionale. Da rieseguire quando il browser/tooling consentirà file chooser reale e ispezione read-only affidabile dello storage: B9-06 allegati reali; B9-07 ID annidati dopo create; B9-13 doppio submit create osservato nel browser; B9-15 stabilità ID dopo reload; B9-20 stabilità ID dopo edit; B9-35 assenza di scritture persistite durante operazioni read-only. I relativi contratti sono già coperti dai gate automatizzati B4/B6, ma la verifica browser diretta resta pendente.**
   - [ ] B9A — Card unità: Affittate, Valore locativo, Valore patrimoniale, Guadagno lordo e Guadagno netto; Tasso di occupazione solo per futuri affitti brevi e Copertura locativa soprattutto aggregata — **FUTURO; KPI-01 e KPI-02 validate**
 
+Le verifiche che dipendono dalla persistence/storage devono essere rieseguite contro l'authority effettiva al momento del collaudo. Dopo il cutover del Blocco S non devono richiedere l'ispezione del vecchio `localStorage`; B9-35 dovrà verificare l'assenza di mutation read-only sulla nuova authority Supabase.
+
 ## Blocco C — Inquilini e contatti
 
 - [x] C1 — Garanti e rubrica — **COMPLETATA; ContactRepository e lifecycle account-scoped, `contactId` canonico Tenant, compatibilità legacy, delete protection Lease/Tenant, Garanti Tenant e contatti di emergenza sulla rubrica reale, draft/guard e gate consolidato verificati**
@@ -174,8 +252,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
   - [x] C6.1 — Chiusura controlli Tenant simulati visibili — **COMPLETATA; Importa/Esporta/Messaggio realmente disabilitati, azioni singole pending coerenti e falso menu Ordina rimosso**
   - [x] C6.2 — Cleanup legacy e gate consolidato C6 — **COMPLETATA; modali e handler legacy rimossi, nessun URL export legacy o simulazione C6 residua; 113 file / 1287 test PASS, build e lint mirato positivi**
 - [ ] C7 — Inviti email — **FUTURO — BACKEND**
-- [ ] C8 — Allegati delle bozze — **FUTURO — STORAGE**
 - [ ] C9 — Verifica documentale/OCR — **FUTURO — BACKEND**
+> Gli allegati delle bozze precedentemente pianificati come C8 sono assorbiti dal Blocco S: modello in S1, Storage port in S3, migrazione dei file Property/Tenant in S5 e cleanup Data URL in S7. Non introdurre una nuova soluzione IndexedDB intermedia.
 - [x] C10 — Collaudo inquilini — **COMPLETATA; PASS CON LIMITAZIONI STRUMENTALI; Persona/Società, relazioni Contact, duplicati fiscali, edit, lifecycle, invito locale, reload e isolamento account verificati; finding logout/SearchBar corretto e collaudato; nessun finding applicativo residuo**
   - [ ] C10A — Card inquilini: Attivi, Connessi e Con locazione — **FUTURO**
 
@@ -192,10 +270,14 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - [ ] D3 — Regressione locazione mirata — **IN ATTESA/APERTO; influenzato da PA-10–PA-13**
   - [ ] D3A — Tre card locazioni: Attive, Canoni di affitto e Depositi cauzionali — **FUTURO; in attesa di KPI-03**
 
-## Blocco E — Preferenze
+## Blocco E — Preferenze — **RIALLINEATO DA S0.12**
 
-- [ ] E1 — Visibilità colonne nel database — **APERTO**
-- [ ] E2 — Audit storage — **APERTO**
+Le precedenti task E1 ed E2 non sono più task operative autonome:
+
+- E1 — la visibilità colonne resta una preferenza UI/browser-local; non deve essere migrata nel business database Supabase per inerzia;
+- E2 — l'audit della persistence/storage locale è stato assorbito dall'analisi S0 e dal final storage audit S7.
+
+Un'eventuale futura sincronizzazione cross-device delle preferenze utente richiederà una nuova task dedicata.
 
 ## Blocco F — Modifiche non salvate
 
@@ -229,13 +311,13 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 
 ## Blocco H — Sicurezza, backend e storage
 
-- [ ] H1 — Autenticazione di produzione — **FUTURO — BACKEND**
-- [ ] H2 — Identità, workspace e accessi — **FUTURO — BACKEND**
+- [ ] H1 — Autenticazione di produzione — **FUTURO; S2 IMPLEMENTA SOLO LA FOUNDATION AUTH NECESSARIA AL BLOCCO S, H1 RESTA APERTA PER HARDENING E FLUSSI DI PRODUZIONE RESIDUI**
+- [ ] H2 — Identità, workspace e accessi — **FUTURO; S2 IMPLEMENTA SOLO WORKSPACE/MEMBERSHIP/RLS MINIMI, H2 RESTA APERTA**
   - [x] AC-01 — CF account Props24 facoltativo alla registrazione iniziale e globalmente univoco se valorizzato, con blocco del riuso fra account; regola distinta dai duplicati tenant/contatti account-scoped — **VALIDATA; influenza H1 e H2**
   - [ ] H2A — Portale inquilino invitato
-  - [ ] H2B — Account multi-ruolo e workspace
+  - [ ] H2B — Account multi-ruolo e workspace avanzato
   - [ ] H2C — Gestione professionale e deleghe
-- [ ] H3 — Storage documentale — **FUTURO — STORAGE/BACKEND**
+- [ ] H3 — Storage documentale — **FUTURO; FOUNDATION E MIGRAZIONE STORAGE NECESSARIE AI CRUD ASSORBITE DAL BLOCCO S, H3 RESTA APERTA PER MODELLO DOCUMENTALE/AUTORIZZATIVO AVANZATO**
 
 ## Blocco I — Automazioni e servizi documentali
 
@@ -329,7 +411,6 @@ Baseline tecnica corrente: 113 file di test / 1288 test PASS. J1 resta parziale 
 - [ ] J2 — Baseline lint — **APERTO**
 - [ ] J3 — Mock e file non usati — **APERTO**
 - [ ] J4 — ID persistiti residui — **APERTO**
-- [ ] J5 — Performance e quota locale — **APERTO**
 - [ ] J6 — Accessibilità e falsi controlli — **APERTO**
 
 ## Blocco K — Audit conclusivi
