@@ -49,27 +49,26 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 
 ## Blocco S — Supabase e persistenza condivisa
 
-* [ ] S0 — Analisi tecnica della persistenza corrente e piano di migrazione — **PROSSIMA TASK / PRIORITÀ CORRENTE**
-
-  * [ ] S0.1 — Schema corrente `LocalDatabase`, collection, record, nested data e seed
-  * [ ] S0.2 — `jsonDb`, localStorage, inizializzazione, migrazioni, validazione, cache e subscription
-  * [ ] S0.3 — CRUD e persistenza Buildings
-  * [ ] S0.4 — CRUD e persistenza Properties / Unit
-  * [ ] S0.5 — CRUD e persistenza Contacts
-  * [ ] S0.6 — CRUD e persistenza Tenants
-  * [ ] S0.7 — CRUD e persistenza Leases
-  * [ ] S0.8 — CRUD e persistenza Payments
-  * [ ] S0.9 — Documents, Drafts, Settings e collection residue
-  * [ ] S0.10 — Auth locale, account isolation e composition root
-  * [ ] S0.11 — Consumer, read-model, selector, subscription e dipendenze runtime
-  * [ ] S0.12 — Matrice finale keep/adapt/delete, ordine di migrazione e scomposizione definitiva S1–S7
-* [ ] S1 — Contratto target e schema PostgreSQL/Supabase — **DIPENDE DA S0**
-* [ ] S2 — Infrastruttura Supabase, Auth e workspace minimo condiviso — **DIPENDE DA S1**
-* [ ] S3 — Repository boundary, adapter asincroni e composition root Supabase — **DIPENDE DA S1/S2**
-* [ ] S4 — Migrazione domini semplici e pilot CRUD — **DIPENDE DA S3**
-* [ ] S5 — Migrazione domini core Tenant e Property/Unit — **DIPENDE DA S4**
-* [ ] S6 — Migrazione transazionale Lease e Payments — **DIPENDE DA S5**
-* [ ] S7 — Storage/documenti, residui, rimozione runtime locale e collaudo finale — **DIPENDE DA S6**
+- [ ] S0 — Analisi tecnica della persistenza corrente e piano di migrazione — **PROSSIMA TASK / PRIORITÀ CORRENTE**
+  - [ ] S0.1 — Schema corrente `LocalDatabase`, collection, record, nested data e seed
+  - [ ] S0.2 — `jsonDb`, localStorage, inizializzazione, migrazioni, validazione, cache e subscription
+  - [ ] S0.3 — CRUD e persistenza Buildings
+  - [ ] S0.4 — CRUD e persistenza Properties / Unit
+  - [ ] S0.5 — CRUD e persistenza Contacts
+  - [ ] S0.6 — CRUD e persistenza Tenants
+  - [ ] S0.7 — CRUD e persistenza Leases
+  - [ ] S0.8 — CRUD e persistenza Payments
+  - [ ] S0.9 — Documents, Drafts, Settings e collection residue
+  - [ ] S0.10 — Auth locale, account isolation e composition root
+  - [ ] S0.11 — Consumer, read-model, selector, subscription e dipendenze runtime
+  - [ ] S0.12 — Matrice finale keep/adapt/delete, ordine di migrazione e scomposizione definitiva S1–S7
+- [ ] S1 — Contratto target e schema PostgreSQL/Supabase — **DIPENDE DA S0**
+- [ ] S2 — Infrastruttura Supabase, Auth e workspace minimo condiviso — **DIPENDE DA S1**
+- [ ] S3 — Repository boundary, adapter asincroni e composition root Supabase — **DIPENDE DA S1/S2**
+- [ ] S4 — Migrazione domini semplici e pilot CRUD — **DIPENDE DA S3**
+- [ ] S5 — Migrazione domini core Tenant e Property/Unit — **DIPENDE DA S4**
+- [ ] S6 — Migrazione transazionale Lease e Payments — **DIPENDE DA S5**
+- [ ] S7 — Storage/documenti, residui, rimozione runtime locale e collaudo finale — **DIPENDE DA S6**
 
 ## Blocco A — Edifici
 
