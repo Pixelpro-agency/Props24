@@ -36,6 +36,7 @@ Le task completate non vengono replicate in questo documento. Il loro stato sint
 - [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md)
 - [Ruoli, inviti e workspace](./specifiche/ruoli-inviti-e-workspace.md)
 - [Decisioni da validare](./decisioni-da-validare.md)
+- [Schema PostgreSQL/Supabase target](./specifiche/schema-supabase.md)
 
 Questo documento conserva il dettaglio delle task residue; la Todo list ne mostra lo stato sintetico e il registro delle decisioni conserva le decisioni ancora operative per il lavoro non concluso.
 
@@ -518,11 +519,13 @@ S0 ha inoltre stabilito che:
 - nessun dominio può usare implicit dual-write o silent fallback;
 - i dati locali correnti non costituiscono dati di produzione da importare automaticamente.
 
-La prossima task tecnica è S1.
+S1 — Contratto target e schema PostgreSQL/Supabase è completata e approvata. Il contratto canonico S1.1–S1.12 è pubblicato nella [facade Schema Supabase](./specifiche/schema-supabase.md) e nei documenti della relativa cartella.
+
+La prossima task tecnica è S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation. La prima sottotask è S2.1 — Configurazione Supabase e ambienti.
 
 ## TASK S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
 
-**Dipende da:** S1.
+**Dipende da:** S1 — completata e approvata.
 
 ### S2.1 — Configurazione Supabase e ambienti
 
