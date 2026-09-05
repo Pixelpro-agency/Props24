@@ -38,6 +38,7 @@ Le task completate non vengono replicate in questo documento. Il loro stato sint
 - [Decisioni da validare](./decisioni-da-validare.md)
 - [Schema PostgreSQL/Supabase target](./specifiche/schema-supabase.md)
 - [Configurazione Supabase e ambienti](./specifiche/supabase-ambienti.md)
+- [Migration SQL e versioning](./specifiche/supabase-migrations.md)
 
 Questo documento conserva il dettaglio delle task residue; la Todo list ne mostra lo stato sintetico e il registro delle decisioni conserva le decisioni ancora operative per il lavoro non concluso.
 
@@ -522,19 +523,15 @@ S0 ha inoltre stabilito che:
 
 S1 — Contratto target e schema PostgreSQL/Supabase è completata e approvata. Il contratto canonico S1.1–S1.12 è pubblicato nella [facade Schema Supabase](./specifiche/schema-supabase.md) e nei documenti della relativa cartella.
 
-S2 è in corso. S2.1 — Configurazione Supabase e ambienti è completata e documentata nella specifica dedicata. La prossima sottotask residua è S2.2 — Migration SQL e versioning.
+S2 è in corso. S2.1 — Configurazione Supabase e ambienti e S2.2 — Migration SQL e versioning sono completate e documentate nelle rispettive specifiche. La prossima sottotask residua è S2.3 — Supabase Auth adapter.
 
 ## TASK S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
 
 **Dipende da:** S1 — completata e approvata.
 
-### S2.2 — Migration SQL e versioning
+### S2.3 — Supabase Auth adapter
 
 **Stato:** prossima sottotask / priorità corrente.
-
-Introdurre un meccanismo riproducibile e versionato per creare e aggiornare lo schema.
-
-### S2.3 — Supabase Auth adapter
 
 Sostituire progressivamente:
 

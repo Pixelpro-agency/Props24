@@ -30,8 +30,11 @@ Prossima fase
 S2.1
 → COMPLETATA E VERIFICATA
 
+S2.2
+→ COMPLETATA E VERIFICATA
+
 Prossima task
-→ S2.2 — Migration SQL e versioning
+→ S2.3 — Supabase Auth adapter
 ```
 
 ## Specifiche
@@ -108,8 +111,8 @@ Lo stato e la decomposizione delle task successive sono mantenuti in:
 
 Con il completamento di S1, il gate progettuale dello schema target è soddisfatto.
 
-S2.1 — Configurazione Supabase e ambienti è completata e verificata.
+S2.1 — Configurazione Supabase e ambienti e S2.2 — Migration SQL e versioning sono completate e verificate.
 
 La prossima task tecnica è:
 
-**S2.2 — Migration SQL e versioning.**
+**S2.3 — Supabase Auth adapter.**

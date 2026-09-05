@@ -32,8 +32,11 @@ Priorità corrente
 S2.1
 → COMPLETATA E VERIFICATA
 
+S2.2
+→ COMPLETATA E VERIFICATA
+
 Prossima task
-→ S2.2 — Migration SQL e versioning
+→ S2.3 — Supabase Auth adapter
 ```
 
 ## Analisi

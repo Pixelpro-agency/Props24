@@ -16,7 +16,9 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
-    "supabase:db:reset:local": "supabase db reset --local"
+    "supabase:db:reset:local": "supabase db reset --local",
+    "supabase:migration:new": "supabase migration new",
+    "supabase:migration:list:local": "supabase migration list --local"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

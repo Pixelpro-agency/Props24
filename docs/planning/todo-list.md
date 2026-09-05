@@ -12,6 +12,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - [Ruoli, inviti e workspace](./specifiche/ruoli-inviti-e-workspace.md)
 - [Schema PostgreSQL/Supabase target](./specifiche/schema-supabase.md)
 - [Configurazione Supabase e ambienti](./specifiche/supabase-ambienti.md)
+- [Migration SQL e versioning](./specifiche/supabase-migrations.md)
 
 ## Riepilogo
 
@@ -22,7 +23,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: S2.2 — Migration SQL e versioning
+- Prossimo punto tecnico: S2.3 — Supabase Auth adapter
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 39 task non concluse e non vanno sommati nuovamente.
 
@@ -38,7 +39,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >
 > S1 — Contratto target e schema PostgreSQL/Supabase è completata e approvata integralmente nelle specifiche S1.1–S1.12. La priorità tecnica corrente è S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation.
 >
-> S2.1 è completata e verificata. La prossima sottotask è S2.2 — Migration SQL e versioning.
+> S2.1 — Configurazione Supabase e ambienti e S2.2 — Migration SQL e versioning sono completate e verificate. La prossima sottotask è S2.3 — Supabase Auth adapter.
 >
 > Il gate S1 è soddisfatto. S2 può iniziare sul contratto target approvato. S3 preparerà repository, command, query, Storage adapter e composition; i cutover dei business domain inizieranno in S4 e proseguiranno nelle fasi S5–S6.
 >
@@ -83,8 +84,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
   - [x] S1.12 — Seed e contratto di cutover
 - [ ] S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation — **IN CORSO / PRIORITÀ CORRENTE**
   - [x] S2.1 — Configurazione Supabase e ambienti
-  - [ ] S2.2 — Migration SQL e versioning — **PROSSIMA SOTTOTASK**
-  - [ ] S2.3 — Supabase Auth adapter
+  - [x] S2.2 — Migration SQL e versioning
+  - [ ] S2.3 — Supabase Auth adapter — **PROSSIMA SOTTOTASK**
   - [ ] S2.4 — Profile, Workspace e Membership foundation
   - [ ] S2.5 — Bootstrap/join workspace minimo
   - [ ] S2.6 — RLS baseline e test cross-workspace
