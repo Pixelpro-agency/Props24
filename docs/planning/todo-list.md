@@ -11,6 +11,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - [Specifica Nuovo edificio](./specifiche/nuovo-edificio.md)
 - [Ruoli, inviti e workspace](./specifiche/ruoli-inviti-e-workspace.md)
 - [Schema PostgreSQL/Supabase target](./specifiche/schema-supabase.md)
+- [Configurazione Supabase e ambienti](./specifiche/supabase-ambienti.md)
 
 ## Riepilogo
 
@@ -21,7 +22,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
+- Prossimo punto tecnico: S2.2 — Migration SQL e versioning
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 39 task non concluse e non vanno sommati nuovamente.
 
@@ -36,6 +37,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 > S0 — Analisi tecnica della persistenza corrente e piano di migrazione — è completata. Le evidenze tecniche S0.1–S0.12 hanno costituito il contratto di analisi da cui è derivato il modello target S1 e restano evidenza tecnica di riferimento per le fasi S2–S7.
 >
 > S1 — Contratto target e schema PostgreSQL/Supabase è completata e approvata integralmente nelle specifiche S1.1–S1.12. La priorità tecnica corrente è S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation.
+>
+> S2.1 è completata e verificata. La prossima sottotask è S2.2 — Migration SQL e versioning.
 >
 > Il gate S1 è soddisfatto. S2 può iniziare sul contratto target approvato. S3 preparerà repository, command, query, Storage adapter e composition; i cutover dei business domain inizieranno in S4 e proseguiranno nelle fasi S5–S6.
 >
@@ -78,9 +81,9 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
   - [x] S1.10 — Contratti query/read-model
   - [x] S1.11 — Matrice RLS
   - [x] S1.12 — Seed e contratto di cutover
-- [ ] S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation — **PROSSIMA TASK / PRIORITÀ CORRENTE**
-  - [ ] S2.1 — Configurazione Supabase e ambienti
-  - [ ] S2.2 — Migration SQL e versioning
+- [ ] S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation — **IN CORSO / PRIORITÀ CORRENTE**
+  - [x] S2.1 — Configurazione Supabase e ambienti
+  - [ ] S2.2 — Migration SQL e versioning — **PROSSIMA SOTTOTASK**
   - [ ] S2.3 — Supabase Auth adapter
   - [ ] S2.4 — Profile, Workspace e Membership foundation
   - [ ] S2.5 — Bootstrap/join workspace minimo

@@ -29,8 +29,11 @@ Fase successiva
 Priorità corrente
 → S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
 
+S2.1
+→ COMPLETATA E VERIFICATA
+
 Prossima task
-→ S2.1 — Configurazione Supabase e ambienti
+→ S2.2 — Migration SQL e versioning
 ```
 
 ## Analisi

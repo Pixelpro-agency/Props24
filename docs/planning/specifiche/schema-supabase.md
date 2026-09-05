@@ -27,8 +27,11 @@ S1.1–S1.12
 Prossima fase
 → S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
 
+S2.1
+→ COMPLETATA E VERIFICATA
+
 Prossima task
-→ S2.1 — Configurazione Supabase e ambienti
+→ S2.2 — Migration SQL e versioning
 ```
 
 ## Specifiche
@@ -105,6 +108,8 @@ Lo stato e la decomposizione delle task successive sono mantenuti in:
 
 Con il completamento di S1, il gate progettuale dello schema target è soddisfatto.
 
+S2.1 — Configurazione Supabase e ambienti è completata e verificata.
+
 La prossima task tecnica è:
 
-**S2.1 — Configurazione Supabase e ambienti.**
+**S2.2 — Migration SQL e versioning.**
