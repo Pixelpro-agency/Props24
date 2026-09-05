@@ -100,10 +100,9 @@ Il requisito Node operativo corrente del repository è:
 
 ```text
 >=22.12.0
-
-```text
-S2.1 era stata completata con il requisito `^20.19.0 || >=22.12.0`. Con l'introduzione di `@supabase/supabase-js` in S2.3 il requisito è stato ristretto a Node 22.12 o successivo. Questo aggiornamento non riapre S2.1 e non modifica il contratto degli ambienti Supabase.
 ```
+
+S2.1 era stata completata con il requisito `^20.19.0 || >=22.12.0`. Con l'introduzione di `@supabase/supabase-js` in S2.3 il requisito è stato ristretto a Node 22.12 o successivo. Questo aggiornamento non riapre S2.1 e non modifica il contratto degli ambienti Supabase.
 
 Su Windows il prerequisito locale per lo stack Supabase è:
 
