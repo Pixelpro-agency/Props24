@@ -23,8 +23,14 @@ S0.1–S0.12
 → CONSOLIDATE
 → PUBBLICATE
 
+Fase successiva
+→ S1 — COMPLETATA E APPROVATA
+
+Priorità corrente
+→ S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
+
 Prossima task
-→ S1.1 — Principi strutturali del modello target
+→ S2.1 — Configurazione Supabase e ambienti
 ```
 
 ## Analisi
@@ -65,4 +71,4 @@ La decomposizione operativa definitiva del Blocco S è mantenuta in:
 * [Todo list e stato di avanzamento](../todo-list.md)
 * [Implementazioni residue](../implementazioni.md)
 
-S1 deve utilizzare S0.1–S0.12 come evidenza tecnica di partenza e non riaprire i contratti già verificati senza una ragione esplicita.
+S1 ha utilizzato S0.1–S0.12 come evidenza tecnica di partenza e ne ha tradotto i contratti nel modello target approvato. Le fasi S2–S7 devono continuare a utilizzare S0 come evidenza della baseline locale e S1 come contratto target, senza riaprire decisioni già verificate senza una ragione esplicita.
