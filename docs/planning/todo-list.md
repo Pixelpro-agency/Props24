@@ -14,13 +14,13 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 ## Riepilogo
 
 - Task principali: 71
-- Completate integralmente: 28
+- Completate integralmente: 29
 - Parzialmente completate: 3
-- Non concluse: 40
+- Non concluse: 39
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: S1 — Contratto target e schema PostgreSQL/Supabase
+- Prossimo punto tecnico: S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 40 task non concluse e non vanno sommati nuovamente.
 
@@ -34,9 +34,9 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >
 > S0 — Analisi tecnica della persistenza corrente e piano di migrazione — è completata. Le evidenze tecniche S0.1–S0.12 costituiscono ora il contratto di analisi da cui deve derivare il modello target.
 >
-> La priorità tecnica corrente è S1 — Contratto target e schema PostgreSQL/Supabase.
+> S1 — Contratto target e schema PostgreSQL/Supabase è completata e approvata integralmente nelle specifiche S1.1–S1.12. La priorità tecnica corrente è S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation.
 >
-> Nessuna implementazione applicativa Supabase dei CRUD deve iniziare prima della chiusura e approvazione di S1. S2 potrà iniziare soltanto sul contratto target approvato.
+> Il gate S1 è soddisfatto. S2 può iniziare sul contratto target approvato; i CRUD business restano comunque fuori dal cutover finché non vengono raggiunte le rispettive fasi S3–S6.
 >
 > I dati correnti di `database.json` e dei database `localStorage` sono dati temporanei di sviluppo e collaudo. Non sono dati di produzione e non devono essere importati automaticamente nel database Supabase definitivo. Il nuovo ambiente condiviso verrà popolato tramite seed di test espliciti e soprattutto tramite i CRUD reali dell'applicazione.
 >
@@ -64,20 +64,20 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
   - [x] S0.10 — Auth locale, account isolation e composition root
   - [x] S0.11 — Consumer, read-model, selector, subscription e dipendenze runtime
   - [x] S0.12 — Matrice finale keep/adapt/delete, ordine di migrazione e scomposizione definitiva S1–S7
-- [ ] S1 — Contratto target e schema PostgreSQL/Supabase — **PROSSIMA TASK / PRIORITÀ CORRENTE**
-  - [ ] S1.1 — Principi strutturali del modello target
-  - [ ] S1.2 — Auth identity, Profile, Workspace e Membership
-  - [ ] S1.3 — Schema Buildings / Properties
-  - [ ] S1.4 — Schema Contacts / Tenants
-  - [ ] S1.5 — Schema Lease / Payments
-  - [ ] S1.6 — Schema Documents / Files / Communications / Drafts
-  - [ ] S1.7 — Lease Activity / audit necessario al runtime corrente
-  - [ ] S1.8 — Matrice constraint e index
-  - [ ] S1.9 — Matrice delle transaction command
-  - [ ] S1.10 — Contratti query/read-model
-  - [ ] S1.11 — Matrice RLS
-  - [ ] S1.12 — Seed e contratto di cutover
-- [ ] S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation — **DIPENDE DA S1**
+- [x] S1 — Contratto target e schema PostgreSQL/Supabase — **COMPLETATA E APPROVATA; contratto target consolidato in S1.1–S1.12**
+  - [x] S1.1 — Principi strutturali del modello target
+  - [x] S1.2 — Auth identity, Profile, Workspace e Membership
+  - [x] S1.3 — Schema Buildings / Properties
+  - [x] S1.4 — Schema Contacts / Tenants
+  - [x] S1.5 — Schema Lease / Payments
+  - [x] S1.6 — Schema Documents / Files / Communications / Drafts
+  - [x] S1.7 — Lease Activity / audit necessario al runtime corrente
+  - [x] S1.8 — Matrice constraint e index
+  - [x] S1.9 — Matrice delle transaction command
+  - [x] S1.10 — Contratti query/read-model
+  - [x] S1.11 — Matrice RLS
+  - [x] S1.12 — Seed e contratto di cutover
+- [ ] S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation — **PROSSIMA TASK / PRIORITÀ CORRENTE**
   - [ ] S2.1 — Configurazione Supabase e ambienti
   - [ ] S2.2 — Migration SQL e versioning
   - [ ] S2.3 — Supabase Auth adapter
