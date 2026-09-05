@@ -13,6 +13,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - [Schema PostgreSQL/Supabase target](./specifiche/schema-supabase.md)
 - [Configurazione Supabase e ambienti](./specifiche/supabase-ambienti.md)
 - [Migration SQL e versioning](./specifiche/supabase-migrations.md)
+- [Supabase Auth adapter](./specifiche/supabase-auth.md)
 
 ## Riepilogo
 
@@ -23,7 +24,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - Decisioni professionali aperte o rinviate: 13
 - Di cui rinviate con risposta/decisione già registrata: 7
 - Di cui ancora senza risposta: 6
-- Prossimo punto tecnico: S2.3 — Supabase Auth adapter
+- Prossimo punto tecnico: S2.4 — Profile, Workspace e Membership foundation
 
 `IN ATTESA`, `FUTURO`, `RINVIATO` e `DECISIONE PRODOTTO` sono sottoinsiemi delle 39 task non concluse e non vanno sommati nuovamente.
 
@@ -39,7 +40,7 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 >
 > S1 — Contratto target e schema PostgreSQL/Supabase è completata e approvata integralmente nelle specifiche S1.1–S1.12. La priorità tecnica corrente è S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation.
 >
-> S2.1 — Configurazione Supabase e ambienti e S2.2 — Migration SQL e versioning sono completate e verificate. La prossima sottotask è S2.3 — Supabase Auth adapter.
+> S2.1 — Configurazione Supabase e ambienti, S2.2 — Migration SQL e versioning e S2.3 — Supabase Auth adapter sono completate e verificate. La prossima sottotask è S2.4 — Profile, Workspace e Membership foundation.
 >
 > Il gate S1 è soddisfatto. S2 può iniziare sul contratto target approvato. S3 preparerà repository, command, query, Storage adapter e composition; i cutover dei business domain inizieranno in S4 e proseguiranno nelle fasi S5–S6.
 >
@@ -85,8 +86,8 @@ Questa Todo list è il riepilogo operativo dello stato del progetto. [Implementa
 - [ ] S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation — **IN CORSO / PRIORITÀ CORRENTE**
   - [x] S2.1 — Configurazione Supabase e ambienti
   - [x] S2.2 — Migration SQL e versioning
-  - [ ] S2.3 — Supabase Auth adapter — **PROSSIMA SOTTOTASK**
-  - [ ] S2.4 — Profile, Workspace e Membership foundation
+  - [x] S2.3 — Supabase Auth adapter
+  - [ ] S2.4 — Profile, Workspace e Membership foundation — **PROSSIMA SOTTOTASK**
   - [ ] S2.5 — Bootstrap/join workspace minimo
   - [ ] S2.6 — RLS baseline e test cross-workspace
   - [ ] S2.7 — Supabase Storage foundation

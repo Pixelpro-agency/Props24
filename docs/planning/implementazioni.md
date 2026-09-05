@@ -39,6 +39,7 @@ Le task completate non vengono replicate in questo documento. Il loro stato sint
 - [Schema PostgreSQL/Supabase target](./specifiche/schema-supabase.md)
 - [Configurazione Supabase e ambienti](./specifiche/supabase-ambienti.md)
 - [Migration SQL e versioning](./specifiche/supabase-migrations.md)
+- [Supabase Auth adapter](./specifiche/supabase-auth.md)
 
 Questo documento conserva il dettaglio delle task residue; la Todo list ne mostra lo stato sintetico e il registro delle decisioni conserva le decisioni ancora operative per il lavoro non concluso.
 
@@ -523,25 +524,15 @@ S0 ha inoltre stabilito che:
 
 S1 — Contratto target e schema PostgreSQL/Supabase è completata e approvata. Il contratto canonico S1.1–S1.12 è pubblicato nella [facade Schema Supabase](./specifiche/schema-supabase.md) e nei documenti della relativa cartella.
 
-S2 è in corso. S2.1 — Configurazione Supabase e ambienti e S2.2 — Migration SQL e versioning sono completate e documentate nelle rispettive specifiche. La prossima sottotask residua è S2.3 — Supabase Auth adapter.
+S2 è in corso. S2.1 — Configurazione Supabase e ambienti, S2.2 — Migration SQL e versioning e S2.3 — Supabase Auth adapter sono completate e documentate nelle rispettive specifiche. La prossima sottotask residua è S2.4 — Profile, Workspace e Membership foundation.
 
 ## TASK S2 — Infrastruttura Supabase, Auth, workspace minimo, RLS e Storage foundation
 
 **Dipende da:** S1 — completata e approvata.
 
-### S2.3 — Supabase Auth adapter
+### S2.4 — Profile, Workspace e Membership foundation
 
 **Stato:** prossima sottotask / priorità corrente.
-
-Sostituire progressivamente:
-
-* password locali;
-* registry account locali;
-* sessione `{accountId}`;
-
-con Auth reale.
-
-### S2.4 — Profile, Workspace e Membership foundation
 
 Implementare soltanto il modello minimo approvato da S1.
 

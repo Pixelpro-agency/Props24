@@ -35,8 +35,11 @@ S2.1
 S2.2
 → COMPLETATA E VERIFICATA
 
+S2.3
+→ COMPLETATA E VERIFICATA
+
 Prossima task
-→ S2.3 — Supabase Auth adapter
+→ S2.4 — Profile, Workspace e Membership foundation
 ```
 
 ## Analisi
